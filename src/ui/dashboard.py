@@ -11,15 +11,19 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 from src.core.config import settings
+from src.core.i18n import t, i18n
+
+# Force reload of translations so JSON updates are picked up without restarting Streamlit
+i18n.load_locales()
 
 DB_PATH = settings.db_path
 
 st.set_page_config(page_title="GPU Price Tracker", layout="wide")
 
-st.title("GPU Price Tracker Dashboard")
-st.markdown(
-    "Track GeForce RTX 5070 and RTX 5070 Ti prices across Brazilian e-commerce stores."
-)
+lang = st.sidebar.selectbox("Idioma / Language", ["pt-BR", "en-US"], index=0)
+
+st.title(t("app_title", lang=lang))
+st.markdown(t("app_desc", lang=lang))
 
 
 def load_data():
@@ -55,12 +59,10 @@ def load_data():
 df = load_data()
 
 if df.empty:
-    st.info(
-        "No pricing data found in the database. Please ensure the orchestrator is running."
-    )
+    st.info(t("no_data_db", lang=lang))
 else:
     # Sidebar Filters
-    st.sidebar.header("Filters")
+    st.sidebar.header(t("sidebar_filters", lang=lang))
 
     # Sort keywords by their absolute lowest price in the DB
     # so the cheapest GPU series (e.g. 5070) is always on the left
@@ -68,16 +70,16 @@ else:
     keywords = keyword_min_prices.index.tolist()
     
     selected_keywords = st.sidebar.multiselect(
-        "Select GPUs", keywords, default=keywords
+        t("select_gpus", lang=lang), keywords, default=keywords, placeholder=t("choose_option", lang=lang)
     )
     # Ensure selected keywords maintain this price-based order
     selected_keywords = sorted(selected_keywords, key=lambda k: keywords.index(k))
 
     stores = df["store_name"].unique().tolist()
-    selected_stores = st.sidebar.multiselect("Select Stores", stores, default=stores)
+    selected_stores = st.sidebar.multiselect(t("select_stores", lang=lang), stores, default=stores, placeholder=t("choose_option", lang=lang))
 
     brands = df["brand"].dropna().unique().tolist()
-    selected_brands = st.sidebar.multiselect("Select Brands", brands, default=brands)
+    selected_brands = st.sidebar.multiselect(t("select_brands", lang=lang), brands, default=brands, placeholder=t("choose_option", lang=lang))
 
     # Apply Filters
     filtered_df = df[
@@ -88,10 +90,10 @@ else:
         filtered_df = filtered_df[filtered_df["brand"].isin(selected_brands) | filtered_df["brand"].isna()]
 
     if filtered_df.empty:
-        st.warning("No data matches the selected filters.")
+        st.warning(t("no_data_filters", lang=lang))
     else:
         # KPIs
-        st.subheader("🌐 Current Market Overview")
+        st.subheader(t("market_overview", lang=lang))
         cols = st.columns(len(selected_keywords))
 
         for idx, keyword in enumerate(selected_keywords):
@@ -114,21 +116,21 @@ else:
                     
                     avg_current = current_market["price_cash"].mean()
                     
-                    st.markdown(f"**{keyword.upper()} Market**")
+                    st.markdown(f"**{t('market_title', lang=lang, keyword=keyword.upper())}**")
                     
                     kpi_col1, kpi_col2 = st.columns(2)
                     
                     # Diff vs Historical
                     diff_from_hist = best_current['price_cash'] - best_historical['price_cash']
                     if diff_from_hist == 0:
-                        delta_str = "Matches All-Time Low!"
+                        delta_str = t("matches_low", lang=lang)
                         delta_col = "normal"
                     else:
-                        delta_str = f"+ R$ {diff_from_hist:,.2f} vs Low"
+                        delta_str = t("vs_low", lang=lang, diff=f"{diff_from_hist:,.2f}")
                         delta_col = "inverse" # Red means higher than historical low
                         
                     kpi_col1.metric(
-                        label="🏆 Best Deal Right Now",
+                        label=t("best_deal", lang=lang),
                         value=f"R$ {best_current['price_cash']:,.2f}",
                         delta=delta_str,
                         delta_color=delta_col,
@@ -136,13 +138,13 @@ else:
                     kpi_col1.markdown(f"*{best_current['store_name']} - {best_current['model']}* [**↗️**]({best_current['product_url']})")
                     
                     kpi_col2.metric(
-                        label="📉 All-Time Low",
+                        label=t("all_time_low", lang=lang),
                         value=f"R$ {best_historical['price_cash']:,.2f}"
                     )
                     
                     kpi_col3, kpi_col4 = st.columns(2)
                     kpi_col3.metric(
-                        label="📊 Market Average",
+                        label=t("market_avg", lang=lang),
                         value=f"R$ {avg_current:,.2f}"
                     )
                     
@@ -150,16 +152,16 @@ else:
                         best_inst_idx = current_market["price_installments"].idxmin()
                         best_inst = current_market.loc[best_inst_idx]
                         kpi_col4.metric(
-                            label="💳 Best Installment",
+                            label=t("best_inst", lang=lang),
                             value=f"R$ {best_inst['price_installments']:,.2f}",
                         )
-                        kpi_col4.markdown(f"*{best_inst['store_name']} - {best_inst['model']}* [**↗️**]({best_inst['product_url']})")
+                        kpi_col4.markdown(f"*{best_inst['store_name']} - {best_inst['model']}* [**{t('go_to_store', lang=lang)}**]({best_inst['product_url']})")
                     else:
-                        kpi_col4.metric("💳 Best Installment", "N/A")
+                        kpi_col4.metric(t("best_inst", lang=lang), t("na", lang=lang))
         # Price Trends
         st.markdown("<br>", unsafe_allow_html=True)
         st.divider()
-        st.subheader("📈 Price Trends Over Time")
+        st.subheader(t("price_trends", lang=lang))
         
         if selected_keywords:
             trend_cols = st.columns(len(selected_keywords))
@@ -174,7 +176,7 @@ else:
                             y="price_cash",
                             color="product_name",
                             line_dash="store_name",
-                            title=f"{keyword.upper()} Price History",
+                            title=t("price_history_title", lang=lang, keyword=keyword.upper()),
                             markers=True,
                             hover_data=["search_keyword", "price_installments", "product_title"],
                             custom_data=["brand", "model", "store_name"]
@@ -198,12 +200,12 @@ else:
                         )
                         st.plotly_chart(fig, width='stretch')
                     else:
-                        st.info(f"No trend data for {keyword.upper()}")
+                        st.info(t("no_trend_data", lang=lang, keyword=keyword.upper()))
 
         # ----- Detailed Product View -----
         st.markdown("<br>", unsafe_allow_html=True)
         st.divider()
-        st.subheader("🔍 Detailed Product View")
+        st.subheader(t("detailed_view", lang=lang))
         
         if selected_keywords:
             main_cols = st.columns(len(selected_keywords))
@@ -219,7 +221,7 @@ else:
                     # Let user pick a single product from the filtered set, sorted by lowest price
                     product_min_prices = keyword_df.groupby("product_name")["price_cash"].min().sort_values()
                     product_options = product_min_prices.index.tolist()
-                    selected_product = st.selectbox(f"Select Model", product_options, index=0, key=f"select_{keyword}")
+                    selected_product = st.selectbox(t("select_model", lang=lang), product_options, index=0, key=f"select_{keyword}")
                     product_df = keyword_df[keyword_df["product_name"] == selected_product].sort_values(by="scraped_at")
                     
                     if not product_df.empty:
@@ -237,34 +239,34 @@ else:
                         lowest_price = product_df["price_cash"].min()
                         avg_price = current_prod_market["price_cash"].mean()
                         
-                        st.markdown("#### Analytics")
+                        st.markdown(t("analytics", lang=lang))
                         col1, col2 = st.columns(2)
                         
                         # Diff vs Historical
                         diff_from_hist = best_current['price_cash'] - lowest_price
                         if diff_from_hist == 0:
-                            delta_str = "Matches All-Time Low!"
+                            delta_str = t("matches_low", lang=lang)
                             delta_col = "normal"
                         else:
-                            delta_str = f"+ R$ {diff_from_hist:,.2f} vs Low"
+                            delta_str = t("vs_low", lang=lang, diff=f"{diff_from_hist:,.2f}")
                             delta_col = "inverse"
                             
                         col1.metric(
-                            label="🏆 Current Best Price",
+                            label=t("current_best_price", lang=lang),
                             value=f"R$ {best_current['price_cash']:,.2f}",
                             delta=delta_str,
                             delta_color=delta_col,
                         )
-                        col1.markdown(f"*{best_current['store_name']}* [**↗️**]({best_current['product_url']})")
+                        col1.markdown(f"*{best_current['store_name']}* [**{t('go_to_store', lang=lang)}**]({best_current['product_url']})")
                         
                         col2.metric(
-                            label="📉 All-Time Low",
+                            label=t("all_time_low", lang=lang),
                             value=f"R$ {lowest_price:,.2f}"
                         )
                         
                         col3, col4 = st.columns(2)
                         col3.metric(
-                            label="📊 Current Average",
+                            label=t("current_avg", lang=lang),
                             value=f"R$ {avg_price:,.2f}"
                         )
                         
@@ -272,12 +274,12 @@ else:
                             best_inst_idx = current_prod_market["price_installments"].idxmin()
                             best_inst = current_prod_market.loc[best_inst_idx]
                             col4.metric(
-                                label="💳 Best Installment",
+                                label=t("best_inst", lang=lang),
                                 value=f"R$ {best_inst['price_installments']:,.2f}",
                             )
-                            col4.markdown(f"*{best_inst['store_name']}* [**↗️**]({best_inst['product_url']})")
+                            col4.markdown(f"*{best_inst['store_name']}* [**{t('go_to_store', lang=lang)}**]({best_inst['product_url']})")
                         else:
-                            col4.metric("💳 Best Installment", "N/A")
+                            col4.metric(t("best_inst", lang=lang), t("na", lang=lang))
             
                         # Detailed line chart for the selected product
                         detail_fig = px.line(
@@ -285,7 +287,7 @@ else:
                             x="scraped_at",
                             y="price_cash",
                             color="store_name",
-                            title=f"Price History",
+                            title=t("price_history_title", lang=lang, keyword=""),
                             markers=True,
                             hover_data=["search_keyword", "price_installments", "product_title"]
                         )
@@ -308,7 +310,7 @@ else:
         # Raw Data Grid
         st.markdown("<br>", unsafe_allow_html=True)
         st.divider()
-        st.subheader("🗄️ Raw Scraped Data")
+        st.subheader(t("raw_data", lang=lang))
         display_df = filtered_df.copy()
         display_df = display_df[
             [
@@ -327,30 +329,47 @@ else:
             ]
         ]
 
-        st.markdown("**Filter Raw Data**")
+        # Translate column names
+        column_translations = {
+            "scraped_at": t("col_scraped_at", lang=lang),
+            "store_name": t("col_store", lang=lang),
+            "search_keyword": t("col_keyword", lang=lang),
+            "brand": t("col_brand", lang=lang),
+            "model": t("col_model", lang=lang),
+            "price_cash": t("col_price_cash", lang=lang),
+            "price_installments": t("col_price_inst", lang=lang),
+            "installment_count": t("col_inst_count", lang=lang),
+            "discount": t("col_discount", lang=lang),
+            "parser_version": t("col_parser_ver", lang=lang),
+            "is_available": t("col_available", lang=lang),
+            "product_url": t("col_url", lang=lang),
+        }
+        display_df = display_df.rename(columns=column_translations)
+
+        st.markdown(t("filter_raw_data", lang=lang))
         f_col1, f_col2 = st.columns(2)
-        filter_col = f_col1.selectbox("Select column to filter", options=["None"] + list(display_df.columns))
+        filter_col = f_col1.selectbox(t("select_col", lang=lang), options=["None"] + list(display_df.columns))
         if filter_col != "None":
             unique_values = display_df[filter_col].dropna().unique().tolist()
-            selected_values = f_col2.multiselect(f"Select values for '{filter_col}'", options=unique_values, default=unique_values)
+            selected_values = f_col2.multiselect(t("select_val", lang=lang, col=filter_col), options=unique_values, default=unique_values)
             display_df = display_df[display_df[filter_col].isin(selected_values) | display_df[filter_col].isna()]
 
         # Configure columns for better display
         st.dataframe(
             display_df,
             column_config={
-                "product_url": st.column_config.LinkColumn(
-                    "Product Link",
+                t("col_url", lang=lang): st.column_config.LinkColumn(
+                    t("col_url", lang=lang),
                     display_text=r"(.*)"
                 ),
-                "scraped_at": st.column_config.DatetimeColumn(
-                    "Scraped At", format="YYYY-MM-DD HH:mm:ss"
+                t("col_scraped_at", lang=lang): st.column_config.DatetimeColumn(
+                    t("col_scraped_at", lang=lang), format="YYYY-MM-DD HH:mm:ss"
                 ),
-                "price_cash": st.column_config.NumberColumn(
-                    "Price (Cash)", format="R$ %.2f"
+                t("col_price_cash", lang=lang): st.column_config.NumberColumn(
+                    t("col_price_cash", lang=lang), format="R$ %.2f"
                 ),
-                "price_installments": st.column_config.NumberColumn(
-                    "Price (Inst.)", format="R$ %.2f"
+                t("col_price_inst", lang=lang): st.column_config.NumberColumn(
+                    t("col_price_inst", lang=lang), format="R$ %.2f"
                 ),
             },
             hide_index=True,
