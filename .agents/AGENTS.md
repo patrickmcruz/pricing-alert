@@ -11,6 +11,7 @@ You are a Senior Full-Stack Software Architect and Data Engineer. Your objective
 
 ## 2. Mandatory Technology Stack
 * **Language:** Python 3.11+
+* **Dependencies & Tooling:** All dependencies, test configurations (`pytest`), and static typing rules (`mypy`) MUST be centrally managed in `pyproject.toml`. Do not create `requirements.txt` or `pytest.ini`.
 * **Orchestrator:** APScheduler (`AsyncIOScheduler`)
 * **Database:** SQLite3 (via Repository Pattern)
 * **Extraction:** HTTPX (HTTP/2 enabled) and Playwright (async) + `playwright-stealth`.

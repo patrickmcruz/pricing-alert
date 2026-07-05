@@ -34,7 +34,16 @@ class TerabyteScraper(BaseScraper):
             return None
 
     async def fetch(self, sku: ProductSKU, client: Any) -> str:
-        raise NotImplementedError("Network fetch is not implemented yet.")
+        """
+        Retrieves the raw HTML document from the store.
+        """
+        try:
+            response = await client.get(str(sku.product_url))
+            response.raise_for_status()
+            return response.text
+        except Exception as e:
+            logger.error("[%s] Network fetch failed for %s: %s", self.store_name, sku.product_url, e)
+            return ""
 
     def parse(self, document: str, sku: ProductSKU) -> Optional[PriceContract]:
         parser_version = "v1"

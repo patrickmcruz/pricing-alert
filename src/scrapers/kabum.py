@@ -22,9 +22,15 @@ class KabumScraper(BaseScraper):
 
     async def fetch(self, sku: ProductSKU, client: Any) -> str:
         """
-        Retrieves the raw HTML document from the store.
+        Retrieves the raw HTML document from the store using Playwright.
         """
-        raise NotImplementedError("Network fetch is not implemented yet.")
+        try:
+            # client is a Playwright Page object here
+            await client.goto(str(sku.product_url), wait_until="networkidle", timeout=30000)
+            return await client.content()
+        except Exception as e:
+            logger.error("[%s] Network fetch failed for %s: %s", self.store_name, sku.product_url, e)
+            return ""
 
     def _clean_price(self, price_str: str) -> Decimal | None:
         """Helper to convert BRL price string to Decimal."""
@@ -40,7 +46,10 @@ class KabumScraper(BaseScraper):
             return None
 
     def parse(self, document: str, sku: ProductSKU) -> Optional[PriceContract]:
-        parser_version = "v1"
+        """
+        Parses the Kabum product page.
+        """
+        parser_version = "v2"
         selectors = self.load_selectors(parser_version)
         soup = BeautifulSoup(document, "lxml")
 

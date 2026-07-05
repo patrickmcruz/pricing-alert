@@ -1,0 +1,6 @@
+- `[x]` Create `task_pyproject.md`
+- `[x]` Create `pyproject.toml`
+- `[x]` Delete old config files (`requirements.txt`, `pytest.ini`, etc.)
+- `[x]` Update `.agents/AGENTS.md`
+- `[x]` Run QA checks (pytest, mypy)
+- `[x]` Create `walkthrough_pyproject.md`

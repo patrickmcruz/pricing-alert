@@ -9,3 +9,13 @@ beautifulsoup4
 lxml
 pandas
 plotly
+
+[dev]
+pytest
+pytest-asyncio
+pytest-mock
+respx
+pytest-cov
+mypy
+ruff
+black

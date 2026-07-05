@@ -7,7 +7,8 @@ import sys
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from src.core.contract import StoreConfig
-from src.core.http_client import HTTPClientFactory
+from src.core.browser import BrowserFactory
+from src.core.config import settings
 from src.engine.scheduler import PriceEngine
 from src.repositories.sqlite_repository import SQLitePriceRepository
 from src.scrapers.kabum import KabumScraper
@@ -56,8 +57,7 @@ async def main():
     await repository.initialize_schema()
 
     # 2. Initialize Dependency Factories
-    # (These are currently empty classes from Phase 1, but this matches the architecture)
-    client_factory = HTTPClientFactory()
+    client_factory = BrowserFactory()
 
     # 3. Initialize Scheduler Engine
     scheduler = AsyncIOScheduler()
@@ -82,6 +82,11 @@ async def main():
     engine.start()
 
     logger.info("Orchestrator running. Press Ctrl+C to exit.")
+    
+    # Run all registered scrapers immediately once for demonstration/testing
+    logger.info("Triggering an immediate run of all scrapers...")
+    for scraper in engine.scrapers.values():
+        asyncio.create_task(engine.run_scraper(scraper))
 
     # Block the main thread to keep the asyncio event loop alive
     while True:

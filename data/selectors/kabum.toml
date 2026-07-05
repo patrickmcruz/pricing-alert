@@ -3,3 +3,9 @@ title = "h1"
 price_cash = ".finalPrice"
 price_installments = ".regularPrice"
 out_of_stock = "indisponível"
+
+[v2]
+title = "h1"
+price_cash = "h4.text-4xl"
+price_installments = "b.text-xs"
+out_of_stock = "indisponível"
