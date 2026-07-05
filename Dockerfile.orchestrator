@@ -1,0 +1,28 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies required for Playwright 
+# We run playwright install-deps which installs the necessary Debian packages automatically.
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY pyproject.toml ./
+RUN pip install --no-cache-dir .
+
+# Install Playwright and Chromium browser
+RUN playwright install chromium
+RUN playwright install-deps chromium
+
+# Copy application source code and static data
+# Note: dynamic data (like .db and locales) are managed via volumes in docker-compose
+COPY src/ ./src/
+COPY data/selectors/ ./data/selectors/
+COPY data/target-stores-list.json ./data/
+COPY main.py ./
+
+# Environment configuration
+ENV APP_ENV=production
+ENV PYTHONUNBUFFERED=1
+
+CMD ["python", "main.py"]

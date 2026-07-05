@@ -1,0 +1,35 @@
+services:
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.orchestrator
+    container_name: pricing_orchestrator
+    volumes:
+      # Map the data directory so the database, stores list, selectors, and locales are shared
+      - ./data:/app/data
+      - ./config.toml:/app/config.toml
+    environment:
+      - APP_ENV=production
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: pricing_dashboard
+    ports:
+      - "8501:8501"
+    depends_on:
+      orchestrator:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ./data:/app/data
+      - ./config.toml:/app/config.toml
+    environment:
+      - APP_ENV=production
+    restart: unless-stopped

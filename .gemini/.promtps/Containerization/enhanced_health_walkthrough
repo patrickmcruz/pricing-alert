@@ -1,0 +1,21 @@
+# Resiliency & Docker Improvements Complete!
+
+I have implemented all the requested improvements to make the application much more robust against failures and to ensure the Docker containers start up flawlessly.
+
+## What was improved:
+
+### 1. Robust Dashboard Schema Validation
+If the Streamlit dashboard encounters an outdated SQLite database or one that hasn't finished its first full scrape yet, it will **no longer crash with a KeyError**. 
+Instead, it now performs schema validation. If required columns (like `brand`, `model`, or `discount`) are missing, it gracefully injects them as empty placeholders so the app continues to render seamlessly!
+
+### 2. Enhanced Orchestrator Logging
+If the Orchestrator encounters a failure deep within the scraping logic (e.g., if a store completely overhauls its HTML structure), it now catches the exception natively and logs a **complete traceback** using `exc_info=True`. This ensures you have all the debugging context you need without letting a single product failure disrupt the rest of the queue.
+
+### 3. Docker Service Dependencies (`docker-compose.yml`)
+The Dashboard container is now explicitly configured to **depend on** the Orchestrator container. Docker Compose will now intelligently guarantee that the Orchestrator is launched first to initialize the shared volume and SQLite database before spinning up the Streamlit UI.
+
+### 4. Native Docker Healthchecks
+I added a `curl` installation layer to `Dockerfile.dashboard` and configured a robust `HEALTHCHECK` block in the `docker-compose.yml`. Docker will now continuously ping Streamlit's internal `/_stcore/health` endpoint every 30 seconds to guarantee the UI is responsive.
+
+> [!TIP]
+> Run `docker-compose build` to pick up the `curl` installation in the Dashboard container, and then `docker-compose up -d`. You'll notice Docker now displays `pricing_dashboard  Started (healthy)` in your container list!

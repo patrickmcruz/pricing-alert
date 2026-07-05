@@ -1,0 +1,5 @@
+- [x] Create Dockerfiles
+  - `[x]` `Dockerfile.orchestrator`
+  - `[x]` `Dockerfile.dashboard`
+- `[x]` Create `docker-compose.yml`
+- [x] Verify Docker build and execution

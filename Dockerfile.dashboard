@@ -1,0 +1,21 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY pyproject.toml ./
+RUN pip install --no-cache-dir .
+
+# Copy application source code
+COPY src/ ./src/
+
+# Environment configuration
+ENV APP_ENV=production
+ENV PYTHONUNBUFFERED=1
+
+EXPOSE 8501
+
+CMD ["streamlit", "run", "src/ui/dashboard.py", "--server.address=0.0.0.0"]

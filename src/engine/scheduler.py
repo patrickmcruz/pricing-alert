@@ -87,6 +87,7 @@ class PriceEngine:
                         scraper.store_name,
                         sku.product_url,
                         e,
+                        exc_info=True
                     )
 
         except Exception as e:
@@ -94,6 +95,7 @@ class PriceEngine:
                 "Failed to initialize client or run scraper %s: %s",
                 scraper.store_name,
                 e,
+                exc_info=True
             )
         finally:
             if client and hasattr(self.client_factory, "close"):

@@ -35,6 +35,12 @@ def load_data():
         conn.close()
 
         if not df.empty:
+            # Schema validation: Ensure critical columns exist. If not, inject empty columns gracefully.
+            required_cols = ["brand", "model", "discount", "price_installments", "installment_count", "parser_version"]
+            for col in required_cols:
+                if col not in df.columns:
+                    df[col] = pd.NA
+                    
             df["scraped_at"] = pd.to_datetime(df["scraped_at"])
             # Convert from UTC to America/Sao_Paulo (GMT-3)
             if df["scraped_at"].dt.tz is None:
