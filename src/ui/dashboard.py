@@ -91,7 +91,7 @@ else:
         st.warning("No data matches the selected filters.")
     else:
         # KPIs
-        st.subheader("Current Market Overview")
+        st.subheader("🌐 Current Market Overview")
         cols = st.columns(len(selected_keywords))
 
         for idx, keyword in enumerate(selected_keywords):
@@ -156,11 +156,10 @@ else:
                         kpi_col4.markdown(f"*{best_inst['store_name']} - {best_inst['model']}* [**↗️**]({best_inst['product_url']})")
                     else:
                         kpi_col4.metric("💳 Best Installment", "N/A")
-                        
-                    st.divider()
-
         # Price Trends
-        st.subheader("Price Trends Over Time")
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.divider()
+        st.subheader("📈 Price Trends Over Time")
         
         if selected_keywords:
             trend_cols = st.columns(len(selected_keywords))
@@ -202,7 +201,9 @@ else:
                         st.info(f"No trend data for {keyword.upper()}")
 
         # ----- Detailed Product View -----
-        st.subheader("Detailed Product View")
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.divider()
+        st.subheader("🔍 Detailed Product View")
         
         if selected_keywords:
             main_cols = st.columns(len(selected_keywords))
@@ -305,7 +306,9 @@ else:
                         st.plotly_chart(detail_fig, use_container_width=True)
 
         # Raw Data Grid
-        st.subheader("Raw Scraped Data")
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.divider()
+        st.subheader("🗄️ Raw Scraped Data")
         display_df = filtered_df.copy()
         display_df = display_df[
             [
