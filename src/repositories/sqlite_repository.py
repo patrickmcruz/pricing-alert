@@ -31,6 +31,7 @@ class SQLitePriceRepository(PriceRepository):
                         product_url TEXT NOT NULL,
                         price_cash DECIMAL(10, 2) NOT NULL,
                         price_installments DECIMAL(10, 2),
+                        installment_count INTEGER,
                         currency TEXT NOT NULL,
                         parser_version TEXT NOT NULL,
                         is_available BOOLEAN NOT NULL,
@@ -40,6 +41,13 @@ class SQLitePriceRepository(PriceRepository):
                         scraped_at TIMESTAMP NOT NULL
                     )
                 """)
+                
+                # Safe migration: Add column if it doesn't exist
+                try:
+                    await db.execute("ALTER TABLE prices ADD COLUMN installment_count INTEGER")
+                except aiosqlite.OperationalError:
+                    pass # Column already exists
+                
                 
                 await db.execute("""
                     CREATE TABLE IF NOT EXISTS target_urls (
@@ -75,9 +83,9 @@ class SQLitePriceRepository(PriceRepository):
         query = """
             INSERT INTO prices (
                 execution_id, store_name, search_keyword, product_title, product_url,
-                brand, model, price_cash, price_installments, discount, currency, parser_version,
+                brand, model, price_cash, price_installments, installment_count, discount, currency, parser_version,
                 is_available, scraped_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
 
         values = []
@@ -93,6 +101,7 @@ class SQLitePriceRepository(PriceRepository):
                     p.model,
                     float(p.price_cash),
                     float(p.price_installments) if p.price_installments else None,
+                    p.installment_count,
                     float(p.discount) if p.discount else None,
                     p.currency,
                     p.parser_version,

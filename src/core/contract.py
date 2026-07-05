@@ -37,6 +37,10 @@ class PriceContract(BaseModel):
         default=None, description="Installment price when available."
     )
 
+    installment_count: int | None = Field(
+        default=None, description="Maximum number of credit card installments (e.g., 10)."
+    )
+
     currency: str = Field(..., description="Currency code (e.g., 'BRL', 'USD')")
     parser_version: str = Field(..., description="Version of the parser used to extract this data")
     is_available: bool = Field(

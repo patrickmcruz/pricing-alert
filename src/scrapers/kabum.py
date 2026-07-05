@@ -80,6 +80,22 @@ class KabumScraper(BaseScraper):
         if price_installments and price_installments > 0 and price_cash > 0:
             discount = price_installments - price_cash
 
+        # Extract installment count if selector is present
+        installment_count = None
+        if "installment_count" in selectors:
+            try:
+                # The provided CSS selector contains escaped colons and brackets. BeautifulSoup handles this better with CSS Selectors, 
+                # but long selectors can fail in BS4. We use it and fallback gracefully.
+                inst_elem = soup.select_one(selectors["installment_count"])
+                if inst_elem:
+                    text = inst_elem.text.strip()
+                    # e.g., "10x" -> 10
+                    match = re.search(r'(\d+)x', text, re.IGNORECASE)
+                    if match:
+                        installment_count = int(match.group(1))
+            except Exception as e:
+                logger.warning("[%s] Failed to extract installment_count: %s", self.store_name, e)
+
         return PriceContract(
             store_name=self.store_name,
             search_keyword=sku.search_keyword,
@@ -87,6 +103,7 @@ class KabumScraper(BaseScraper):
             product_url=sku.product_url,
             price_cash=price_cash,
             price_installments=price_installments if price_installments and price_installments > 0 else None,
+            installment_count=installment_count,
             currency="BRL",
             parser_version=f"{self.store_name}_{parser_version}",
             is_available=is_available,

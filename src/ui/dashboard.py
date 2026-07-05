@@ -154,6 +154,7 @@ else:
                 price_change_last = 0.0
                 
             std_dev = product_df["price_cash"].std()
+            st.markdown("#### Cash Price Analytics (À vista)")
             col1, col2, col3 = st.columns(3)
             col1.metric("Current Price", f"R$ {latest['price_cash']:,.2f}")
             col2.metric("Lowest Price", f"R$ {lowest_price:,.2f}")
@@ -164,6 +165,27 @@ else:
             col5.metric("Change Since First", f"{price_change_first:.2f}%")
             col6.metric("Change Since Last", f"{price_change_last:.2f}%")
             col7.metric("Volatility (Std Dev)", f"R$ {std_dev:,.2f}" if pd.notna(std_dev) else "R$ 0.00")
+            
+            # Installments Analytics
+            if "price_installments" in product_df.columns and not product_df["price_installments"].isna().all():
+                st.markdown("#### Installment Analytics (Parcelado)")
+                lowest_inst = product_df["price_installments"].min()
+                highest_inst = product_df["price_installments"].max()
+                avg_inst = product_df["price_installments"].mean()
+                
+                i_col1, i_col2, i_col3, i_col4 = st.columns(4)
+                if pd.notna(latest.get("price_installments")):
+                    i_col1.metric("Current Installment", f"R$ {latest['price_installments']:,.2f}")
+                else:
+                    i_col1.metric("Current Installment", "N/A")
+                    
+                i_col2.metric("Lowest Installment", f"R$ {lowest_inst:,.2f}")
+                i_col3.metric("Highest Installment", f"R$ {highest_inst:,.2f}")
+                i_col4.metric("Avg Installment", f"R$ {avg_inst:,.2f}")
+            
+            # Optional extra metrics below
+            if "installment_count" in latest and pd.notna(latest["installment_count"]):
+                st.metric("Max Installments", f"{int(latest['installment_count'])}x")
 
             # Detailed line chart for the selected product
             detail_fig = px.line(
@@ -204,6 +226,7 @@ else:
                 "model",
                 "price_cash",
                 "price_installments",
+                "installment_count",
                 "discount",
                 "parser_version",
                 "is_available",
