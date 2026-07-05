@@ -56,6 +56,7 @@ All extracted data must be normalized into the `PriceContract` model before leav
 * Models must use `ConfigDict(frozen=True, extra="forbid", validate_assignment=True)`.
 * Use `UUID` for `execution_id` to ensure end-to-end traceability.
 * Use `Decimal` (not float) for all monetary fields (`price_cash`, `price_installments`).
+* Extract both Cash (À vista) and Installment (Parcelado) prices, as well as the maximum `installment_count` (e.g. `10`).
 * Timestamps must use timezone-aware UTC (`datetime.now(timezone.utc)`).
 
 ## 5. Spider & Scraper Architecture (The Two-Tier Strategy)

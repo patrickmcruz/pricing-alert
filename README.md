@@ -80,6 +80,10 @@ To see the scraped prices:
 ```bash
 streamlit run src/ui/dashboard.py
 ```
+The dashboard features:
+- **Dynamic Chart Timelines:** The main graphics default to an aggregated "hour-by-hour" view but allow you to dynamically zoom (drill down) into minute-level scrapes seamlessly.
+- **Two-Tier Analytics:** Detailed product views separate analytics for "Cash Price" and "Installment Price", showing minimums, maximums, and volatility for both.
+- **Data Filtering:** The raw scraped data grid includes comprehensive filters for all tracked columns, including `installment_count`.
 
 ---
 
