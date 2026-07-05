@@ -95,16 +95,69 @@ else:
         cols = st.columns(len(selected_keywords))
 
         for idx, keyword in enumerate(selected_keywords):
-            keyword_df = filtered_df[filtered_df["search_keyword"] == keyword]
-            if not keyword_df.empty:
-                # Get the absolute lowest price
-                lowest = keyword_df.loc[keyword_df["price_cash"].idxmin()]
-                cols[idx].metric(
-                    label=f"Lowest {keyword.upper()}",
-                    value=f"R$ {lowest['price_cash']:,.2f}",
-                    delta=f"Store: {lowest['store_name']}",
-                    delta_color="off",
-                )
+            with cols[idx]:
+                keyword_df = filtered_df[filtered_df["search_keyword"] == keyword]
+                if not keyword_df.empty:
+                    # 1. Calculate Current Market (Latest scrape for each product_url)
+                    idx_latest = keyword_df.groupby("product_url")["scraped_at"].idxmax()
+                    current_market = keyword_df.loc[idx_latest]
+                    
+                    if current_market.empty:
+                        continue
+                        
+                    # 2. Extract Metrics
+                    best_current_idx = current_market["price_cash"].idxmin()
+                    best_current = current_market.loc[best_current_idx]
+                    
+                    best_historical_idx = keyword_df["price_cash"].idxmin()
+                    best_historical = keyword_df.loc[best_historical_idx]
+                    
+                    avg_current = current_market["price_cash"].mean()
+                    
+                    st.markdown(f"**{keyword.upper()} Market**")
+                    
+                    kpi_col1, kpi_col2 = st.columns(2)
+                    
+                    # Diff vs Historical
+                    diff_from_hist = best_current['price_cash'] - best_historical['price_cash']
+                    if diff_from_hist == 0:
+                        delta_str = "Matches All-Time Low!"
+                        delta_col = "normal"
+                    else:
+                        delta_str = f"+ R$ {diff_from_hist:,.2f} vs Low"
+                        delta_col = "inverse" # Red means higher than historical low
+                        
+                    kpi_col1.metric(
+                        label="🏆 Best Deal Right Now",
+                        value=f"R$ {best_current['price_cash']:,.2f}",
+                        delta=delta_str,
+                        delta_color=delta_col,
+                    )
+                    kpi_col1.markdown(f"*{best_current['store_name']} - {best_current['model']}* [**↗️**]({best_current['product_url']})")
+                    
+                    kpi_col2.metric(
+                        label="📉 All-Time Low",
+                        value=f"R$ {best_historical['price_cash']:,.2f}"
+                    )
+                    
+                    kpi_col3, kpi_col4 = st.columns(2)
+                    kpi_col3.metric(
+                        label="📊 Market Average",
+                        value=f"R$ {avg_current:,.2f}"
+                    )
+                    
+                    if "price_installments" in current_market.columns and not current_market["price_installments"].isna().all():
+                        best_inst_idx = current_market["price_installments"].idxmin()
+                        best_inst = current_market.loc[best_inst_idx]
+                        kpi_col4.metric(
+                            label="💳 Best Installment",
+                            value=f"R$ {best_inst['price_installments']:,.2f}",
+                        )
+                        kpi_col4.markdown(f"*{best_inst['store_name']} - {best_inst['model']}* [**↗️**]({best_inst['product_url']})")
+                    else:
+                        kpi_col4.metric("💳 Best Installment", "N/A")
+                        
+                    st.divider()
 
         # Price Trends
         st.subheader("Price Trends Over Time")
@@ -169,34 +222,61 @@ else:
                     product_df = keyword_df[keyword_df["product_name"] == selected_product].sort_values(by="scraped_at")
                     
                     if not product_df.empty:
-                        # Show key metrics for the selected product
-                        latest = product_df.iloc[-1]
-                        lowest_price = product_df["price_cash"].min()
-                        highest_price = product_df["price_cash"].max()
-                        avg_price = product_df["price_cash"].mean()
+                        # 1. Calculate Current Market for this specific product
+                        idx_latest_prod = product_df.groupby("product_url")["scraped_at"].idxmax()
+                        current_prod_market = product_df.loc[idx_latest_prod]
                         
-                        std_dev = product_df["price_cash"].std()
-                        st.markdown("#### Cash Analytics (À vista)")
+                        if current_prod_market.empty:
+                            continue
+                            
+                        # 2. Extract Metrics
+                        best_current_idx = current_prod_market["price_cash"].idxmin()
+                        best_current = current_prod_market.loc[best_current_idx]
+                        
+                        lowest_price = product_df["price_cash"].min()
+                        avg_price = current_prod_market["price_cash"].mean()
+                        
+                        st.markdown("#### Analytics")
                         col1, col2 = st.columns(2)
-                        col1.metric("Current Price", f"R$ {latest['price_cash']:,.2f}")
-                        col2.metric("Lowest Price", f"R$ {lowest_price:,.2f}")
+                        
+                        # Diff vs Historical
+                        diff_from_hist = best_current['price_cash'] - lowest_price
+                        if diff_from_hist == 0:
+                            delta_str = "Matches All-Time Low!"
+                            delta_col = "normal"
+                        else:
+                            delta_str = f"+ R$ {diff_from_hist:,.2f} vs Low"
+                            delta_col = "inverse"
+                            
+                        col1.metric(
+                            label="🏆 Current Best Price",
+                            value=f"R$ {best_current['price_cash']:,.2f}",
+                            delta=delta_str,
+                            delta_color=delta_col,
+                        )
+                        col1.markdown(f"*{best_current['store_name']}* [**↗️**]({best_current['product_url']})")
+                        
+                        col2.metric(
+                            label="📉 All-Time Low",
+                            value=f"R$ {lowest_price:,.2f}"
+                        )
                         
                         col3, col4 = st.columns(2)
-                        col3.metric("Highest Price", f"R$ {highest_price:,.2f}")
-                        col4.metric("Average Price", f"R$ {avg_price:,.2f}")
+                        col3.metric(
+                            label="📊 Current Average",
+                            value=f"R$ {avg_price:,.2f}"
+                        )
                         
-                        # Installments Analytics
-                        if "price_installments" in product_df.columns and not product_df["price_installments"].isna().all():
-                            st.markdown("#### Installment Analytics")
-                            lowest_inst = product_df["price_installments"].min()
-                            
-                            i_col1, i_col2 = st.columns(2)
-                            if pd.notna(latest.get("price_installments")):
-                                i_col1.metric("Current Inst.", f"R$ {latest['price_installments']:,.2f}")
-                            else:
-                                i_col1.metric("Current Inst.", "N/A")
-                                
-                            i_col2.metric("Lowest Inst.", f"R$ {lowest_inst:,.2f}")
+                        if "price_installments" in current_prod_market.columns and not current_prod_market["price_installments"].isna().all():
+                            best_inst_idx = current_prod_market["price_installments"].idxmin()
+                            best_inst = current_prod_market.loc[best_inst_idx]
+                            col4.metric(
+                                label="💳 Best Installment",
+                                value=f"R$ {best_inst['price_installments']:,.2f}",
+                            )
+                            col4.markdown(f"*{best_inst['store_name']}* [**↗️**]({best_inst['product_url']})")
+                        else:
+                            col4.metric("💳 Best Installment", "N/A")
             
                         # Detailed line chart for the selected product
                         detail_fig = px.line(
