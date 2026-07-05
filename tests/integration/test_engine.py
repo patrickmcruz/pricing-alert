@@ -1,11 +1,11 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from typing import Any
+from typing import Any, Optional
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from src.core.base_scraper import BaseScraper
-from src.core.contract import PriceContract, StoreConfig
+from src.core.contract import PriceContract, StoreConfig, ProductSKU
 from src.engine.scheduler import PriceEngine
 from src.repositories.base_repository import PriceRepository
 
@@ -15,14 +15,14 @@ class MockScraper(BaseScraper):
         super().__init__(store_name=store_name, base_url="http://mock")
         self.execute_mock = AsyncMock(return_value=[])
 
-    async def fetch(self, keyword: str, client: Any) -> str:
-        return ""
+    async def fetch(self, sku: ProductSKU, client: Any) -> str:
+        return "mock_html"
 
-    def parse(self, document: str, keyword: str) -> list[PriceContract]:
-        return []
+    def parse(self, document: str, sku: ProductSKU) -> Optional[PriceContract]:
+        return None
 
-    async def execute(self, keyword: str, client: Any) -> list[PriceContract]:
-        return await self.execute_mock(keyword, client)
+    async def execute(self, sku: ProductSKU, client: Any) -> Optional[PriceContract]:
+        return await self.execute_mock(sku, client)
 
 
 @pytest.fixture
@@ -52,23 +52,24 @@ async def test_engine_run_scraper(engine, mock_repository, mock_client_factory):
 
     # Simulate scraper returning some mock prices
     mock_price = MagicMock(spec=PriceContract)
-    scraper.execute_mock.return_value = [mock_price]
+    scraper.execute_mock.return_value = mock_price
+    
+    mock_sku = MagicMock(spec=ProductSKU)
+    mock_sku.product_url = "https://mock"
+    mock_repository.get_target_skus.return_value = [mock_sku]
 
-    keywords = ["rtx 5070", "rtx 5070 ti"]
-
-    await engine.run_scraper(scraper, keywords)
+    await engine.run_scraper(scraper)
 
     # Verify client factory was called
     mock_client_factory.create.assert_called_once_with(scraper)
     mock_client_factory.close.assert_called_once_with("mock_client")
 
-    # Verify scraper was executed for each keyword
-    assert scraper.execute_mock.call_count == 2
-    scraper.execute_mock.assert_any_call("rtx 5070", "mock_client")
-    scraper.execute_mock.assert_any_call("rtx 5070 ti", "mock_client")
 
-    # Verify repository was called to save prices for each keyword
-    assert mock_repository.save_prices.call_count == 2
+    # Verify scraper was executed
+    scraper.execute_mock.assert_called_once()
+
+    # Verify repository was called to save prices
+    assert mock_repository.save_prices.call_count == 1
     mock_repository.save_prices.assert_any_call([mock_price])
 
 

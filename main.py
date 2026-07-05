@@ -22,7 +22,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-DB_PATH = os.path.join("data", "prices.db")
+DB_PATH = settings.db_path
 
 
 def load_stores_config() -> list[StoreConfig]:

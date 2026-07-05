@@ -7,6 +7,7 @@ You are a Senior Full-Stack Software Architect and Data Engineer. Your objective
 * **Separation of Concerns:** Network I/O, HTML parsing, orchestration, and persistence are strictly decoupled.
 * **Dependency Injection & IoC:** Never instantiate HTTP clients, Playwright contexts, or databases inside the scrapers or the scheduler. Use factories and inject them.
 * **No External Dependencies:** The app runs entirely locally. No paid APIs.
+* **Configuration & Gitflow Environments:** All configurations MUST be centralized in a root `config.toml` file. The application relies on `APP_ENV` (develop, staging, production) to load environment-specific variables natively via `tomllib` (in `src/core/config.py`).
 
 ## 2. Mandatory Technology Stack
 * **Language:** Python 3.11+
@@ -25,18 +26,20 @@ You are a Senior Full-Stack Software Architect and Data Engineer. Your objective
 ├── /src
 │   ├── /core                         # Shared architecture and abstractions
 │   │   ├── __init__.py
-│   │   ├── contract.py               # Pydantic data models
-│   │   ├── base_scraper.py           # Abstract Base Class
-│   │   ├── config.py                 # Application configuration
+│   │   ├── contract.py               # Pydantic data models (PriceContract, ProductSKU)
+│   │   ├── base_scraper.py           # Abstract Base Class for Scrapers
+│   │   ├── config.py                 # Application configuration via tomllib
 │   │   ├── browser.py                # Playwright factory
 │   │   ├── http_client.py            # HTTPX client factory
 │   │   └── utils.py                  # Shared helper functions
-│   ├── /scrapers                     # One scraper strategy per store
-│   ├── /engine                       # Orchestration (scheduler.py)
+│   ├── /spiders                      # Discovery Engine (crawls grids for URLs)
+│   ├── /scrapers                     # Scraper Engine (parses specific Product Pages)
+│   ├── /engine                       # Orchestration (scheduler.py, discovery.py)
 │   ├── /repositories                 # Persistence layer (SQLite implementation)
 │   ├── /ui                           # Streamlit application
 │   └── /data
-│       └── target-stores-list.json   # Store definitions
+│       └── target-stores-list.json   # Store definitions (Cron configs)
+├── /data/selectors                   # TOML config files for externalized CSS selectors
 ├── /tests
 │   ├── /fixtures                     # Static HTML for parser tests
 │   ├── /unit
@@ -54,19 +57,25 @@ All extracted data must be normalized into the `PriceContract` model before leav
 * Use `Decimal` (not float) for all monetary fields (`price_cash`, `price_installments`).
 * Timestamps must use timezone-aware UTC (`datetime.now(timezone.utc)`).
 
-## 5. BaseScraper Architecture (The Strategy)
+## 5. Spider & Scraper Architecture (The Two-Tier Strategy)
 
-Concrete scrapers must inherit from `BaseScraper` and implement strictly separated methods:
+The extraction process is strictly divided into two independent engines:
 
-1. **`fetch(self, keyword: str, client: Any) -> str`**: Performs ONLY network I/O. Returns raw HTML. The `client` (HTTPX or Playwright) is injected.
-2. **`parse(self, document: str, keyword: str) -> List[PriceContract]`**: Performs ONLY data extraction. **Must be 100% deterministic and unit-testable** using static HTML fixtures without network access.
-3. **`execute()`**: Orchestrates the jitter, fetch, and parse pipeline.
+* **Discovery Engine (Spiders):** Responsible for crawling search grids (e.g., searching for "rtx 5070"), extracting URLs, Brands, and Models, and persisting them as `ProductSKU` records in the `target_urls` database table.
+* **Scraper Engine (Scrapers):** Concrete scrapers inherit from `BaseScraper` and visit the exact product URLs discovered by the Spiders.
+
+Concrete scrapers must implement strictly separated methods:
+1. **`fetch(self, sku: ProductSKU, client: Any) -> str`**: Performs ONLY network I/O. Returns raw HTML. 
+2. **`parse(self, document: str, sku: ProductSKU) -> Optional[PriceContract]`**: Performs ONLY data extraction using CSS selectors loaded from the `data/selectors/{store}.toml` file. **Must be 100% deterministic and unit-testable**.
+3. **`execute()`**: Orchestrates the fetch and parse pipeline.
+
+**Resilience & Versioning:** 
+Scrapers do NOT hardcode CSS classes. If a `parse()` method cannot find critical DOM elements using its TOML selectors, it must raise a `SelectorOutdatedException`. The `PriceContract` records the `parser_version` to maintain data lineage.
 
 ## 6. Orchestration & Persistence
 
-* **Scheduler (`PriceEngine`):** Responsible only for registering scrapers, loading schedules from `StoreConfig`, coordinating execution, and passing results to the repository. Receives `repository` and `client_factory` via dependency injection.
+* **Scheduler (`PriceEngine`):** Responsible for loading `ProductSKU` records from the repository and coordinating execution of the Scrapers. Catches `SelectorOutdatedException` gracefully to prevent batch crashes.
 * **Repository Pattern:** Database operations are isolated behind `PriceRepository`. Scrapers never talk to SQLite.
-* **Isolation:** If one scraper fails during execution, exceptions must be handled so that other scheduled jobs are not interrupted. Resources (clients/contexts) must be properly released.
 
 ## 7. QA Strategy & Testing Gates
 

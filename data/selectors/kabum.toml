@@ -1,0 +1,5 @@
+[v1]
+title = "h1"
+price_cash = ".finalPrice"
+price_installments = ".regularPrice"
+out_of_stock = "indisponível"

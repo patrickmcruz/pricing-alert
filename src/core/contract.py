@@ -37,12 +37,18 @@ class PriceContract(BaseModel):
         default=None, description="Installment price when available."
     )
 
-    currency: str = Field(default="BRL", description="ISO-4217 currency code.")
-
+    currency: str = Field(..., description="Currency code (e.g., 'BRL', 'USD')")
+    parser_version: str = Field(..., description="Version of the parser used to extract this data")
     is_available: bool = Field(
         ...,
         description="Indicates whether the product is currently available for purchase.",
     )
+
+    brand: str | None = Field(default=None, description="Product brand name.")
+    
+    model: str | None = Field(default=None, description="Product model identifier.")
+    
+    discount: Decimal | None = Field(default=None, description="Discount amount applied.")
 
     scraped_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
@@ -66,3 +72,16 @@ class StoreConfig(BaseModel):
         min_length=1,
         description="Daily execution schedule using the 24-hour 'HH:MM' format.",
     )
+
+class ProductSKU(BaseModel):
+    """
+    Discovered SKU mapping for the tracker.
+    """
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    
+    store_name: str
+    search_keyword: str
+    product_url: HttpUrl
+    brand: str | None = None
+    model: str | None = None
+    product_title: str

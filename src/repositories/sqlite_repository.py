@@ -2,7 +2,7 @@ import logging
 from typing import List
 import aiosqlite
 
-from src.core.contract import PriceContract
+from src.core.contract import PriceContract, ProductSKU
 from src.repositories.base_repository import PriceRepository
 
 logger = logging.getLogger(__name__)
@@ -20,23 +20,38 @@ class SQLitePriceRepository(PriceRepository):
         """
         Creates the prices table if it does not exist.
         """
-        query = """
-        CREATE TABLE IF NOT EXISTS prices (
-            execution_id TEXT NOT NULL,
-            store_name TEXT NOT NULL,
-            search_keyword TEXT NOT NULL,
-            product_title TEXT NOT NULL,
-            product_url TEXT NOT NULL,
-            price_cash DECIMAL(10, 2) NOT NULL,
-            price_installments DECIMAL(10, 2),
-            currency TEXT DEFAULT 'BRL',
-            is_available BOOLEAN NOT NULL,
-            scraped_at TIMESTAMP NOT NULL
-        )
-        """
         try:
             async with aiosqlite.connect(self.db_path) as db:
-                await db.execute(query)
+                await db.execute("""
+                    CREATE TABLE IF NOT EXISTS prices (
+                        execution_id TEXT NOT NULL,
+                        store_name TEXT NOT NULL,
+                        search_keyword TEXT NOT NULL,
+                        product_title TEXT NOT NULL,
+                        product_url TEXT NOT NULL,
+                        price_cash DECIMAL(10, 2) NOT NULL,
+                        price_installments DECIMAL(10, 2),
+                        currency TEXT NOT NULL,
+                        parser_version TEXT NOT NULL,
+                        is_available BOOLEAN NOT NULL,
+                        brand TEXT,
+                        model TEXT,
+                        discount DECIMAL(10, 2),
+                        scraped_at TIMESTAMP NOT NULL
+                    )
+                """)
+                
+                await db.execute("""
+                    CREATE TABLE IF NOT EXISTS target_urls (
+                        product_url TEXT PRIMARY KEY,
+                        store_name TEXT NOT NULL,
+                        search_keyword TEXT NOT NULL,
+                        brand TEXT,
+                        model TEXT,
+                        product_title TEXT NOT NULL
+                    )
+                """)
+                
                 # Create indexes for faster queries
                 await db.execute(
                     "CREATE INDEX IF NOT EXISTS idx_search_keyword ON prices(search_keyword)"
@@ -58,44 +73,37 @@ class SQLitePriceRepository(PriceRepository):
             return
 
         query = """
-        INSERT INTO prices (
-            execution_id,
-            store_name,
-            search_keyword,
-            product_title,
-            product_url,
-            price_cash,
-            price_installments,
-            currency,
-            is_available,
-            scraped_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO prices (
+                execution_id, store_name, search_keyword, product_title, product_url,
+                brand, model, price_cash, price_installments, discount, currency, parser_version,
+                is_available, scraped_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
 
-        # Convert Pydantic models to tuples for sqlite execution
-        rows = [
-            (
-                str(p.execution_id),
-                p.store_name,
-                p.search_keyword,
-                p.product_title,
-                str(p.product_url),
-                float(p.price_cash),
+        values = []
+        for p in prices:
+            values.append(
                 (
-                    float(p.price_installments)
-                    if p.price_installments is not None
-                    else None
-                ),
-                p.currency,
-                p.is_available,
-                p.scraped_at.isoformat(),
+                    str(p.execution_id),
+                    p.store_name,
+                    p.search_keyword,
+                    p.product_title,
+                    str(p.product_url),
+                    p.brand,
+                    p.model,
+                    float(p.price_cash),
+                    float(p.price_installments) if p.price_installments else None,
+                    float(p.discount) if p.discount else None,
+                    p.currency,
+                    p.parser_version,
+                    p.is_available,
+                    p.scraped_at.isoformat(),
+                )
             )
-            for p in prices
-        ]
 
         try:
             async with aiosqlite.connect(self.db_path) as db:
-                await db.executemany(query, rows)
+                await db.executemany(query, values)
                 await db.commit()
             logger.info("Successfully saved %d price records to SQLite.", len(prices))
         except Exception as e:
@@ -110,3 +118,54 @@ class SQLitePriceRepository(PriceRepository):
         # This will be fully implemented when the UI requires it.
         # For now, it returns an empty list to satisfy the abstract method signature.
         return []
+
+    async def save_skus(self, skus: List[ProductSKU]) -> None:
+        """
+        Persists discovered SKUs to the database (upsert).
+        """
+        if not skus:
+            return
+
+        query = """
+            INSERT OR REPLACE INTO target_urls (
+                product_url, store_name, search_keyword, brand, model, product_title
+            ) VALUES (?, ?, ?, ?, ?, ?)
+        """
+
+        values = [
+            (
+                str(sku.product_url),
+                sku.store_name,
+                sku.search_keyword,
+                sku.brand,
+                sku.model,
+                sku.product_title,
+            )
+            for sku in skus
+        ]
+
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.executemany(query, values)
+            await db.commit()
+            logger.info("Saved %d SKUs to the database.", len(skus))
+
+    async def get_target_skus(self, store_name: str) -> List[ProductSKU]:
+        """
+        Retrieves all SKUs to be scraped for a specific store.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "SELECT product_url, store_name, search_keyword, brand, model, product_title FROM target_urls WHERE store_name = ?", (store_name,)
+            )
+            rows = await cursor.fetchall()
+            return [
+                ProductSKU(
+                    product_url=row[0], # type: ignore
+                    store_name=row[1],
+                    search_keyword=row[2],
+                    brand=row[3],
+                    model=row[4],
+                    product_title=row[5]
+                )
+                for row in rows
+            ]

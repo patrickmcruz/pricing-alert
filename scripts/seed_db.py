@@ -12,8 +12,9 @@ from src.scrapers.kabum import KabumScraper
 from src.scrapers.terabyte import TerabyteScraper
 
 async def seed():
-    print("Seeding database with mock data from fixtures...")
-    db_path = os.path.join(PROJECT_ROOT, "data", "prices.db")
+    from src.core.config import settings
+    print(f"Seeding database at {settings.db_path} with mock data from fixtures...")
+    db_path = settings.db_path
     
     # Clear the database
     async with aiosqlite.connect(db_path) as db:

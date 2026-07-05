@@ -4,8 +4,8 @@ from typing import Dict, Iterable
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from src.core.base_scraper import BaseScraper
-from src.core.contract import StoreConfig
+from src.core.base_scraper import BaseScraper, SelectorOutdatedException
+from src.core.contract import PriceContract, StoreConfig
 from src.repositories.base_repository import PriceRepository
 
 logger = logging.getLogger(__name__)
@@ -47,13 +47,16 @@ class PriceEngine:
     async def run_scraper(
         self,
         scraper: BaseScraper,
-        keywords: list[str],
     ) -> None:
         """
-        Executes a scraper for all configured keywords.
-        Retrieves a client from the factory, executes, saves, and releases the client.
+        Executes a scraper for all configured URLs from the database.
         """
         logger.info("Starting execution for scraper: %s", scraper.store_name)
+        
+        skus = await self.repository.get_target_skus(scraper.store_name)
+        if not skus:
+            logger.info("No SKUs found for store %s", scraper.store_name)
+            return
 
         # We assume client_factory has an async create() method, though its exact
         # signature isn't fully defined. This matches the blueprint.
@@ -62,23 +65,29 @@ class PriceEngine:
             if hasattr(self.client_factory, "create"):
                 client = await self.client_factory.create(scraper)
 
-            for keyword in keywords:
+            for sku in skus:
                 try:
-                    prices = await scraper.execute(
-                        keyword,
+                    price = await scraper.execute(
+                        sku,
                         client,
                     )
 
-                    if prices:
-                        await self.repository.save_prices(prices)
-                except Exception as e:
-                    logger.error(
-                        "Scraper %s failed on keyword '%s': %s",
+                    if price:
+                        await self.repository.save_prices([price])
+                except SelectorOutdatedException as e:
+                    logger.critical(
+                        "SelectorOutdatedException caught for %s on SKU '%s': %s",
                         scraper.store_name,
-                        keyword,
+                        sku.product_url,
                         e,
                     )
-                    # We catch errors per keyword so one bad keyword doesn't crash the whole job.
+                except Exception as e:
+                    logger.error(
+                        "Scraper %s failed on SKU '%s': %s",
+                        scraper.store_name,
+                        sku.product_url,
+                        e,
+                    )
 
         except Exception as e:
             logger.error(
@@ -126,7 +135,7 @@ class PriceEngine:
                         self.run_scraper,
                         trigger=trigger,
                         id=job_id,
-                        args=[scraper, config.target_keywords],
+                        args=[scraper],
                         replace_existing=True,
                     )
                     logger.info(

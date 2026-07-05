@@ -1,0 +1,10 @@
+- `[x]` Create `task_versioning.md`
+- `[x]` Update `src/core/contract.py`
+- `[x]` Update `src/repositories/sqlite_repository.py`
+- `[x]` Create `data/selectors/kabum.toml` & `terabyte.toml`
+- `[x]` Update `src/core/base_scraper.py`
+- `[x]` Refactor `src/scrapers/kabum.py` & `terabyte.py`
+- `[x]` Update `src/engine/scheduler.py`
+- `[x]` Update tests
+- `[x]` Run QA checks
+- `[x]` Create `walkthrough_versioning.md`

@@ -1,0 +1,7 @@
+- `[x]` Create `task_toml.md`
+- `[x]` Create `config.toml`
+- `[x]` Update `src/core/config.py`
+- `[x]` Update `main.py`, `dashboard.py`, `seed_db.py` to use `settings`
+- `[x]` Update `.agents/AGENTS.md`
+- `[x]` Run QA checks
+- `[x]` Create `walkthrough_toml.md`

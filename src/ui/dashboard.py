@@ -2,9 +2,9 @@ import sqlite3
 import pandas as pd
 import streamlit as st
 import plotly.express as px
-import os
+from src.core.config import settings
 
-DB_PATH = os.path.join("data", "prices.db")
+DB_PATH = settings.db_path
 
 st.set_page_config(page_title="GPU Price Tracker", layout="wide")
 

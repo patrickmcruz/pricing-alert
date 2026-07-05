@@ -1,0 +1,11 @@
+[develop]
+db_path = "data/prices_dev.db"
+log_level = "DEBUG"
+
+[staging]
+db_path = "data/prices_staging.db"
+log_level = "INFO"
+
+[production]
+db_path = "data/prices.db"
+log_level = "WARNING"

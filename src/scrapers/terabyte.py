@@ -1,13 +1,13 @@
 import logging
 import re
 from decimal import Decimal
-from typing import Any, List
+from typing import Any, List, Optional
 
 from bs4 import BeautifulSoup
 from pydantic import ValidationError
 
-from src.core.base_scraper import BaseScraper
-from src.core.contract import PriceContract
+from src.core.base_scraper import BaseScraper, SelectorOutdatedException
+from src.core.contract import PriceContract, ProductSKU
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +22,6 @@ class TerabyteScraper(BaseScraper):
             store_name="terabyte", base_url="https://www.terabyteshop.com.br"
         )
 
-    async def fetch(self, keyword: str, client: Any) -> str:
-        """
-        Retrieves the raw HTML document from the store.
-        """
-        raise NotImplementedError("Network fetch is not implemented yet.")
-
     def _clean_price(self, price_str: str) -> Decimal | None:
         """Helper to convert BRL price string to Decimal."""
         if not price_str:
@@ -39,61 +33,52 @@ class TerabyteScraper(BaseScraper):
         except Exception:
             return None
 
-    def parse(self, document: str, keyword: str) -> List[PriceContract]:
-        """
-        Parses Terabyte HTML to extract products.
-        """
+    async def fetch(self, sku: ProductSKU, client: Any) -> str:
+        raise NotImplementedError("Network fetch is not implemented yet.")
+
+    def parse(self, document: str, sku: ProductSKU) -> Optional[PriceContract]:
+        parser_version = "v1"
+        selectors = self.load_selectors(parser_version)
         soup = BeautifulSoup(document, "lxml")
-        products = []
 
-        cards = soup.find_all("div", class_="pbox")
-        for card in cards:
-            try:
-                link_elem = card.find("a")
-                if not link_elem or not link_elem.get("href"):
-                    continue
-                url = str(link_elem.get("href"))
+        title_elem = soup.select_one(selectors["title"])
+        if not title_elem:
+            raise SelectorOutdatedException(f"[{self.store_name}] Title selector '{selectors['title']}' failed.")
+        title = title_elem.text.strip()
 
-                title_elem = card.find(class_="prod-name")
-                title = title_elem.text.strip() if title_elem else "Unknown"
-                
-                title_lower = title.lower()
-                keyword_lower = keyword.lower()
-                
-                # Strict filtering to differentiate RTX 5070 from RTX 5070 Ti
-                if "5070 ti" in keyword_lower and "ti" not in title_lower:
-                    continue
-                elif "5070" in keyword_lower and "ti" not in keyword_lower and "ti" in title_lower:
-                    continue
+        price_cash_elem = soup.select_one(selectors["price_cash"])
+        if not price_cash_elem:
+            raise SelectorOutdatedException(f"[{self.store_name}] Cash price selector '{selectors['price_cash']}' failed.")
+            
+        price_cash_str = price_cash_elem.text.strip()
+        price_cash = self._clean_price(price_cash_str)
+        if price_cash is None or price_cash <= 0:
+            return None
 
-                price_cash_elem = card.find(class_="prod-new-price")
-                price_cash_str = price_cash_elem.text.strip() if price_cash_elem else ""
-                price_cash = self._clean_price(price_cash_str)
+        price_inst_elem = soup.select_one(selectors["price_installments"])
+        price_inst_str = price_inst_elem.text.strip() if price_inst_elem else ""
+        price_installments = self._clean_price(price_inst_str)
 
-                if price_cash is None:
-                    continue
+        is_available = True
+        if soup.find(string=re.compile(selectors["out_of_stock"], re.I)):
+            is_available = False
 
-                price_inst_elem = card.find(class_="prod-juros")
-                price_inst_str = price_inst_elem.text.strip() if price_inst_elem else ""
-                price_inst = self._clean_price(price_inst_str)
+        # Calculate discount if applicable
+        discount = None
+        if price_installments and price_installments > 0 and price_cash > 0:
+            discount = price_installments - price_cash
 
-                is_available = True
-
-                contract = PriceContract(
-                    store_name=self.store_name,
-                    search_keyword=keyword,
-                    product_title=title,
-                    product_url=url,  # type: ignore
-                    price_cash=price_cash,
-                    price_installments=price_inst,
-                    is_available=is_available,
-                )
-                products.append(contract)
-            except ValidationError as e:
-                logger.warning(
-                    "Failed to validate product on %s: %s", self.store_name, e
-                )
-            except Exception as e:
-                logger.error("Error parsing product card on %s: %s", self.store_name, e)
-
-        return products
+        return PriceContract(
+            store_name=self.store_name,
+            search_keyword=sku.search_keyword,
+            product_title=title,
+            product_url=sku.product_url,
+            price_cash=price_cash,
+            price_installments=price_installments if price_installments and price_installments > 0 else None,
+            currency="BRL",
+            parser_version=f"{self.store_name}_{parser_version}",
+            is_available=is_available,
+            brand=sku.brand,
+            model=sku.model,
+            discount=discount
+        )
