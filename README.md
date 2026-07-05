@@ -87,6 +87,28 @@ The dashboard features:
 
 ---
 
+## 🐳 Running with Docker
+
+The application is fully containerized using Docker and Docker Compose. The architecture is split into two independent services that share data via Docker Volumes:
+
+1. **`orchestrator`**: Runs the background scraping engine (`main.py`) with Playwright Chromium bundled.
+2. **`dashboard`**: Runs the Streamlit user interface (`dashboard.py`) and exposes it on port `8501`.
+
+Both containers share the `./data` directory (which holds the SQLite database, CSS selectors, and i18n locales) and the `./config.toml` file, meaning you can edit configurations locally and have them instantly reflected in the containers.
+
+To start the application:
+```bash
+# 1. Build the images (this downloads Chromium for the orchestrator)
+docker-compose build
+
+# 2. Start the services in the background
+docker-compose up -d
+```
+The Dashboard container natively checks for the Orchestrator to start first and runs its own `curl` healthchecks.
+Once running, simply navigate to `http://localhost:8501` to view your dashboard!
+
+---
+
 ## 🧪 Testing and Quality Assurance
 
 We strictly enforce a test-driven workflow.
