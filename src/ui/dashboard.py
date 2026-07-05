@@ -196,7 +196,7 @@ else:
                             margin=dict(l=10, r=10, t=30, b=10),
                             legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5)
                         )
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width='stretch')
                     else:
                         st.info(f"No trend data for {keyword.upper()}")
 
@@ -303,7 +303,7 @@ else:
                                 dict(dtickrange=[86400000, None], value="%d %b")
                             ]
                         )
-                        st.plotly_chart(detail_fig, use_container_width=True)
+                        st.plotly_chart(detail_fig, width='stretch')
 
         # Raw Data Grid
         st.markdown("<br>", unsafe_allow_html=True)
@@ -354,5 +354,5 @@ else:
                 ),
             },
             hide_index=True,
-            use_container_width=True,
+            width='stretch',
         )
