@@ -62,10 +62,16 @@ else:
     # Sidebar Filters
     st.sidebar.header("Filters")
 
-    keywords = df["search_keyword"].unique().tolist()
+    # Sort keywords by their absolute lowest price in the DB
+    # so the cheapest GPU series (e.g. 5070) is always on the left
+    keyword_min_prices = df.groupby("search_keyword")["price_cash"].min().sort_values()
+    keywords = keyword_min_prices.index.tolist()
+    
     selected_keywords = st.sidebar.multiselect(
         "Select GPUs", keywords, default=keywords
     )
+    # Ensure selected keywords maintain this price-based order
+    selected_keywords = sorted(selected_keywords, key=lambda k: keywords.index(k))
 
     stores = df["store_name"].unique().tolist()
     selected_stores = st.sidebar.multiselect("Select Stores", stores, default=stores)
@@ -103,116 +109,120 @@ else:
         # Price Trends
         st.subheader("Price Trends Over Time")
         
-        # Plotly chart grouping by product_name and differentiating stores
-        fig = px.line(
-            filtered_df,
-            x="scraped_at",
-            y="price_cash",
-            color="product_name",
-            line_dash="store_name",
-            title="Cash Price History by Model & Store",
-            markers=True,
-            hover_data=["search_keyword", "price_installments", "product_title"],
-            custom_data=["brand", "model", "store_name"]
-        )
-        # Allow auto-scaling but format nicely based on zoom level
-        fig.update_xaxes(
-            title_text="Date / Time",
-            tickformatstops=[
-                dict(dtickrange=[None, 3600000], value="%H:%M:%S"),  # zoom in: show minutes/seconds
-                dict(dtickrange=[3600000, 86400000], value="%d %b\n%H:00"), # default zoom out: hour-by-hour
-                dict(dtickrange=[86400000, None], value="%d %b %Y") # far zoom out: daily
-            ]
-        )
-        # Customize hover label to show price and product details
-        fig.update_traces(
-            hovertemplate="<b>%{customdata[0]} %{customdata[1]}</b><br>Price: R$ %{y:,.2f}<br>Store: %{customdata[2]}<br>Date: %{x}<extra></extra>"
-        )
-        st.plotly_chart(fig, width='stretch')
+        if selected_keywords:
+            trend_cols = st.columns(len(selected_keywords))
+            for idx, keyword in enumerate(selected_keywords):
+                with trend_cols[idx]:
+                    keyword_df = filtered_df[filtered_df["search_keyword"] == keyword]
+                    if not keyword_df.empty:
+                        # Plotly chart grouping by product_name and differentiating stores
+                        fig = px.line(
+                            keyword_df,
+                            x="scraped_at",
+                            y="price_cash",
+                            color="product_name",
+                            line_dash="store_name",
+                            title=f"{keyword.upper()} Price History",
+                            markers=True,
+                            hover_data=["search_keyword", "price_installments", "product_title"],
+                            custom_data=["brand", "model", "store_name"]
+                        )
+                        # Allow auto-scaling but format nicely based on zoom level
+                        fig.update_xaxes(
+                            title_text="",
+                            tickformatstops=[
+                                dict(dtickrange=[None, 3600000], value="%H:%M"), 
+                                dict(dtickrange=[3600000, 86400000], value="%d %b\n%H:00"), 
+                                dict(dtickrange=[86400000, None], value="%d %b %Y") 
+                            ]
+                        )
+                        # Customize hover label to show price and product details
+                        fig.update_traces(
+                            hovertemplate="<b>%{customdata[0]} %{customdata[1]}</b><br>Price: R$ %{y:,.2f}<br>Store: %{customdata[2]}<br>Date: %{x}<extra></extra>"
+                        )
+                        fig.update_layout(
+                            margin=dict(l=10, r=10, t=30, b=10),
+                            legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5)
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.info(f"No trend data for {keyword.upper()}")
 
         # ----- Detailed Product View -----
         st.subheader("Detailed Product View")
-        # Let user pick a single product from the filtered set
-        product_options = filtered_df["product_name"].unique().tolist()
-        selected_product = st.selectbox("Select a product for deep analysis", product_options, index=0)
-        product_df = filtered_df[filtered_df["product_name"] == selected_product].sort_values(by="scraped_at")
-        if not product_df.empty:
-            # Show key metrics for the selected product
-            latest = product_df.iloc[-1]
-            lowest_price = product_df["price_cash"].min()
-            highest_price = product_df["price_cash"].max()
-            avg_price = product_df["price_cash"].mean()
-            
-            # Since first record
-            price_change_first = ((latest["price_cash"] - product_df.iloc[0]["price_cash"]) / product_df.iloc[0]["price_cash"]) * 100 if product_df.iloc[0]["price_cash"] else 0
-            
-            # Since last record
-            if len(product_df) > 1:
-                previous = product_df.iloc[-2]
-                price_change_last = ((latest["price_cash"] - previous["price_cash"]) / previous["price_cash"]) * 100 if previous["price_cash"] else 0
-            else:
-                price_change_last = 0.0
-                
-            std_dev = product_df["price_cash"].std()
-            st.markdown("#### Cash Price Analytics (À vista)")
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Current Price", f"R$ {latest['price_cash']:,.2f}")
-            col2.metric("Lowest Price", f"R$ {lowest_price:,.2f}")
-            col3.metric("Highest Price", f"R$ {highest_price:,.2f}")
-            
-            col4, col5, col6, col7 = st.columns(4)
-            col4.metric("Average Price", f"R$ {avg_price:,.2f}")
-            col5.metric("Change Since First", f"{price_change_first:.2f}%")
-            col6.metric("Change Since Last", f"{price_change_last:.2f}%")
-            col7.metric("Volatility (Std Dev)", f"R$ {std_dev:,.2f}" if pd.notna(std_dev) else "R$ 0.00")
-            
-            # Installments Analytics
-            if "price_installments" in product_df.columns and not product_df["price_installments"].isna().all():
-                st.markdown("#### Installment Analytics (Parcelado)")
-                lowest_inst = product_df["price_installments"].min()
-                highest_inst = product_df["price_installments"].max()
-                avg_inst = product_df["price_installments"].mean()
-                
-                i_col1, i_col2, i_col3, i_col4 = st.columns(4)
-                if pd.notna(latest.get("price_installments")):
-                    i_col1.metric("Current Installment", f"R$ {latest['price_installments']:,.2f}")
-                else:
-                    i_col1.metric("Current Installment", "N/A")
+        
+        if selected_keywords:
+            main_cols = st.columns(len(selected_keywords))
+            for idx, keyword in enumerate(selected_keywords):
+                with main_cols[idx]:
+                    keyword_df = filtered_df[filtered_df["search_keyword"] == keyword]
+                    if keyword_df.empty:
+                        st.warning(f"No data for {keyword.upper()}")
+                        continue
+                        
+                    st.markdown(f"### {keyword.upper()}")
                     
-                i_col2.metric("Lowest Installment", f"R$ {lowest_inst:,.2f}")
-                i_col3.metric("Highest Installment", f"R$ {highest_inst:,.2f}")
-                i_col4.metric("Avg Installment", f"R$ {avg_inst:,.2f}")
+                    # Let user pick a single product from the filtered set, sorted by lowest price
+                    product_min_prices = keyword_df.groupby("product_name")["price_cash"].min().sort_values()
+                    product_options = product_min_prices.index.tolist()
+                    selected_product = st.selectbox(f"Select Model", product_options, index=0, key=f"select_{keyword}")
+                    product_df = keyword_df[keyword_df["product_name"] == selected_product].sort_values(by="scraped_at")
+                    
+                    if not product_df.empty:
+                        # Show key metrics for the selected product
+                        latest = product_df.iloc[-1]
+                        lowest_price = product_df["price_cash"].min()
+                        highest_price = product_df["price_cash"].max()
+                        avg_price = product_df["price_cash"].mean()
+                        
+                        std_dev = product_df["price_cash"].std()
+                        st.markdown("#### Cash Analytics (À vista)")
+                        col1, col2 = st.columns(2)
+                        col1.metric("Current Price", f"R$ {latest['price_cash']:,.2f}")
+                        col2.metric("Lowest Price", f"R$ {lowest_price:,.2f}")
+                        
+                        col3, col4 = st.columns(2)
+                        col3.metric("Highest Price", f"R$ {highest_price:,.2f}")
+                        col4.metric("Average Price", f"R$ {avg_price:,.2f}")
+                        
+                        # Installments Analytics
+                        if "price_installments" in product_df.columns and not product_df["price_installments"].isna().all():
+                            st.markdown("#### Installment Analytics")
+                            lowest_inst = product_df["price_installments"].min()
+                            
+                            i_col1, i_col2 = st.columns(2)
+                            if pd.notna(latest.get("price_installments")):
+                                i_col1.metric("Current Inst.", f"R$ {latest['price_installments']:,.2f}")
+                            else:
+                                i_col1.metric("Current Inst.", "N/A")
+                                
+                            i_col2.metric("Lowest Inst.", f"R$ {lowest_inst:,.2f}")
             
-            # Optional extra metrics below
-            if "installment_count" in latest and pd.notna(latest["installment_count"]):
-                st.metric("Max Installments", f"{int(latest['installment_count'])}x")
-
-            # Detailed line chart for the selected product
-            detail_fig = px.line(
-                product_df,
-                x="scraped_at",
-                y="price_cash",
-                color="store_name",
-                title=f"Price History for {selected_product}",
-                markers=True,
-                hover_data=["search_keyword", "price_installments", "product_title"]
-            )
-            detail_fig.update_traces(
-                hovertemplate="<b>"+selected_product+"</b><br>Price: R$ %{y:,.2f}<br>Store: %{customdata[0]}<br>Date: %{x}<extra></extra>",
-                customdata=product_df[["store_name"]].values
-            )
-            # Allow auto-scaling but format nicely based on zoom level
-            detail_fig.update_xaxes(
-                title_text="Date / Time",
-                tickformatstops=[
-                    dict(dtickrange=[None, 3600000], value="%H:%M:%S"),
-                    dict(dtickrange=[3600000, 86400000], value="%d %b\n%H:00"),
-                    dict(dtickrange=[86400000, None], value="%d %b %Y")
-                ]
-            )
-            st.plotly_chart(detail_fig, width='stretch')
-        else:
-            st.warning("No data available for the selected product.")
+                        # Detailed line chart for the selected product
+                        detail_fig = px.line(
+                            product_df,
+                            x="scraped_at",
+                            y="price_cash",
+                            color="store_name",
+                            title=f"Price History",
+                            markers=True,
+                            hover_data=["search_keyword", "price_installments", "product_title"]
+                        )
+                        detail_fig.update_traces(
+                            hovertemplate="<b>"+selected_product+"</b><br>Price: R$ %{y:,.2f}<br>Store: %{customdata[0]}<br>Date: %{x}<extra></extra>",
+                            customdata=product_df[["store_name"]].values
+                        )
+                        # Adjust layout for narrow columns
+                        detail_fig.update_layout(margin=dict(l=10, r=10, t=30, b=10))
+                        detail_fig.update_xaxes(
+                            title_text="",
+                            tickformatstops=[
+                                dict(dtickrange=[None, 3600000], value="%H:%M"),
+                                dict(dtickrange=[3600000, 86400000], value="%d %b"),
+                                dict(dtickrange=[86400000, None], value="%d %b")
+                            ]
+                        )
+                        st.plotly_chart(detail_fig, use_container_width=True)
 
         # Raw Data Grid
         st.subheader("Raw Scraped Data")
@@ -234,18 +244,22 @@ else:
             ]
         ]
 
-        with st.expander("Filter Raw Data"):
-            filter_col = st.selectbox("Select column to filter", options=["None"] + list(display_df.columns))
-            if filter_col != "None":
-                unique_values = display_df[filter_col].dropna().unique().tolist()
-                selected_values = st.multiselect(f"Select values for '{filter_col}'", options=unique_values, default=unique_values)
-                display_df = display_df[display_df[filter_col].isin(selected_values) | display_df[filter_col].isna()]
+        st.markdown("**Filter Raw Data**")
+        f_col1, f_col2 = st.columns(2)
+        filter_col = f_col1.selectbox("Select column to filter", options=["None"] + list(display_df.columns))
+        if filter_col != "None":
+            unique_values = display_df[filter_col].dropna().unique().tolist()
+            selected_values = f_col2.multiselect(f"Select values for '{filter_col}'", options=unique_values, default=unique_values)
+            display_df = display_df[display_df[filter_col].isin(selected_values) | display_df[filter_col].isna()]
 
         # Configure columns for better display
         st.dataframe(
             display_df,
             column_config={
-                "product_url": st.column_config.LinkColumn("Product Link"),
+                "product_url": st.column_config.LinkColumn(
+                    "Product Link",
+                    display_text=r"(.*)"
+                ),
                 "scraped_at": st.column_config.DatetimeColumn(
                     "Scraped At", format="YYYY-MM-DD HH:mm:ss"
                 ),
