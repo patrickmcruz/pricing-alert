@@ -2,7 +2,7 @@
 
 A highly modular, resilient, and test-driven web scraping orchestrator built to monitor GPU prices (specifically RTX 5070 and RTX 5070 Ti) across major Brazilian e-commerce stores.
 
-## Welcome, New Developers!
+## Welcome!
 
 If you are joining the project, this document will help you understand our architectural principles and how to run, test, and contribute to the application. Our architecture enforces a strict **Separation of Concerns**, ensuring that business logic, network retrieval, HTML parsing, orchestration, and persistence never tightly couple.
 
@@ -34,7 +34,8 @@ The system uses a **Two-Tier Extraction Strategy**:
 │   ├── /repositories   # SQLite persistence layer (Repository Pattern)
 │   └── /ui             # Streamlit Dashboard
 ├── /data
-│   └── /selectors      # Externalized CSS classes in TOML
+│   ├── /selectors      # Externalized CSS classes in TOML
+│   └── /locales        # i18n localization JSON dictionaries
 ├── /scripts
 │   └── seed_db.py      # Seeds target URLs into the DB for testing
 ├── config.toml         # App environment configurations
@@ -67,7 +68,7 @@ The application uses the `APP_ENV` environment variable to determine which block
 Before the scrapers can run, they need target URLs. 
 
 ```bash
-# 1. Seed the development database with real target URLs
+# 1. (Optional) Seed the database manually, or let the Spiders discover URLs
 python scripts/seed_db.py
 
 # 2. Start the Orchestrator
@@ -83,7 +84,8 @@ streamlit run src/ui/dashboard.py
 The dashboard features:
 - **Dynamic Chart Timelines:** The main graphics default to an aggregated "hour-by-hour" view but allow you to dynamically zoom (drill down) into minute-level scrapes seamlessly.
 - **Two-Tier Analytics:** Detailed product views separate analytics for "Cash Price" and "Installment Price", showing minimums, maximums, and volatility for both.
-- **Data Filtering:** The raw scraped data grid includes comprehensive filters for all tracked columns, including `installment_count`.
+- **Data Filtering:** The raw scraped data grid includes comprehensive filters for all tracked columns.
+- **Internationalization (i18n):** Fully localized interface supporting both `pt-BR` and `en-US` seamlessly.
 
 ---
 
@@ -113,6 +115,7 @@ Once running, simply navigate to `http://localhost:8501` to view your dashboard!
 
 We strictly enforce a test-driven workflow.
 - **Run Unit Tests**: `pytest tests/unit`
+- **Run E2E/Integration Tests**: `pytest tests/e2e` and `pytest tests/integration`
 - **Run Static Type Checking**: `mypy src tests scripts`
 
 When writing tests for parsers, use the static HTML files provided in `tests/fixtures/`. You should never mock the network layer to test a parser; simply pass the fixture HTML string into `parse()`.
