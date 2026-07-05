@@ -151,9 +151,23 @@ else:
                     if "price_installments" in current_market.columns and not current_market["price_installments"].isna().all():
                         best_inst_idx = current_market["price_installments"].idxmin()
                         best_inst = current_market.loc[best_inst_idx]
+                        
+                        hist_best_inst_idx = keyword_df["price_installments"].idxmin()
+                        hist_best_inst = keyword_df.loc[hist_best_inst_idx]
+                        
+                        inst_diff_from_hist = best_inst['price_installments'] - hist_best_inst['price_installments']
+                        if inst_diff_from_hist == 0:
+                            inst_delta_str = t("matches_low", lang=lang)
+                            inst_delta_col = "normal"
+                        else:
+                            inst_delta_str = t("vs_low", lang=lang, diff=f"{inst_diff_from_hist:,.2f}")
+                            inst_delta_col = "inverse"
+                            
                         kpi_col4.metric(
                             label=t("best_inst", lang=lang),
                             value=f"R$ {best_inst['price_installments']:,.2f}",
+                            delta=inst_delta_str,
+                            delta_color=inst_delta_col,
                         )
                         kpi_col4.markdown(f"*{best_inst['store_name']} - {best_inst['model']}* [**{t('go_to_store', lang=lang)}**]({best_inst['product_url']})")
                     else:
@@ -273,9 +287,21 @@ else:
                         if "price_installments" in current_prod_market.columns and not current_prod_market["price_installments"].isna().all():
                             best_inst_idx = current_prod_market["price_installments"].idxmin()
                             best_inst = current_prod_market.loc[best_inst_idx]
+                            
+                            lowest_inst_price = product_df["price_installments"].min()
+                            inst_diff_from_hist = best_inst['price_installments'] - lowest_inst_price
+                            if inst_diff_from_hist == 0:
+                                inst_delta_str = t("matches_low", lang=lang)
+                                inst_delta_col = "normal"
+                            else:
+                                inst_delta_str = t("vs_low", lang=lang, diff=f"{inst_diff_from_hist:,.2f}")
+                                inst_delta_col = "inverse"
+                                
                             col4.metric(
                                 label=t("best_inst", lang=lang),
                                 value=f"R$ {best_inst['price_installments']:,.2f}",
+                                delta=inst_delta_str,
+                                delta_color=inst_delta_col,
                             )
                             col4.markdown(f"*{best_inst['store_name']}* [**{t('go_to_store', lang=lang)}**]({best_inst['product_url']})")
                         else:

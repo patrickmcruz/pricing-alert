@@ -39,8 +39,12 @@ class I18n:
         elif lang == "en-US":
             lang = "en_US"
             
-        lang_dict = self.locales.get(lang, self.locales.get("pt_BR", {}))
-        text = lang_dict.get(key, key)
+        lang_dict = self.locales.get(lang, {})
+        default_dict = self.locales.get("pt_BR", {})
+        
+        text = lang_dict.get(key)
+        if text is None:
+            text = default_dict.get(key, key)
         
         if kwargs and text != key:
             try:

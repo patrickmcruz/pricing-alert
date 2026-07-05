@@ -1,0 +1,35 @@
+# Environments
+.env
+.venv/
+venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Pytest / Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Databases
+*.db
+*.sqlite3
+*.db-journal
+
+# IDEs
+.vscode/
+.idea/
+
+# Type checking
+.mypy_cache/
+.ruff_cache/
+
+# OS generated files
+.DS_Store
+Thumbs.db
