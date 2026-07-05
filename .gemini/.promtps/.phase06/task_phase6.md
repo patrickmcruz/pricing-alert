@@ -1,0 +1,8 @@
+- `[x]` Create `task_phase6.md`
+- `[x]` Create Python virtual environment (`venv`)
+- `[x]` Install dependencies from `requirements.txt` and `requirements-dev.txt`
+- `[x]` Run `black` for code formatting
+- `[x]` Run `ruff` for code linting
+- `[x]` Run `mypy` for static type checking
+- `[x]` Run `pytest` for unit and integration testing
+- `[x]` Create `walkthrough_phase6.md`

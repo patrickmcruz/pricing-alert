@@ -1,0 +1,5 @@
+- `[x]` Create `task_phase5.md`
+- `[x]` Append `pandas` and `plotly` to `requirements.txt`
+- `[x]` Implement `src/ui/dashboard.py`
+- `[x]` Implement `main.py`
+- `[x]` Create `walkthrough_phase5.md`

@@ -1,0 +1,58 @@
+{
+  "mercado-livre": {
+    "store_name": "mercado-livre",
+    "base_url": "https://www.mercadolivre.com.br"
+  },
+  "amazon": {
+    "store_name": "amazon",
+    "base_url": "https://www.amazon.com.br"
+  },
+  "kabum": {
+    "store_name": "kabum",
+    "base_url": "https://www.kabum.com.br"
+  },
+  "terabyte": {
+    "store_name": "terabyte",
+    "base_url": "https://www.terabyteshop.com.br"
+  },
+  "pichau": {
+    "store_name": "pichau",
+    "base_url": "https://www.pichau.com.br"
+  },
+  "microgem": {
+    "store_name": "microgem",
+    "base_url": "https://www.microgem.com.br"
+  },
+  "magalu": {
+    "store_name": "magalu",
+    "base_url": "https://www.magazineluiza.com.br"
+  },
+  "patoloco": {
+    "store_name": "patoloco",
+    "base_url": "https://www.patoloco.com.br"
+  },
+  "infostore": {
+    "store_name": "infostore",
+    "base_url": "https://www.infostore.com.br"
+  },
+  "gk-infostore": {
+    "store_name": "gk-infostore",
+    "base_url": "https://www.gkinfostore.com.br"
+  },
+  "vitrine-informatica": {
+    "store_name": "vitrine-informatica",
+    "base_url": "https://www.vitrineinformatica.com.br"
+  },
+  "alligator-shop": {
+    "store_name": "alligator-shop",
+    "base_url": "https://www.alligatorshop.com.br"
+  },
+  "gigantec": {
+    "store_name": "gigantec",
+    "base_url": "https://www.gigantec.com.br"
+  },
+  "bemol": {
+    "store_name": "bemol",
+    "base_url": "https://www.bemol.com.br"
+  }
+}

@@ -1,0 +1,11 @@
+streamlit
+pydantic
+apscheduler
+httpx[http2]
+playwright
+playwright-stealth
+aiosqlite
+beautifulsoup4
+lxml
+pandas
+plotly

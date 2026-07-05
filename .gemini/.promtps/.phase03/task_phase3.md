@@ -1,0 +1,8 @@
+- `[x]` Create `task_phase3.md`
+- `[x]` Append `beautifulsoup4` and `lxml` to `requirements.txt`
+- `[x]` Create `tests/fixtures/kabum_mock.html` and `tests/fixtures/terabyte_mock.html`
+- `[x]` Implement `src/scrapers/kabum.py`
+- `[x]` Implement `src/scrapers/terabyte.py`
+- `[x]` Implement `tests/unit/test_parsers.py`
+- `[x]` Run unit tests to verify deterministic parsing
+- `[x]` Create `walkthrough_phase3.md`

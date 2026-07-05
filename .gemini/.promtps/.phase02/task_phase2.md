@@ -1,0 +1,5 @@
+- `[x]` Create `task_phase2.md`
+- `[x]` Append `aiosqlite` to `requirements.txt`
+- `[x]` Implement `src/repositories/base_repository.py`
+- `[x]` Implement `src/repositories/sqlite_repository.py`
+- `[x]` Create `walkthrough_phase2.md`

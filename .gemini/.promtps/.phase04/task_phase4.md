@@ -1,0 +1,4 @@
+- `[x]` Create `task_phase4.md`
+- `[x]` Implement `src/engine/scheduler.py`
+- `[x]` Implement `tests/integration/test_engine.py`
+- `[x]` Create `walkthrough_phase4.md`

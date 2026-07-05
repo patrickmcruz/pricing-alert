@@ -1,0 +1,8 @@
+- `[x]` Create `task.md`
+- `[x]` Create `requirements.txt` and `requirements-dev.txt`
+- `[x]` Create directory structure and `__init__.py` files
+- `[x]` Implement `src/core/contract.py`
+- `[x]` Implement `src/core/base_scraper.py`
+- `[x]` Implement `src/core/http_client.py`, `src/core/browser.py`, `src/core/config.py`, and `src/core/utils.py`
+- `[x]` Create `data/target-stores-list.json`
+- `[x]` Create `walkthrough.md`
