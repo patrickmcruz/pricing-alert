@@ -9,3 +9,7 @@ log_level = "INFO"
 [production]
 db_path = "data/prices.db"
 log_level = "WARNING"
+
+[test]
+db_path = ":memory:"
+log_level = "DEBUG"

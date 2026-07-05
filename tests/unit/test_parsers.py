@@ -34,9 +34,10 @@ def test_kabum_product_parser():
     assert product.model == "MockModel"
     assert product.price_cash == Decimal("5499.99")
     assert product.price_installments == Decimal("6100.00")
+    assert product.installment_count == 10
     assert product.discount == Decimal("600.01")
     assert product.currency == "BRL"
-    assert product.parser_version == "kabum_v1"
+    assert product.parser_version == "kabum_v2"
     assert product.is_available is True
     assert product.execution_id is not None
     assert product.scraped_at is not None

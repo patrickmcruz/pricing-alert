@@ -33,6 +33,19 @@ dev = [
 pythonpath = "."
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "e2e: End-to-End tests that execute against a live network",
+]
+testpaths = ["tests"]
+filterwarnings = [
+    "ignore::pytest.PytestUnraisableExceptionWarning",
+]
+
+[tool.coverage.run]
+omit = [
+    "src/ui/*",
+    "tests/*",
+]
 
 [tool.mypy]
 explicit_package_bases = true

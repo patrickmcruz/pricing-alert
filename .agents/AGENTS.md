@@ -86,3 +86,4 @@ The project adheres to a strict Testing Pyramid:
 * **Unit Tests (>= 95% Coverage):** Must test contracts and parsers. Provide static HTML fixtures in `/tests/fixtures/` to test `parse()` methods without I/O.
 * **Integration Tests:** Use mocked HTTP responses (`respx`), mocked browser contexts, and temporary in-memory SQLite databases to test the Engine and Repositories.
 * **Quality Gates:** Code must pass `mypy`, `black`, and `ruff` before acceptance. Smoke tests (hitting real URLs) must be isolated and never run automatically in CI/CD.
+* **Agent Mandate:** Before delivering any task or marking it as successfully complete, the agent MUST run the full test suite (`pytest`) and verify that all tests pass. If tests fail, the agent must fix the broken code or tests before concluding its turn.
