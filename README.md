@@ -109,6 +109,28 @@ docker-compose up -d
 The Dashboard container natively checks for the Orchestrator to start first and runs its own `curl` healthchecks.
 Once running, simply navigate to `http://localhost:8501` to view your dashboard!
 
+### Troubleshooting Docker Workflows
+
+**1. Code Changes Not Appearing in Docker?**
+The `docker-compose.yml` mounts `./data` and `./config.toml` as volumes. This means changes to these files/folders take effect immediately. However, the `./src` directory is *copied* during the Docker image build process. 
+If you modify any Python files (`.py`), you must **rebuild** the image for the changes to apply:
+```bash
+docker compose up -d --build
+```
+*(Running `docker compose up -d --force-recreate` will only recreate the container from the old image, it will not pull in your new code).*
+
+**2. Seed Script Not Showing in Dashboard?**
+When running `python scripts/seed_db.py` locally without specifying an environment, it defaults to the `develop` environment (saving to `data/prices_dev.db`). However, the Docker containers run with `APP_ENV=production` and read from `data/prices.db`.
+To properly seed the production database that Docker uses, run:
+```bash
+# Windows PowerShell
+$env:APP_ENV="production"; python .\scripts\seed_db.py
+
+# Linux / Mac
+APP_ENV=production python scripts/seed_db.py
+```
+After seeding, restart the orchestrator (`docker compose restart orchestrator`) so it immediately fetches the new URLs.
+
 ---
 
 ## 🧪 Testing and Quality Assurance

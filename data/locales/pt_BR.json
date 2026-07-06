@@ -41,5 +41,11 @@
   "col_parser_ver": "Versão do Parser",
   "col_available": "Disponível",
   "col_url": "Link do Produto",
-  "choose_option": "Escolha uma opção"
+  "choose_option": "Escolha uma opção",
+  "tab_compare": "Comparativo (2 Placas)",
+  "tab_overview": "Visão Geral (Dados Brutos)",
+  "price_history_compare": "Menor Preço Histórico: Comparativo",
+  "btn_prev": "⬅️ Anterior",
+  "btn_next": "Próximo ➡️",
+  "page_info": "Página {page} de {total} ({items} itens)"
 }

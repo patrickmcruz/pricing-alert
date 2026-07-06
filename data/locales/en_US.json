@@ -41,5 +41,11 @@
   "col_parser_ver": "Parser Version",
   "col_available": "Available",
   "col_url": "Product Link",
-  "choose_option": "Choose an option"
+  "choose_option": "Choose an option",
+  "tab_compare": "Comparison (2 Boards)",
+  "tab_overview": "Overview (Raw Data)",
+  "price_history_compare": "Lowest Price History: Comparison",
+  "btn_prev": "⬅️ Previous",
+  "btn_next": "Next ➡️",
+  "page_info": "Page {page} of {total} ({items} items)"
 }
