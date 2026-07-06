@@ -75,7 +75,7 @@ else:
     keyword_min_prices = df.groupby("search_keyword")["price_cash"].min().sort_values()
     keywords = keyword_min_prices.index.tolist()
     
-    default_keywords = [k for k in keywords if k in ["rtx 5070", "rtx 5070 ti"]]
+    default_keywords = [k for k in keywords if k in settings.default_gpus]
     
     selected_keywords = st.sidebar.multiselect(
         t("select_gpus", lang=lang), keywords, default=default_keywords, max_selections=2, placeholder=t("choose_option", lang=lang)

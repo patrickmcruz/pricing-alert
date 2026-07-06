@@ -18,6 +18,7 @@ class AppSettings:
         self.db_path = os.path.join(PROJECT_ROOT, raw_db_path)
         
         self.log_level = self.config_data.get("log_level", "INFO")
+        self.default_gpus = self.config_data.get("default_gpus", [])
         
         self._configure_logging()
         

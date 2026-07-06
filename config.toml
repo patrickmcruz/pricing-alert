@@ -1,15 +1,19 @@
 [develop]
 db_path = "data/prices_dev.db"
 log_level = "DEBUG"
+default_gpus = ["rx 9070", "rx 9070 xt"]
 
 [staging]
 db_path = "data/prices_staging.db"
 log_level = "INFO"
+default_gpus = ["rx 9070", "rx 9070 xt"]
 
 [production]
 db_path = "data/prices.db"
 log_level = "WARNING"
+default_gpus = ["rx 9070", "rx 9070 xt"]
 
 [test]
 db_path = ":memory:"
 log_level = "DEBUG"
+default_gpus = ["rx 9070", "rx 9070 xt"]
