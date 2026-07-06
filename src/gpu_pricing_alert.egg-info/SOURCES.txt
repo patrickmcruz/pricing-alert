@@ -1,3 +1,4 @@
+README.md
 pyproject.toml
 src/core/__init__.py
 src/core/base_scraper.py
@@ -5,6 +6,7 @@ src/core/browser.py
 src/core/config.py
 src/core/contract.py
 src/core/http_client.py
+src/core/i18n.py
 src/core/utils.py
 src/engine/__init__.py
 src/engine/discovery.py

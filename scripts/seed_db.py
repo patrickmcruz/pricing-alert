@@ -54,6 +54,30 @@ async def seed():
             model="Phoenix",
             product_title="Placa De Vídeo Gainward Rtx 5070 Ti Phoenix 16gb",
             product_url="https://www.kabum.com.br/produto/996236/placa-de-video-gainward-rtx-5070-ti-phoenix-16gb-gddr7"
+        ),
+        ProductSKU(
+            store_name="kabum",
+            search_keyword="rx 9070 oc",
+            brand="xfx",
+            model="swift",
+            product_title="Placa De Vídeo Xfx Swift Rx 9070 Oc Triple Fan Gaming Edition",
+            product_url="https://www.kabum.com.br/produto/725937/placa-de-video-xfx-swift-rx-9070-oc-triple-fan-gaming-edition-with-amd-radeon-16gb-gddr6-hdmi-3xdp-rdna-4-rx-97swfb3b9"
+        ),
+        # ProductSKU(
+        #     store_name="kabum",
+        #     search_keyword="rx 9070",
+        #     brand="reaper",
+        #     model="PowerColor",
+        #     product_title="Placa de Vídeo PowerColor Reaper AMD Radeon RX 9070 XT 16GB GDDR6",
+        #     product_url="https://www.kabum.com.br/produto/871953/placa-de-video-powercolor-reaper-amd-radeon-rx-9070-xt-16gb-gddr6-rx9070xt-16g-a"
+        # ),
+        ProductSKU(
+            store_name="kabum",
+            search_keyword="rx 9070 xt",
+            brand="xfx",
+            model="swift",
+            product_title="Placa de Vídeo Xfx Swift Rx 9070 Oc Triple Fan Gaming Edition",
+            product_url="https://www.kabum.com.br/produto/725947/placa-de-video-xfx-swift-rx-9070-xt-triple-fan-gaming-edition-with-amd-radeon-16gb-gddr6-hdmi-3xdp-rdna-4-rx-97tswf3b9"
         )
     ]
     
