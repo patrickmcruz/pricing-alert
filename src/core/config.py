@@ -26,8 +26,8 @@ class AppSettings:
         self.headless = self.config_data.get("headless", True)
         
         # Mercado Livre API Credentials (loaded from ENV natively, or config.toml as fallback)
-        self.ml_app_id = os.getenv("APP_ID", self.config_data.get("APP_ID"))
-        self.ml_secret_key = os.getenv("SECRET_KEY", self.config_data.get("SECRET_KEY"))
+        self.ml_app_id = os.getenv("MERCADOLIVRE_APP_ID", self.config_data.get("MERCADOLIVRE_APP_ID"))
+        self.ml_secret_key = os.getenv("MERCADOLIVRE_APP_SECRET_KEY", self.config_data.get("MERCADOLIVRE_APP_SECRET_KEY"))
         
         self._configure_logging()
         
