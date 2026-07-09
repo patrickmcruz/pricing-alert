@@ -1,5 +1,6 @@
 [v1]
 title = ".tit-prod"
 price_cash = "#valVista"
-price_installments = "#valParcel"
+price_installments = "#valParc"
+installment_count = "#nParc"
 out_of_stock = "indisponível|Avise-me"

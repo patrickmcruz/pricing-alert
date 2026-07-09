@@ -13,7 +13,14 @@ class TerabyteSpider(BaseSpider):
         super().__init__(store_name="terabyte", base_url="https://www.terabyteshop.com.br")
 
     async def fetch_search_page(self, keyword: str, client: Any) -> str:
-        raise NotImplementedError("Network fetch is not implemented yet.")
+        from urllib.parse import quote_plus
+        search_url = f"{self.base_url}/busca?str={quote_plus(keyword)}"
+        try:
+            await client.goto(search_url, wait_until="networkidle", timeout=30000)
+            return await client.content()
+        except Exception as e:
+            logger.error("[%s] Network fetch failed for search keyword '%s': %s", self.store_name, keyword, e)
+            return ""
 
     def parse_search_grid(self, document: str, keyword: str) -> List[ProductSKU]:
         soup = BeautifulSoup(document, "lxml")
@@ -30,13 +37,22 @@ class TerabyteSpider(BaseSpider):
             
             # Simple brand/model heuristic
             brand = None
-            if "msi" in title.lower(): brand = "MSI"
-            elif "gigabyte" in title.lower(): brand = "Gigabyte"
-            elif "asus" in title.lower(): brand = "ASUS"
+            if "msi" in title.lower():
+                brand = "MSI"
+            elif "gigabyte" in title.lower():
+                brand = "Gigabyte"
+            elif "asus" in title.lower():
+                brand = "ASUS"
+            elif "colorful" in title.lower():
+                brand = "Colorful"
             
             model = None
-            if "eagle" in title.lower(): model = "Eagle"
-            elif "windforce" in title.lower(): model = "Windforce"
+            if "eagle" in title.lower():
+                model = "Eagle"
+            elif "windforce" in title.lower():
+                model = "Windforce"
+            elif "battle ax" in title.lower() or "battle-ax" in title.lower():
+                model = "Battle AX"
             
             sku = ProductSKU(
                 store_name=self.store_name,

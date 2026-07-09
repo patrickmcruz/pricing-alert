@@ -66,6 +66,7 @@ def test_terabyte_product_parser():
     assert product.model == "MockModelTB"
     assert product.price_cash == Decimal("5399.90")
     assert product.price_installments == Decimal("5999.00")
+    assert product.installment_count == 12
     assert product.discount == Decimal("599.10")
     assert product.currency == "BRL"
     assert product.parser_version == "terabyte_v1"

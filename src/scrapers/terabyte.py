@@ -1,10 +1,9 @@
 import logging
 import re
 from decimal import Decimal
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from bs4 import BeautifulSoup
-from pydantic import ValidationError
 
 from src.core.base_scraper import BaseScraper, SelectorOutdatedException
 from src.core.contract import PriceContract, ProductSKU
@@ -38,9 +37,8 @@ class TerabyteScraper(BaseScraper):
         Retrieves the raw HTML document from the store.
         """
         try:
-            response = await client.get(str(sku.product_url))
-            response.raise_for_status()
-            return response.text
+            await client.goto(str(sku.product_url), wait_until="networkidle", timeout=30000)
+            return await client.content()
         except Exception as e:
             logger.error("[%s] Network fetch failed for %s: %s", self.store_name, sku.product_url, e)
             return ""
@@ -68,6 +66,14 @@ class TerabyteScraper(BaseScraper):
         price_inst_str = price_inst_elem.text.strip() if price_inst_elem else ""
         price_installments = self._clean_price(price_inst_str)
 
+        installment_count = None
+        if "installment_count" in selectors:
+            count_elem = soup.select_one(selectors["installment_count"])
+            if count_elem:
+                count_str = re.sub(r"\D", "", count_elem.text)
+                if count_str:
+                    installment_count = int(count_str)
+
         is_available = True
         if soup.find(string=re.compile(selectors["out_of_stock"], re.I)):
             is_available = False
@@ -84,6 +90,7 @@ class TerabyteScraper(BaseScraper):
             product_url=sku.product_url,
             price_cash=price_cash,
             price_installments=price_installments if price_installments and price_installments > 0 else None,
+            installment_count=installment_count,
             currency="BRL",
             parser_version=f"{self.store_name}_{parser_version}",
             is_available=is_available,
