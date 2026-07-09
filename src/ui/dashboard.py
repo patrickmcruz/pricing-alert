@@ -203,10 +203,6 @@ else:
                             )
                             
                             kpi_col3, kpi_col4 = st.columns(2)
-                            kpi_col3.metric(
-                                label=t("market_avg", lang=lang),
-                                value=f"R$ {avg_current:,.2f}"
-                            )
                             
                             if "price_installments" in current_market.columns and not current_market["price_installments"].isna().all():
                                 best_inst_idx = current_market["price_installments"].idxmin()
@@ -223,15 +219,21 @@ else:
                                     inst_delta_str = t("vs_low", lang=lang, diff=f"{inst_diff_from_hist:,.2f}")
                                     inst_delta_col = "inverse"
                                     
-                                kpi_col4.metric(
+                                kpi_col3.metric(
                                     label=t("best_inst", lang=lang),
                                     value=f"R$ {best_inst['price_installments']:,.2f}",
                                     delta=inst_delta_str,
                                     delta_color=inst_delta_col,
                                 )
-                                kpi_col4.markdown(f"*{best_inst['store_name']} - {best_inst['model']}* [**{t('go_to_store', lang=lang)}**]({best_inst['product_url']})")
+                                kpi_col3.markdown(f"*{best_inst['store_name']} - {best_inst['model']}* [**{t('go_to_store', lang=lang)}**]({best_inst['product_url']})")
+                                
+                                kpi_col4.metric(
+                                    label=t("all_time_low_inst", lang=lang),
+                                    value=f"R$ {hist_best_inst['price_installments']:,.2f}"
+                                )
                             else:
-                                kpi_col4.metric(t("best_inst", lang=lang), t("na", lang=lang))
+                                kpi_col3.metric(t("best_inst", lang=lang), t("na", lang=lang))
+                                kpi_col4.metric(t("all_time_low_inst", lang=lang), t("na", lang=lang))
                 
                 # Price Trends
                 st.markdown("<br>", unsafe_allow_html=True)
@@ -336,10 +338,6 @@ else:
                                 )
                                 
                                 col3, col4 = st.columns(2)
-                                col3.metric(
-                                    label=t("current_avg", lang=lang),
-                                    value=f"R$ {avg_price:,.2f}"
-                                )
                                 
                                 if "price_installments" in current_prod_market.columns and not current_prod_market["price_installments"].isna().all():
                                     best_inst_idx = current_prod_market["price_installments"].idxmin()
@@ -354,15 +352,21 @@ else:
                                         inst_delta_str = t("vs_low", lang=lang, diff=f"{inst_diff_from_hist:,.2f}")
                                         inst_delta_col = "inverse"
                                         
-                                    col4.metric(
+                                    col3.metric(
                                         label=t("best_inst", lang=lang),
                                         value=f"R$ {best_inst['price_installments']:,.2f}",
                                         delta=inst_delta_str,
                                         delta_color=inst_delta_col,
                                     )
-                                    col4.markdown(f"*{best_inst['store_name']}* [**{t('go_to_store', lang=lang)}**]({best_inst['product_url']})")
+                                    col3.markdown(f"*{best_inst['store_name']}* [**{t('go_to_store', lang=lang)}**]({best_inst['product_url']})")
+                                    
+                                    col4.metric(
+                                        label=t("all_time_low_inst", lang=lang),
+                                        value=f"R$ {lowest_inst_price:,.2f}"
+                                    )
                                 else:
-                                    col4.metric(t("best_inst", lang=lang), t("na", lang=lang))
+                                    col3.metric(t("best_inst", lang=lang), t("na", lang=lang))
+                                    col4.metric(t("all_time_low_inst", lang=lang), t("na", lang=lang))
                     
                                 # Detailed line chart for the selected product
                                 lbl_cash = t("label_cash", lang=lang)

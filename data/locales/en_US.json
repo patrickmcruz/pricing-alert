@@ -12,6 +12,7 @@
   "market_title": "{keyword} Market",
   "best_deal": "🏆 Best Deal Right Now",
   "all_time_low": "📉 All-Time Low",
+  "all_time_low_inst": "📉 All-Time Low (Inst.)",
   "market_avg": "📊 Market Average",
   "best_inst": "💳 Best Installment",
   "matches_low": "Matches All-Time Low!",
