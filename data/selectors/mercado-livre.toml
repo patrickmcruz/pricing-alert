@@ -1,6 +1,11 @@
-[v1.price_cash]
+[v2.price_cash]
 price_container = ".ui-pdp-price__second-line .andes-money-amount__fraction"
 cents_container = ".ui-pdp-price__second-line .andes-money-amount__cents"
 
-[v1.price_installments]
-installment_text = ".ui-pdp-price__subtitles .ui-pdp-color--BLACK"
+[v2.price_installments]
+installment_text = "#_R_98rcj2aj4tlpa_ > span.andes-money-amount__fraction"
+installment_count = "#pricing_price_subtitle > span:nth-child(4)"
+fallback_subtitle = "#pricing_price_subtitle"
+
+[v2.out_of_stock]
+text = "Estoque indisponível"

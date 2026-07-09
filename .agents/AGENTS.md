@@ -71,8 +71,8 @@ Concrete scrapers must implement strictly separated methods:
 2. **`parse(self, document: str, sku: ProductSKU) -> Optional[PriceContract]`**: Performs ONLY data extraction using CSS selectors loaded from the `data/selectors/{store}.toml` file. **Must be 100% deterministic and unit-testable**.
 3. **`execute()`**: Orchestrates the fetch and parse pipeline.
 
-**Resilience & Versioning:** 
-Scrapers do NOT hardcode CSS classes. If a `parse()` method cannot find critical DOM elements using its TOML selectors, it must raise a `SelectorOutdatedException`. The `PriceContract` records the `parser_version` to maintain data lineage.
+**Resilience, Fallbacks & Versioning:** 
+Scrapers MUST NOT hardcode CSS classes, IDs, or XPath expressions under any circumstances. If a dynamic or primary selector fails, any fallback selectors MUST also be read dynamically from the corresponding `data/selectors/{store}.toml` file. If a `parse()` method cannot find critical DOM elements using its TOML selectors, it must raise a `SelectorOutdatedException`. The `PriceContract` records the `parser_version` to maintain data lineage.
 
 ## 6. Orchestration & Persistence
 

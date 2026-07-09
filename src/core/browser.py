@@ -13,11 +13,17 @@ class BrowserFactory:
     def __init__(self):
         self.playwright = None
         self.browser = None
+        self._lock = asyncio.Lock()
 
     async def _init_browser(self):
-        if not self.playwright:
-            self.playwright = await async_playwright().start()
-            self.browser = await self.playwright.chromium.launch(headless=settings.headless)
+        async with self._lock:
+            if not self.browser:
+                if not self.playwright:
+                    self.playwright = await async_playwright().start()
+                self.browser = await self.playwright.chromium.launch(
+                    headless=settings.headless,
+                    args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+                )
 
     async def create(self, scraper: Any) -> Page:
         await self._init_browser()

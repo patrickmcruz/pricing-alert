@@ -46,7 +46,7 @@ def load_stores_config() -> list[StoreConfig]:
         configs.append(
             StoreConfig(
                 store_name=store_info["store_name"],
-                target_keywords=["rtx 5070", "rtx 5070 ti"],
+                target_keywords=settings.default_gpus,
                 cron_times=["08:00", "12:00", "16:00", "20:00"],
             )
         )

@@ -69,7 +69,7 @@ class StoreConfig(BaseModel):
 
     store_name: str
 
-    target_keywords: List[str] = Field(..., min_length=1)
+    target_keywords: List[str] = Field(default_factory=list)
 
     cron_times: List[str] = Field(
         ...,
