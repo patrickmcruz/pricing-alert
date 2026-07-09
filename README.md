@@ -18,6 +18,22 @@ The system uses a **Two-Tier Extraction Strategy**:
 - **100% Deterministic Parsers**: Our `parse()` methods in `BaseScraper` implementations perform zero network I/O. They accept an HTML string and output a strictly typed `PriceContract` (using Pydantic V2).
 - **Externalized Selectors**: We NEVER hardcode CSS classes in Python. All selectors are stored in `data/selectors/{store}.toml`. If a store changes its UI (e.g., switches to Tailwind), we simply bump the parser version in Python and add a new `[v2]` block to the TOML file!
 - **Playwright Network Layer**: Since many modern stores (like Kabum) are Single Page Applications built with React/Next.js, we use `BrowserFactory` (Playwright) to retrieve the DOM asynchronously.
+## Rodando Localmente com Interface Visual (Bypass Avançado)
+
+O Mercado Livre possui proteções severas contra robôs (especialmente para Lojas Oficiais). Para contornar essas detecções, implementamos um scraper que usa o Playwright. Para burlar os firewalls mais restritivos, pode ser necessário abrir o browser visualmente para que a detecção biométrica/comportamental funcione.
+
+Por padrão, o container Docker roda no modo invisível (`headless=true`), pois contêineres não possuem interface gráfica nativa. 
+Se você precisa visualizar o robô operando ou enfrentar captchas, você deve rodar a aplicação **diretamente no seu Windows** (fora do Docker).
+
+1. Tenha o Python 3.11+ e o Poetry instalados no Windows.
+2. Certifique-se de que o `config.toml` na seção `[develop]` possua a flag `headless = false`.
+3. Instale as dependências: `poetry install`
+4. Instale os navegadores do Playwright: `poetry run playwright install chromium`
+5. Rode o orquestrador localmente: `poetry run python -m src.engine.scheduler`
+
+Uma janela do Chrome abrirá automaticamente para extrair os preços dos produtos.
+
+## Configuração do config.toml
 - **Gitflow Configuration**: All app settings are defined in `config.toml` (using native `tomllib`), providing distinct `[develop]`, `[staging]`, and `[production]` environments.
 
 ---

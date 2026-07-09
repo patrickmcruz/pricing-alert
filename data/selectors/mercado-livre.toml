@@ -1,0 +1,6 @@
+[v1.price_cash]
+price_container = ".ui-pdp-price__second-line .andes-money-amount__fraction"
+cents_container = ".ui-pdp-price__second-line .andes-money-amount__cents"
+
+[v1.price_installments]
+installment_text = ".ui-pdp-price__subtitles .ui-pdp-color--BLACK"

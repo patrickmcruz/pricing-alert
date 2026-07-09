@@ -2,6 +2,8 @@ import asyncio
 import logging
 from typing import Any
 from playwright.async_api import async_playwright, BrowserContext, Page
+from playwright_stealth import Stealth
+from src.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +17,7 @@ class BrowserFactory:
     async def _init_browser(self):
         if not self.playwright:
             self.playwright = await async_playwright().start()
-            self.browser = await self.playwright.chromium.launch(headless=True)
+            self.browser = await self.playwright.chromium.launch(headless=settings.headless)
 
     async def create(self, scraper: Any) -> Page:
         await self._init_browser()
@@ -24,7 +26,8 @@ class BrowserFactory:
             viewport={'width': 1920, 'height': 1080},
         )
         page = await context.new_page()
-        # Add stealth script if needed
+        # Apply stealth to bypass basic anti-bot detections
+        await Stealth().apply_stealth_async(page)
         return page
 
     async def close(self, page: Page) -> None:

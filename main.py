@@ -10,9 +10,13 @@ from src.core.contract import StoreConfig
 from src.core.browser import BrowserFactory
 from src.core.config import settings
 from src.engine.scheduler import PriceEngine
+from src.engine.discovery import DiscoveryEngine
 from src.repositories.sqlite_repository import SQLitePriceRepository
 from src.scrapers.kabum import KabumScraper
 from src.scrapers.terabyte import TerabyteScraper
+from src.scrapers.mercadolivre import MercadoLivreScraper
+from src.spiders.kabum_spider import KabumSpider
+from src.spiders.terabyte_spider import TerabyteSpider
 
 # Setup basic logging
 logging.basicConfig(
@@ -49,6 +53,25 @@ def load_stores_config() -> list[StoreConfig]:
     return configs
 
 
+async def startup_routine(discovery: DiscoveryEngine, engine: PriceEngine, configs: list[StoreConfig]):
+    """Runs immediately on startup to update graphs for the user."""
+    logger.info("Executing immediate startup routine (Discovery + Scrapers)...")
+    
+    # 1. Run Discovery to find any new URLs
+    await discovery.run_discovery(configs)
+    
+    # 2. Run all scrapers concurrently to fetch prices
+    logger.info("Discovery complete. Running scrapers...")
+    tasks = [engine.run_scraper(scraper) for scraper in engine.scrapers.values()]
+    
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    for res in results:
+        if isinstance(res, Exception):
+            logger.error("A scraper failed during startup: %s", res, exc_info=res)
+    
+    logger.info("Startup routine complete. Initial data populated.")
+
+
 async def main():
     logger.info("Initializing GPU Price Tracker Orchestrator...")
 
@@ -59,18 +82,28 @@ async def main():
     # 2. Initialize Dependency Factories
     client_factory = BrowserFactory()
 
-    # 3. Initialize Scheduler Engine
+    # 3. Initialize Engines
     scheduler = AsyncIOScheduler()
     engine = PriceEngine(
         scheduler=scheduler, repository=repository, client_factory=client_factory
     )
+    discovery = DiscoveryEngine(
+        repository=repository, client_factory=client_factory
+    )
 
-    # 4. Register Concrete Scrapers
+    # 4. Register Concrete Scrapers & Spiders
     engine.register_scrapers(
         [
             KabumScraper(),
             TerabyteScraper(),
-            # Other scrapers will be added here as they are built
+            MercadoLivreScraper(),
+        ]
+    )
+    
+    discovery.register_spiders(
+        [
+            KabumSpider(),
+            TerabyteSpider(),
         ]
     )
 
@@ -81,13 +114,13 @@ async def main():
     # 6. Start Orchestration
     engine.start()
 
+    logger.info("Orchestrator cron schedule started.")
+    
+    # 7. Run initial discovery and scrape
+    await startup_routine(discovery, engine, configs)
+
     logger.info("Orchestrator running. Press Ctrl+C to exit.")
     
-    # Run all registered scrapers immediately once for demonstration/testing
-    logger.info("Triggering an immediate run of all scrapers...")
-    for scraper in engine.scrapers.values():
-        asyncio.create_task(engine.run_scraper(scraper))
-
     # Block the main thread to keep the asyncio event loop alive
     while True:
         await asyncio.sleep(3600)

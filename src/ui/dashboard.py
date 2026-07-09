@@ -49,6 +49,13 @@ def load_data():
             # Remove tzinfo so Streamlit formats it cleanly
             df["scraped_at"] = df["scraped_at"].dt.tz_localize(None)
             
+            # --- VALIDADOR DE DADOS ---
+            # Removemos qualquer registro com preço zero ou negativo, pois distorcem 
+            # os gráficos e os cálculos de "menor preço histórico"
+            df = df[df["price_cash"] > 0]
+            if "price_installments" in df.columns:
+                df = df[(df["price_installments"] > 0) | df["price_installments"].isna()]
+            
             # Create a composite product name for clear differentiation
             df["product_name"] = df.apply(
                 lambda row: f"{row['brand']} {row['model']}" if pd.notna(row.get('brand')) and pd.notna(row.get('model')) else row['search_keyword'].upper(),

@@ -1,0 +1,7 @@
+- `[x]` Insert target URL into SQLite Database
+- `[x]` Fetch raw HTML of Mercado Livre product for test fixtures
+- `[x]` Identify CSS Selectors and create `data/selectors/mercado-livre.toml`
+- `[x]` Implement `src/scrapers/mercadolivre.py`
+- `[x]` Register scraper in `main.py`
+- `[x]` Write and run Pytest tests
+- `[x]` Final Verification

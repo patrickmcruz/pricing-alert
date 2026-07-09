@@ -23,6 +23,12 @@ class AppSettings:
         self.default_stores = self.config_data.get("default_stores", [])
         self.default_brands = self.config_data.get("default_brands", [])
         
+        self.headless = self.config_data.get("headless", True)
+        
+        # Mercado Livre API Credentials (loaded from ENV natively, or config.toml as fallback)
+        self.ml_app_id = os.getenv("APP_ID", self.config_data.get("APP_ID"))
+        self.ml_secret_key = os.getenv("SECRET_KEY", self.config_data.get("SECRET_KEY"))
+        
         self._configure_logging()
         
     def _load_config(self) -> Dict[str, Any]:

@@ -1,6 +1,7 @@
 [develop]
 db_path = "data/prices_dev.db"
 log_level = "DEBUG"
+headless = false
 default_manufacturer = "NVIDIA"
 default_gpus = ["rtx 5070", "rtx 5070 ti"]
 default_stores = []
@@ -9,6 +10,7 @@ default_brands = []
 [staging]
 db_path = "data/prices_staging.db"
 log_level = "INFO"
+headless = false
 default_manufacturer = "NVIDIA"
 default_gpus = ["rtx 5070", "rtx 5070 ti"]
 default_stores = []
@@ -17,6 +19,7 @@ default_brands = []
 [production]
 db_path = "data/prices.db"
 log_level = "WARNING"
+headless = false
 default_manufacturer = "NVIDIA"
 default_gpus = []
 default_stores = []
