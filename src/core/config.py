@@ -18,7 +18,10 @@ class AppSettings:
         self.db_path = os.path.join(PROJECT_ROOT, raw_db_path)
         
         self.log_level = self.config_data.get("log_level", "INFO")
+        self.default_manufacturer = self.config_data.get("default_manufacturer", "NVIDIA")
         self.default_gpus = self.config_data.get("default_gpus", [])
+        self.default_stores = self.config_data.get("default_stores", [])
+        self.default_brands = self.config_data.get("default_brands", [])
         
         self._configure_logging()
         

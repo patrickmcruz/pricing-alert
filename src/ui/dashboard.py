@@ -67,17 +67,54 @@ df = load_data()
 if df.empty:
     st.info(t("no_data_db", lang=lang))
 else:
+    # Global column definitions
+    df["manufacturer"] = df["search_keyword"].apply(
+        lambda k: "NVIDIA" if any(x in str(k).lower() for x in ["rtx", "gtx"]) else ("AMD" if any(x in str(k).lower() for x in ["rx ", "rx-", "radeon"]) else "Outros")
+    )
+
     # Sidebar Filters (Global)
     st.sidebar.header(t("sidebar_filters", lang=lang))
 
+    # 1. Selecionar Lojas
     stores = df["store_name"].unique().tolist()
-    selected_stores = st.sidebar.multiselect(t("select_stores", lang=lang), stores, default=stores, placeholder=t("choose_option", lang=lang))
+    default_stores = [s for s in settings.default_stores if s in stores] if settings.default_stores else stores
+    selected_stores = st.sidebar.multiselect(t("select_stores", lang=lang), stores, default=default_stores, placeholder=t("choose_option", lang=lang))
 
+    # 2. Selecionar Fabricante
+    manufacturers = df["manufacturer"].dropna().unique().tolist()
+    default_mf = [settings.default_manufacturer] if settings.default_manufacturer in manufacturers else manufacturers
+    selected_mfs = st.sidebar.multiselect(t("select_manufacturer", lang=lang), manufacturers, default=default_mf, placeholder=t("choose_option", lang=lang))
+
+    # 3. Selecionar Marcas
     brands = df["brand"].dropna().unique().tolist()
-    selected_brands = st.sidebar.multiselect(t("select_brands", lang=lang), brands, default=brands, placeholder=t("choose_option", lang=lang))
+    default_brands = [b for b in settings.default_brands if b in brands] if settings.default_brands else brands
+    selected_brands = st.sidebar.multiselect(t("select_brands", lang=lang), brands, default=default_brands, placeholder=t("choose_option", lang=lang))
+
+    # 4. Selecionar GPUs
+    # Compute intermediate filtered df for GPU options based on selected manufacturer
+    mf_df = df[df["manufacturer"].isin(selected_mfs)] if selected_mfs else df
+    keyword_min_prices = mf_df.groupby("search_keyword")["price_cash"].min().sort_values()
+    keywords = keyword_min_prices.index.tolist()
+    
+    default_keywords = [k for k in keywords if k in settings.default_gpus]
+    if len(default_keywords) < 2:
+        for k in keywords:
+            if k not in default_keywords:
+                default_keywords.append(k)
+            if len(default_keywords) == 2:
+                break
+                
+    selected_keywords = st.sidebar.multiselect(
+        t("select_gpus", lang=lang), keywords, default=default_keywords, max_selections=2, placeholder=t("choose_option", lang=lang), key="global_keywords"
+    )
+    selected_keywords = sorted(selected_keywords, key=lambda k: keywords.index(k))
 
     # Apply Global Filters
-    global_df = df[df["store_name"].isin(selected_stores)]
+    global_df = df[
+        (df["store_name"].isin(selected_stores)) &
+        (df["manufacturer"].isin(selected_mfs)) &
+        (df["search_keyword"].isin(selected_keywords))
+    ]
     if selected_brands:
         global_df = global_df[global_df["brand"].isin(selected_brands) | global_df["brand"].isna()]
 
@@ -85,15 +122,15 @@ else:
     tab_options = [t("tab_compare", lang=lang), t("tab_overview", lang=lang)]
     
     if hasattr(st, "segmented_control"):
-        if "active_tab" not in st.session_state:
+        # If language changed, the old translated tab string won't be in the new options list.
+        if "active_tab" not in st.session_state or st.session_state.active_tab not in tab_options:
             st.session_state.active_tab = tab_options[0]
             
         active_tab = st.segmented_control(
             "Navegação",
             options=tab_options,
             label_visibility="collapsed",
-            key="active_tab",
-            default=st.session_state.active_tab
+            key="active_tab"
         )
         if not active_tab: # if user unselects
             active_tab = tab_options[0]
@@ -109,18 +146,8 @@ else:
         if global_df.empty:
             st.warning(t("no_data_filters", lang=lang))
         else:
-            # Keyword Filter (Local to Compare Tab)
-            keyword_min_prices = global_df.groupby("search_keyword")["price_cash"].min().sort_values()
-            keywords = keyword_min_prices.index.tolist()
-            
-            default_keywords = [k for k in keywords if k in settings.default_gpus]
-            
-            selected_keywords = st.multiselect(
-                t("select_gpus", lang=lang), keywords, default=default_keywords, max_selections=2, placeholder=t("choose_option", lang=lang), key="compare_keywords"
-            )
-            selected_keywords = sorted(selected_keywords, key=lambda k: keywords.index(k))
-
-            filtered_df = global_df[global_df["search_keyword"].isin(selected_keywords)].copy()
+            # global_df is already filtered by selected_keywords from the sidebar
+            filtered_df = global_df.copy()
             
             if filtered_df.empty:
                 st.warning(t("no_data_filters", lang=lang))
@@ -338,21 +365,34 @@ else:
                                     col4.metric(t("best_inst", lang=lang), t("na", lang=lang))
                     
                                 # Detailed line chart for the selected product
+                                lbl_cash = t("label_cash", lang=lang)
+                                lbl_inst = t("label_inst", lang=lang)
+                                lbl_spread = t("label_spread", lang=lang)
+                                
+                                plot_df = product_df.copy()
+                                plot_df[lbl_cash] = plot_df["price_cash"]
+                                plot_df[lbl_inst] = plot_df["price_installments"]
+                                plot_df[lbl_spread] = plot_df["price_installments"] - plot_df["price_cash"]
+                                
                                 detail_fig = px.line(
-                                    product_df,
+                                    plot_df,
                                     x="scraped_at",
-                                    y="price_cash",
-                                    color="store_name",
+                                    y=[lbl_cash, lbl_inst],
                                     title=t("price_history_title", lang=lang, keyword=""),
                                     markers=True,
-                                    hover_data=["search_keyword", "price_installments", "product_title"]
+                                    color_discrete_sequence=["#1f77b4", "#ff7f0e"]
                                 )
                                 detail_fig.update_traces(
-                                    hovertemplate="<b>"+selected_product+"</b><br>Price: R$ %{y:,.2f}<br>Store: %{customdata[0]}<br>Date: %{x}<extra></extra>",
-                                    customdata=product_df[["store_name"]].values
+                                    hovertemplate="<b>%{data.name}</b>: R$ %{y:,.2f}<extra></extra>"
                                 )
                                 # Adjust layout for narrow columns
-                                detail_fig.update_layout(margin=dict(l=10, r=10, t=30, b=10))
+                                detail_fig.update_layout(
+                                    margin=dict(l=10, r=10, t=30, b=10),
+                                    yaxis_title=t("yaxis_price", lang=lang),
+                                    legend_title="",
+                                    legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
+                                    hovermode="x unified" # Shows all labels when hovering vertically
+                                )
                                 detail_fig.update_xaxes(
                                     title_text="",
                                     tickformatstops=[
@@ -362,6 +402,31 @@ else:
                                     ]
                                 )
                                 st.plotly_chart(detail_fig, width='stretch')
+
+                                # Spread / Tax Chart
+                                spread_fig = px.bar(
+                                    plot_df,
+                                    x="scraped_at",
+                                    y=lbl_spread,
+                                    title=f"💸 {lbl_spread}",
+                                    color=lbl_spread,
+                                    color_continuous_scale="RdYlGn_r", # High cost is red, low cost is green
+                                    text=lbl_spread
+                                )
+                                spread_fig.update_layout(
+                                    margin=dict(l=10, r=10, t=30, b=10),
+                                    yaxis_title=t("yaxis_tax", lang=lang),
+                                    xaxis_title="",
+                                    coloraxis_showscale=False, # Hide the color bar legend
+                                    hovermode="x unified"
+                                )
+                                hover_tax_lbl = t("hover_tax", lang=lang)
+                                spread_fig.update_traces(
+                                    texttemplate='R$ %{text:,.2f}',
+                                    textposition='outside',
+                                    hovertemplate=f"<b>{hover_tax_lbl}</b>: R$ %{{y:,.2f}}<extra></extra>"
+                                )
+                                st.plotly_chart(spread_fig, width='stretch')
 
     elif active_tab == tab_options[1]:
         st.subheader(t("raw_data", lang=lang))

@@ -5,6 +5,7 @@
   "select_gpus": "Selecionar GPUs",
   "select_stores": "Selecionar Lojas",
   "select_brands": "Selecionar Marcas",
+  "select_manufacturer": "Selecionar Fabricante",
   "no_data_db": "Nenhum dado de preço encontrado no banco de dados. Certifique-se de que o orquestrador está em execução.",
   "no_data_filters": "Nenhum dado corresponde aos filtros selecionados.",
   "market_overview": "🌐 Visão Geral do Mercado",
@@ -47,5 +48,11 @@
   "price_history_compare": "Menor Preço Histórico: Comparativo",
   "btn_prev": "⬅️ Anterior",
   "btn_next": "Próximo ➡️",
-  "page_info": "Página {page} de {total} ({items} itens)"
+  "page_info": "Página {page} de {total} ({items} itens)",
+  "label_cash": "À Vista",
+  "label_inst": "Parcelado",
+  "label_spread": "Custo do Parcelamento",
+  "yaxis_price": "Preço (R$)",
+  "yaxis_tax": "Taxa / Juros (R$)",
+  "hover_tax": "Spread / Juros"
 }
