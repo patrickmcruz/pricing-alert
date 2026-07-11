@@ -19,9 +19,9 @@ default_brands = []
 [production]
 db_path = "data/prices.db"
 log_level = "WARNING"
-headless = false
+headless = true
 default_manufacturer = "NVIDIA"
-default_gpus = []
+default_gpus = ["rtx 5070", "rtx 5070 ti"]
 default_stores = []
 default_brands = []
 

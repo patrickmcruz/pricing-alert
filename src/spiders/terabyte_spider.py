@@ -25,14 +25,18 @@ class TerabyteSpider(BaseSpider):
     def parse_search_grid(self, document: str, keyword: str) -> List[ProductSKU]:
         soup = BeautifulSoup(document, "lxml")
         skus = []
-        cards = soup.find_all("div", class_="pbox")
+        cards = soup.find_all("a", class_="tss-result-card")
         for card in cards:
-            link_elem = card.find("a")
-            if not link_elem or not link_elem.get("href"):
+            if not card or not card.get("href"):
                 continue
-            url = str(link_elem.get("href"))
             
-            title_elem = card.find(class_="prod-name")
+            raw_url = str(card.get("href"))
+            if raw_url.startswith("/"):
+                url = f"{self.base_url}{raw_url}"
+            else:
+                url = raw_url
+            
+            title_elem = card.find(class_="tss-result-title") or card.find(class_="prod-name")
             title = title_elem.text.strip() if title_elem else "Unknown"
             
             # Simple brand/model heuristic
