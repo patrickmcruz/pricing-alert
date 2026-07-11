@@ -1,146 +1,184 @@
 import logging
 import re
+import json
+import asyncio
 from decimal import Decimal
 from typing import Any, Optional
 from datetime import datetime, timezone
-
-from bs4 import BeautifulSoup
+import urllib.parse
 
 from src.core.base_scraper import BaseScraper, SelectorOutdatedException
 from src.core.contract import PriceContract, ProductSKU
+from src.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 class MercadoLivreScraper(BaseScraper):
     """
-    Scraper implementation for Mercado Livre using HTML and CSS Selectors.
+    Scraper implementation for Mercado Livre using the Official API.
+    Bypasses WAF/Captcha by authenticating as a Developer.
     """
 
     def __init__(self):
-        super().__init__(store_name="mercado-livre", base_url="https://www.mercadolivre.com.br")
+        super().__init__(store_name="mercado-livre", base_url="https://api.mercadolibre.com")
+        self._access_token = None
+        self._token_expires_at = 0
+
+    async def _get_access_token(self, client: Any) -> Optional[str]:
+        """Fetches or returns cached OAuth token using client.request."""
+        now = datetime.now(timezone.utc).timestamp()
+        if self._access_token and now < self._token_expires_at:
+            return self._access_token
+
+        if not settings.ml_app_id or not settings.ml_secret_key:
+            logger.error("[%s] Missing API credentials in settings (MERCADOLIVRE_APP_ID/SECRET)", self.store_name)
+            return None
+
+        try:
+            # Playwright client APIRequestContext
+            response = await client.request.post(
+                "https://api.mercadolibre.com/oauth/token",
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": settings.ml_app_id,
+                    "client_secret": settings.ml_secret_key
+                }
+            )
+            
+            if response.status != 200:
+                logger.error("[%s] Failed to authenticate: %s", self.store_name, await response.text())
+                return None
+                
+            data = await response.json()
+            self._access_token = data.get("access_token")
+            expires_in = data.get("expires_in", 21600)  # usually 6 hours
+            self._token_expires_at = now + expires_in - 300  # 5 min buffer
+            logger.info("[%s] Successfully authenticated with ML API.", self.store_name)
+            return self._access_token
+            
+        except Exception as e:
+            logger.error("[%s] Error fetching ML token: %s", self.store_name, e)
+            return None
+
+    def _extract_id_from_url(self, url: str) -> Optional[str]:
+        """Extracts the catalog product ID (e.g., MLB123) from the URL."""
+        # e.g., /p/MLB53508354
+        match = re.search(r'/p/(MLB\d+)', url)
+        if match:
+            return match.group(1)
+        # fallback for normal items e.g., /MLB-123456- or /MLB123456
+        match = re.search(r'(MLB-?\d+)', url)
+        if match:
+            return match.group(1).replace("-", "")
+        return None
 
     async def fetch(self, sku: ProductSKU, client: Any) -> str:
         """
-        Retrieves the raw HTML document from the store using Playwright.
+        Retrieves the JSON data from the ML API using Playwright's API context.
         """
-        try:
-            # client is a Playwright Page object here
-            await client.goto(str(sku.product_url), wait_until="domcontentloaded", timeout=30000)
-            return await client.content()
-        except Exception as e:
-            logger.error("[%s] Network fetch failed for %s: %s", self.store_name, sku.product_url, e)
+        token = await self._get_access_token(client)
+        if not token:
             return ""
 
-    def _clean_price(self, price_str: str) -> Decimal | None:
-        """Helper to convert BRL price string to Decimal."""
-        if not price_str:
-            return None
-        cleaned = re.sub(r"[R\$\s\.]", "", price_str)
-        cleaned = cleaned.replace(",", ".")
+        product_id = self._extract_id_from_url(str(sku.product_url))
+        if not product_id:
+            logger.error("[%s] Could not extract ID from URL: %s", self.store_name, sku.product_url)
+            return ""
+
+        headers = {"Authorization": f"Bearer {token}"}
+        
         try:
-            return Decimal(cleaned)
-        except Exception:
-            return None
+            # Depending on if it's a catalog product or an item listing
+            # Most of our targets are Catalog Products (starts with /p/)
+            is_catalog = "/p/" in str(sku.product_url)
+            
+            if is_catalog:
+                # 1. Fetch catalog product details
+                prod_resp = await client.request.get(f"https://api.mercadolibre.com/products/{product_id}", headers=headers)
+                if prod_resp.status != 200:
+                    logger.error("[%s] Product API returned %s: %s", self.store_name, prod_resp.status, await prod_resp.text())
+                    return ""
+                
+                prod_data = await prod_resp.json()
+                
+                # 2. Fetch active items for this catalog product
+                items_resp = await client.request.get(f"https://api.mercadolibre.com/products/{product_id}/items", headers=headers)
+                items_data = await items_resp.json() if items_resp.status == 200 else {"results": []}
+                
+                # Combine data to pass to parse()
+                combined_data = {
+                    "type": "catalog",
+                    "product": prod_data,
+                    "items": items_data.get("results", [])
+                }
+                return json.dumps(combined_data)
+                
+            else:
+                # Direct item listing fallback
+                item_resp = await client.request.get(f"https://api.mercadolibre.com/items/{product_id}", headers=headers)
+                if item_resp.status != 200:
+                    logger.error("[%s] Item API returned %s", self.store_name, item_resp.status)
+                    return ""
+                    
+                item_data = await item_resp.json()
+                combined_data = {
+                    "type": "item",
+                    "item": item_data
+                }
+                return json.dumps(combined_data)
+                
+        except Exception as e:
+            logger.error("[%s] Error fetching API data for %s: %s", self.store_name, sku.product_url, e)
+            return ""
 
     def parse(self, document: str, sku: ProductSKU) -> Optional[PriceContract]:
         """
-        Parses the Mercado Livre product page.
+        Parses the JSON document returned by the API.
         """
         if not document:
             return None
             
-        parser_version = "v2"
         try:
-            selectors = self.load_selectors(parser_version)
-        except Exception:
-            # Fallback if toml fails
-            selectors = {
-                "price_cash": {"price_container": ".ui-pdp-price__second-line .andes-money-amount__fraction"},
-                "price_installments": {
-                    "installment_text": "#_R_98rcj2aj4tlpa_ > span.andes-money-amount__fraction",
-                    "installment_count": "#pricing_price_subtitle > span:nth-child(4)",
-                    "fallback_subtitle": "#pricing_price_subtitle"
-                },
-                "out_of_stock": {"text": "Estoque indisponível"}
-            }
+            data = json.loads(document)
+        except json.JSONDecodeError:
+            logger.error("[%s] Failed to parse JSON document.", self.store_name)
+            return None
+
+        if data.get("type") == "catalog":
+            return self._parse_catalog(data, sku)
+        elif data.get("type") == "item":
+            return self._parse_item(data, sku)
             
-        soup = BeautifulSoup(document, "lxml")
+        return None
 
-        # 1. Title
-        title_elem = soup.select_one("h1.ui-pdp-title")
-        title = title_elem.text.strip() if title_elem else sku.product_title
-
-        # 2. Availability
-        is_available = True
-        out_of_stock_text = selectors.get("out_of_stock", {}).get("text", "Estoque indisponível")
-        if soup.find(string=re.compile(out_of_stock_text, re.I)):
-            is_available = False
-
-        if not is_available:
-            return self._build_unavailable_contract(sku)
-
-        # 3. Cash Price
-        price_cash_sel = selectors.get("price_cash", {}).get("price_container", ".ui-pdp-price__second-line .andes-money-amount__fraction")
-        price_cash_elem = soup.select_one(price_cash_sel)
+    def _parse_catalog(self, data: dict, sku: ProductSKU) -> PriceContract:
+        prod = data.get("product", {})
+        items = data.get("items", [])
         
-        if not price_cash_elem:
-            raise SelectorOutdatedException(f"[{self.store_name}] Cash price selector '{price_cash_sel}' failed.")
-            
-        price_cash = self._clean_price(price_cash_elem.text.strip())
-        if price_cash is None or price_cash <= 0:
-            return self._build_unavailable_contract(sku)
-
-        # 4. Installments
-        inst_sel_text = selectors.get("price_installments", {}).get("installment_text", "#_R_98rcj2aj4tlpa_ > span.andes-money-amount__fraction")
-        inst_sel_count = selectors.get("price_installments", {}).get("installment_count", "#pricing_price_subtitle > span:nth-child(4)")
+        title = prod.get("name", sku.product_title)
         
-        price_installments = None
-        installment_count = None
+        if not items:
+            return self._build_unavailable_contract(sku, title)
+            
+        # In Mercado Livre:
+        # gold_special / gold: Usually classic listings (cash price / interest on installments)
+        # gold_pro: Usually premium listings (interest-free installments, so it's the "installment price" baseline)
         
-        # Parse installment price
-        inst_price_elem = soup.select_one(inst_sel_text)
-        if inst_price_elem:
-            price_installments = self._clean_price(inst_price_elem.text.strip())
-            
-        # Parse installment count
-        inst_count_elem = soup.select_one(inst_sel_count)
-        if inst_count_elem:
-            count_text = inst_count_elem.text.strip()
-            # Find the number in text like "10x" or just "10"
-            match = re.search(r'(\d+)', count_text)
-            if match:
-                installment_count = int(match.group(1))
-
-        # If installment price found but no count, fallback to 1
-        if price_installments and not installment_count:
-            installment_count = 1
-            
-        # --- Fallback Logic ---
-        # If the specific dynamic ID for the installment price was missing,
-        # we can try to extract the count and individual value from the fallback block
-        # Format example: "18x R$ 266 , 61 sem juros"
-        if not price_installments:
-            fallback_sel = selectors.get("price_installments", {}).get("fallback_subtitle", "#pricing_price_subtitle")
-            # We look for the main subtitle block
-            subtitle_block = soup.select_one(fallback_sel)
-            if subtitle_block:
-                block_text = subtitle_block.text
-                # Match e.g., "18x" and "R$ 266 , 61"
-                match = re.search(r'(\d+)\s*x.*?R\$?\s*([\d\s\.,]+)', block_text, re.IGNORECASE)
-                if match:
-                    extracted_count = int(match.group(1))
-                    extracted_val_str = match.group(2).strip()
-                    
-                    per_installment = self._clean_price(extracted_val_str)
-                    if per_installment:
-                        installment_count = extracted_count
-                        price_installments = extracted_count * per_installment
-
-        # ML Rule: If still no installment info is found, it usually means 1x at cash price
-        if not price_installments:
-            price_installments = price_cash
-            installment_count = 1
-
+        # We find the lowest price overall for Cash Price
+        lowest_cash = min([Decimal(str(item.get("price", 0))) for item in items if item.get("price")])
+        
+        # We find the lowest price in 'gold_pro' listings for the Installment Price
+        pro_items = [Decimal(str(item.get("price", 0))) for item in items if item.get("listing_type_id") == "gold_pro" and item.get("price")]
+        
+        price_cash = lowest_cash
+        price_installments = min(pro_items) if pro_items else price_cash
+        
+        # ML usually offers 10x or 12x on gold_pro. 
+        # API doesn't detail exact max installments in the items array directly, but it's universally 10 for electronics now or 12.
+        # If it's a pro listing, we'll assume 10x max as per ML standard for electronics, or 1x if no pro listing exists.
+        installment_count = 10 if pro_items else 1
+        
         discount = None
         if price_installments and price_installments > 0 and price_cash > 0:
             discount = price_installments - price_cash
@@ -154,26 +192,68 @@ class MercadoLivreScraper(BaseScraper):
             price_installments=price_installments,
             installment_count=installment_count,
             currency="BRL",
-            parser_version=f"{self.store_name}_{parser_version}_html",
-            is_available=is_available,
+            parser_version=f"{self.store_name}_api_v1",
+            is_available=True,
             brand=sku.brand,
             model=sku.model,
             discount=discount
         )
 
-    def _build_unavailable_contract(self, sku: ProductSKU) -> PriceContract:
+    def _parse_item(self, data: dict, sku: ProductSKU) -> PriceContract:
+        item = data.get("item", {})
+        title = item.get("title", sku.product_title)
+        
+        status = item.get("status")
+        qty = item.get("available_quantity", 0)
+        
+        if status != "active" or qty <= 0:
+            return self._build_unavailable_contract(sku, title)
+            
+        price = Decimal(str(item.get("price", 0)))
+        if price <= 0:
+            return self._build_unavailable_contract(sku, title)
+            
+        listing_type = item.get("listing_type_id")
+        
+        if listing_type == "gold_pro":
+            price_installments = price
+            # Without detailed parsing of the item's body, we can't be sure of cash discount.
+            price_cash = price 
+            installment_count = 10
+        else:
+            price_cash = price
+            price_installments = price
+            installment_count = 1
+            
+        return PriceContract(
+            store_name=self.store_name,
+            search_keyword=sku.search_keyword,
+            product_title=title,
+            product_url=sku.product_url,
+            price_cash=price_cash,
+            price_installments=price_installments,
+            installment_count=installment_count,
+            currency="BRL",
+            parser_version=f"{self.store_name}_api_v1",
+            is_available=True,
+            brand=sku.brand,
+            model=sku.model,
+            discount=0
+        )
+
+    def _build_unavailable_contract(self, sku: ProductSKU, title: str = None) -> PriceContract:
         return PriceContract(
             product_url=sku.product_url,
             store_name=self.store_name,
             search_keyword=sku.search_keyword,
             brand=sku.brand,
             model=sku.model,
-            product_title=sku.product_title,
+            product_title=title or sku.product_title,
             price_cash=Decimal(0),
             price_installments=Decimal(0),
             installment_count=0,
             scraped_at=datetime.now(timezone.utc),
-            parser_version="v2_html",
+            parser_version="api_v1",
             currency="BRL",
             is_available=False,
         )

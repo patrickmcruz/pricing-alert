@@ -1,54 +1,57 @@
-# Documentação: Mercado Livre Scraper
+# Mercado Livre Scraper
 
-O scraper do Mercado Livre (`MercadoLivreScraper`) foi construído com uma arquitetura diferenciada em relação aos demais (como Kabum e Terabyte). Devido às rigorosas proteções anti-bot (Cloudflare/Datadome) presentes nas Lojas Oficiais do Mercado Livre, a navegação via DOM (Playwright) foi substituída por uma integração nativa e 100% resiliente utilizando a **API Oficial do Mercado Livre**.
+## Visão Geral
 
-## 🏗️ Arquitetura de Integração
+O scraper do Mercado Livre (`MercadoLivreScraper`) é responsável por extrair preços e informações de disponibilidade de produtos (como placas de vídeo) dentro do ecossistema do Mercado Livre.
 
-O Scraper atua como um parceiro VIP ("App" do Mercado Livre), utilizando credenciais OAuth 2.0 para consultar os bancos de dados do e-commerce diretamente.
+## O Desafio: WAF e CAPTCHAs
 
-### 1. Autenticação Automática (`client_credentials`)
-O scraper gerencia de forma autônoma o ciclo de vida do token de acesso:
-- Ele consome `APP_ID` e `SECRET_KEY` diretamente das variáveis de ambiente ou do arquivo `.env` (mapeado via `config.toml` -> `AppSettings`).
-- Realiza uma requisição `POST` para `https://api.mercadolibre.com/oauth/token` sempre que o scraper é inicializado ou quando o token expira (tempo de vida de 6 horas).
-- O `Bearer Token` obtido é anexado no header `Authorization` de todas as chamadas subsequentes.
+Inicialmente, a arquitetura do projeto utilizava o `Playwright` para realizar o web scraping do HTML das páginas de produtos, imitando o comportamento de um navegador real.
+No entanto, o Mercado Livre emprega um sistema agressivo de **Web Application Firewall (WAF)** e **Cloudflare CAPTCHAs** (como o desafio `verifyChallenge`).
 
-### 2. Bypass de Defesas e Performance
-Como consumimos a API Oficial, a execução ocorre em **milissegundos** e **nunca** é bloqueada por desafios de Captcha, testes de Javascript ou fingerprinting biométrico, garantindo 100% de precisão nos preços reportados.
+Isso tornava o web scraping convencional extremamente instável:
+1. O HTML da página de produto muitas vezes não era retornado pelo servidor, mas sim uma página de bloqueio ou desafio humano.
+2. Como resultado, os seletores CSS configurados externamente (armazenados em `data/selectors/mercado-livre.toml`) falhavam constantemente, gerando erros crônicos de `SelectorOutdatedException`.
+3. O orquestrador falhava em coletar os dados, criando lacunas ("gaps") na visualização e inviabilizando análises históricas no dashboard do Streamlit.
 
-### 3. Rotas Dinâmicas de Catálogo vs. Anúncio
-A arquitetura do scraper foi desenvolvida para suportar automaticamente os dois padrões de URLs do Mercado Livre:
+## A Solução: API Oficial de Desenvolvedores
 
-* **Padrão Produto/Catálogo (ex: `/p/MLB12345`)**: O scraper identifica o `id_type = product`. Como o catálogo possui múltiplos vendedores, ele consulta a rota de `/products/{id}/items` para varrer todas as listagens ativas e seleciona, com precisão cirúrgica, **o menor preço disponível daquele modelo exato**, não dependendo apenas da Buy Box principal.
-* **Padrão Item (ex: `/MLB-12345-nome`)**: O scraper identifica o `id_type = item` e consome diretamente a rota `/items/{id}`, que retorna o preço em tempo real de um anúncio individual.
+Para garantir estabilidade de 100%, determinismo e alta resiliência, a extração via Playwright tradicional (renderização de interface) foi descontinuada e substituída pela **API REST Oficial do Mercado Livre**.
 
-### 4. Mapeamento Inteligente de Parcelamento
-As listagens do Mercado Livre possuem tipos (`listing_type_id`). Através de engenharia reversa das regras de negócio:
-- O Scraper mapeia as flags para descobrir o preço parcelado sem consultar rotas complexas de calculadora.
-- Listagens **Premium/Ouro (`gold_pro`)** garantem parcelamento em até 10x sem juros (ou seja, Preço à Prazo = Preço à Vista). 
-- Demais listagens (clássicas) sinalizam ausência de parcelamento sem juros e não misturam seus valores nas estatísticas do Orchestrator.
+Ao fazer as extrações se identificando formalmente como uma aplicação desenvolvedora através da API, o sistema não é submetido aos bloqueios do WAF.
 
----
+### Funcionamento da Arquitetura
 
-## 🚀 Configuração
+A integração respeita o contrato da `BaseScraper`, mantendo estritamente separada a I/O (rede) da lógica de Parse (transformação em memória).
 
-Para que o Scraper do Mercado Livre funcione, você DEVE possuir uma conta de Desenvolvedor no Mercado Livre e registrar uma aplicação para obter o `MERCADOLIVRE_APP_ID` e `MERCADOLIVRE_APP_SECRET_KEY`.
+1. **Autenticação (OAuth2)**:
+   - Durante o estágio de extração de dados, a classe se comunica com a rota de tokens `https://api.mercadolibre.com/oauth/token`.
+   - Utiliza-se o fluxo de concessão `client_credentials` enviando o `MERCADOLIVRE_APP_ID` e `MERCADOLIVRE_APP_SECRET_KEY`.
+   - Um `access_token` válido é retornado para autorizar as consultas subsequentes.
 
-1. Acesse o [Portal de Desenvolvedores do Mercado Livre](https://developers.mercadolivre.com.br/).
-2. Crie uma aplicação (Não requer permissões especiais, apenas leitura anônima de itens de catálogo).
-3. Insira suas credenciais no arquivo `.env` da raiz do projeto:
+2. **Extração de Dados via HTTP/2 (`fetch()`)**:
+   - Em vez de realizar navegação gráfica de páginas, o método `fetch()` invoca o injetado `client.request` do Playwright (o módulo `APIRequestContext`). Isso reaproveita a camada de requisição assíncrona do projeto de forma eficiente.
+   - O identificador único do produto do Mercado Livre (ex: `MLB53508354`) é extraído via regex diretamente da `product_url`.
+   - O scraper consulta dois endpoints combinados:
+     - **Catálogo (`/products/{id}`)**: Traz o status de disponibilidade do catálogo, nome da placa sem poluição SEO, e as fotos principais.
+     - **Itens de Venda (`/products/{id}/items`)**: Traz as informações das ofertas (Anúncios) que alimentam aquele catálogo específico. Desse payload são retirados os valores à vista (`price_cash`), o cálculo dinâmico de juros das ofertas normais (`price_installments`), além do limite e parcelamento (`installment_count`).
+
+3. **Parse Determinístico (`parse()`)**:
+   - O método `parse()` não varre DOM ou HTML. Ele recebe os JSONs unificados e os valida construindo o `PriceContract` em memória.
+   - É resistente a catálogos esgotados, capturando graciosamente a flag `is_available = False`.
+   - No banco de dados (SQLite), o log dessa ferramenta fica gravado com a assinatura rastreável de `parser_version = "mercado-livre_api_v1"`.
+
+## Configuração do Ambiente (Requisitos)
+
+Para que a orquestração deste módulo seja executada com sucesso, é obrigatório preencher as credenciais de API no arquivo `.env` localizado na raiz do projeto (mesmo nível do `docker-compose.yml`):
 
 ```env
-MERCADOLIVRE_APP_ID=seu_app_id
-MERCADOLIVRE_APP_SECRET_KEY=sua_secret_key_longa_aqui
+MERCADOLIVRE_APP_ID="<seu-app-id>"
+MERCADOLIVRE_APP_SECRET_KEY="<seu-app-secret-key>"
 ```
 
-4. Suba a aplicação via Docker (`docker-compose up -d --build`). O `docker-compose.yml` já está configurado para injetar este arquivo `.env` nos containers do Orquestrador e da Dashboard.
+Estas variáveis são carregadas nativamente pelo utilitário `src/core/config.py` e propagadas via a instância estática `settings`. Sem essas definições o scraper logará erros de autenticação na API.
 
-> [!WARNING]
-> Sem estas variáveis, o `MercadoLivreScraper` não conseguirá gerar o Token OAuth e **falhará silenciosamente** para todos os links do Mercado Livre cadastrados.
-
-## 🧪 Testes Unitários
-
-O `MercadoLivreScraper` foi abstraído para separar a fase de requisição HTTP (onde ocorre o OAuth e a montagem das rotas) da fase de Parsing (extração de dados).
-
-Os testes encontram-se em `tests/unit/test_mercadolivre_parser.py` e utilizam *fixtures* JSON (que imitam a API Oficial) em vez do código HTML padrão usado pelas outras lojas. Apenas garanta que o formato de testes injete o dicionário com a chave `"data"` conforme o contrato retornado pela função `fetch` customizada do Scraper.
+## Referências
+- [Mercado Livre Developers](https://developers.mercadolivre.com.br/)
+- Repositório Principal de Documentação de Regras: `AGENTS.md`

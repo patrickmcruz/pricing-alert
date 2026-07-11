@@ -87,3 +87,43 @@ The project adheres to a strict Testing Pyramid:
 * **Integration Tests:** Use mocked HTTP responses (`respx`), mocked browser contexts, and temporary in-memory SQLite databases to test the Engine and Repositories.
 * **Quality Gates:** Code must pass `mypy`, `black`, and `ruff` before acceptance. Smoke tests (hitting real URLs) must be isolated and never run automatically in CI/CD.
 * **Agent Mandate:** Before delivering any task or marking it as successfully complete, the agent MUST run the full test suite (`pytest`) and verify that all tests pass. If tests fail, the agent must fix the broken code or tests before concluding its turn.
+
+## 8. Agent Operations & Validated Commands
+
+To prevent repeated trial-and-error when interacting with the Docker environment and Windows host, agents MUST strictly adhere to the following validated command patterns:
+
+### 8.1 Testing Code Inside the Orchestrator Container
+The orchestrator relies on Playwright, which requires an X11 server to run headed browsers. If you run `python` directly via `docker exec`, it will crash with a `TargetClosedError` due to a missing `$DISPLAY`.
+**Always use `xvfb-run`:**
+```bash
+docker exec pricing_orchestrator xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" python <script.py>
+```
+
+### 8.2 Rebuilding the Orchestrator
+Source files (`/src`) are **copied** into the orchestrator image during build, not mounted via volumes (only `/data` and `config.toml` are mounted). If you modify any `.py` file, you MUST rebuild the container for the changes to take effect:
+```bash
+docker-compose up -d --build orchestrator
+```
+
+### 8.3 Reading Docker Logs on Windows
+In PowerShell, standard Unix commands like `tail` or `grep` might fail. The orchestrator's stdout is swallowed by `xvfb-run`, meaning `docker logs pricing_orchestrator` will be empty.
+**To read logs, parse the file directly via PowerShell:**
+```powershell
+# Tail logs:
+Get-Content data/orchestrator.log -Tail 100
+
+# Grep logs:
+Select-String -Path data/orchestrator.log -Pattern "keyword"
+```
+
+### 8.4 Querying SQLite Directly
+The `sqlite3` CLI is not installed inside the `python:3.11-slim` container by default. Instead of trying to install it or running `docker exec sqlite3`, query the database locally from the host using Python (since `data/` is volume-mapped):
+```powershell
+python -c "
+import sqlite3
+conn = sqlite3.connect('data/prices.db')
+conn.row_factory = sqlite3.Row
+rows = conn.execute('SELECT * FROM prices LIMIT 5;').fetchall()
+for row in rows: print(dict(row))
+"
+```
