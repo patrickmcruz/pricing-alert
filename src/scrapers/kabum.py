@@ -75,11 +75,6 @@ class KabumScraper(BaseScraper):
         if soup.find(string=re.compile(selectors["out_of_stock"], re.I)):
             is_available = False
 
-        # Calculate discount if applicable
-        discount = None
-        if price_installments and price_installments > 0 and price_cash > 0:
-            discount = price_installments - price_cash
-
         # Extract installment count if selector is present
         installment_count = None
         if "installment_count" in selectors:
@@ -95,6 +90,16 @@ class KabumScraper(BaseScraper):
                         installment_count = int(match.group(1))
             except Exception as e:
                 logger.warning("[%s] Failed to extract installment_count: %s", self.store_name, e)
+
+        # Fix installment total if only installment value was extracted
+        if price_installments and price_cash and installment_count:
+            if price_installments < price_cash:
+                price_installments = price_installments * installment_count
+
+        # Calculate discount if applicable
+        discount = None
+        if price_installments and price_installments > 0 and price_cash > 0:
+            discount = price_installments - price_cash
 
         return PriceContract(
             store_name=self.store_name,

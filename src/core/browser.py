@@ -22,17 +22,37 @@ class BrowserFactory:
                     self.playwright = await async_playwright().start()
                 self.browser = await self.playwright.chromium.launch(
                     headless=settings.headless,
-                    args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+                    args=[
+                        "--no-sandbox",
+                        "--disable-setuid-sandbox",
+                        "--disable-dev-shm-usage",
+                        "--disable-blink-features=AutomationControlled",
+                        "--disable-infobars",
+                        "--start-maximized"
+                    ]
                 )
 
     async def create(self, scraper: Any) -> Page:
         await self._init_browser()
         context = await self.browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
             viewport={'width': 1920, 'height': 1080},
+            locale="pt-BR",
+            timezone_id="America/Sao_Paulo",
+            permissions=["geolocation"],
         )
+        
+        # Inject standard webdriver evasion
+        await context.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined
+            });
+            window.chrome = {
+                runtime: {}
+            };
+        """)
+
         page = await context.new_page()
-        # Apply stealth to bypass basic anti-bot detections
         await Stealth().apply_stealth_async(page)
         return page
 

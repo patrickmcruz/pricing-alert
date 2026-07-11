@@ -14,9 +14,11 @@ class TerabyteSpider(BaseSpider):
 
     async def fetch_search_page(self, keyword: str, client: Any) -> str:
         from urllib.parse import quote_plus
+        from src.core.utils import simulate_human_interaction
         search_url = f"{self.base_url}/busca?str={quote_plus(keyword)}"
         try:
-            await client.goto(search_url, wait_until="networkidle", timeout=30000)
+            await client.goto(search_url, wait_until="domcontentloaded", timeout=45000)
+            await simulate_human_interaction(client)
             return await client.content()
         except Exception as e:
             logger.error("[%s] Network fetch failed for search keyword '%s': %s", self.store_name, keyword, e)

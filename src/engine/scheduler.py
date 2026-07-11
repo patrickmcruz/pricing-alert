@@ -67,13 +67,17 @@ class PriceEngine:
 
             for sku in skus:
                 try:
+                    logger.info("Scraping %s...", sku.product_url)
                     price = await scraper.execute(
                         sku,
                         client,
                     )
 
                     if price:
+                        logger.info("Extracted price for %s: %s (Available: %s)", sku.product_url, price.price_cash, price.is_available)
                         await self.repository.save_prices([price])
+                    else:
+                        logger.warning("No price extracted for %s", sku.product_url)
                 except SelectorOutdatedException as e:
                     logger.critical(
                         "SelectorOutdatedException caught for %s on SKU '%s': %s",

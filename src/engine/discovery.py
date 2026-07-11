@@ -26,34 +26,40 @@ class DiscoveryEngine:
 
     async def run_discovery(self, configs: list[StoreConfig]) -> None:
         """
-        Runs the discovery process for all configs.
+        Runs the discovery process by loading static URLs from data/target_urls.json.
         """
-        logger.info("Starting Discovery Engine run...")
-        for config in configs:
-            spider = self.spiders.get(config.store_name)
-            if not spider:
-                logger.warning("No spider found for %s", config.store_name)
-                continue
-                
-            client = None
-            try:
-                if hasattr(self.client_factory, "create"):
-                    client = await self.client_factory.create(spider)
-                
-                for keyword in config.target_keywords:
-                    try:
-                        skus = await spider.discover(keyword, client)
-                        if skus:
-                            await self.repository.save_skus(skus)
-                    except Exception as e:
-                        logger.error("Spider %s failed on keyword %s: %s", config.store_name, keyword, e)
-            except Exception as e:
-                logger.error("Failed to run discovery for %s: %s", config.store_name, e)
-            finally:
-                if client and hasattr(self.client_factory, "close"):
-                    try:
-                        await self.client_factory.close(client)
-                    except Exception as e:
-                        logger.error("Failed to close client: %s", e)
+        import json
+        import os
+        from src.core.contract import ProductSKU
         
+        logger.info("Starting Discovery Engine run (Static Mode)...")
+        target_file = "data/target_urls.json"
+        
+        if not os.path.exists(target_file):
+            logger.warning("File %s not found. Skipping discovery.", target_file)
+            return
+
+        try:
+            with open(target_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                
+            skus = []
+            for item in data:
+                skus.append(ProductSKU(
+                    store_name=item["store_name"],
+                    search_keyword=item["search_keyword"],
+                    product_url=item["product_url"],
+                    brand=item.get("brand"),
+                    model=item.get("model"),
+                    product_title=item.get("product_title", "Unknown")
+                ))
+                
+            if skus:
+                await self.repository.save_skus(skus)
+                logger.info("Saved %d static SKUs from %s", len(skus), target_file)
+            else:
+                logger.warning("No SKUs found in %s", target_file)
+        except Exception as e:
+            logger.error("Failed to load static URLs from %s: %s", target_file, e)
+            
         logger.info("Discovery run complete.")

@@ -36,11 +36,13 @@ class TerabyteScraper(BaseScraper):
         """
         Retrieves the raw HTML document from the store.
         """
+        from src.core.utils import simulate_human_interaction
         try:
-            await client.goto(str(sku.product_url), wait_until="networkidle", timeout=30000)
+            await client.goto(str(sku.product_url), wait_until="domcontentloaded", timeout=45000)
+            await simulate_human_interaction(client)
             return await client.content()
         except Exception as e:
-            logger.error("[%s] Network fetch failed for %s: %s", self.store_name, sku.product_url, e)
+            logger.error("[%s] Network fetch failed for '%s': %s", self.store_name, sku.product_url, e)
             return ""
 
     def parse(self, document: str, sku: ProductSKU) -> Optional[PriceContract]:
@@ -59,8 +61,16 @@ class TerabyteScraper(BaseScraper):
             
         price_cash_str = price_cash_elem.text.strip()
         price_cash = self._clean_price(price_cash_str)
-        if price_cash is None or price_cash <= 0:
+        
+        is_available = True
+        if soup.find(string=re.compile(selectors["out_of_stock"], re.I)):
+            is_available = False
+            
+        if (price_cash is None or price_cash <= 0) and is_available:
             return None
+            
+        if not is_available and price_cash is None:
+            price_cash = Decimal('0.00')
 
         price_inst_elem = soup.select_one(selectors["price_installments"])
         price_inst_str = price_inst_elem.text.strip() if price_inst_elem else ""
@@ -73,10 +83,6 @@ class TerabyteScraper(BaseScraper):
                 count_str = re.sub(r"\D", "", count_elem.text)
                 if count_str:
                     installment_count = int(count_str)
-
-        is_available = True
-        if soup.find(string=re.compile(selectors["out_of_stock"], re.I)):
-            is_available = False
 
         # Calculate discount if applicable
         discount = None

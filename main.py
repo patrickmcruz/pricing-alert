@@ -18,11 +18,17 @@ from src.scrapers.mercadolivre import MercadoLivreScraper
 from src.spiders.kabum_spider import KabumSpider
 from src.spiders.terabyte_spider import TerabyteSpider
 
-# Setup basic logging
+level_str = getattr(settings, 'log_level', 'INFO').upper()
+logging_level = getattr(logging, level_str, logging.INFO)
+
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging_level,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler("data/orchestrator.log", encoding="utf-8")
+    ],
+    force=True
 )
 
 logger = logging.getLogger(__name__)

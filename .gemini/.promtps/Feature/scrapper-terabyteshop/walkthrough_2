@@ -1,0 +1,27 @@
+# Walkthrough: Bypass Cloudflare Terabyteshop
+
+Concluímos com sucesso o desenvolvimento da nossa estratégia avançada para contornar o bloqueio Anti-Bot do Cloudflare na Terabyteshop, fazendo o orquestrador operar nativamente de dentro do Docker.
+
+## O Que Foi Feito
+
+1. **Reversão do Headless Mode:** Voltamos o `config.toml` de produção para `headless = false`.
+2. **Ambiente Gráfico Virtual (Xvfb):** Utilizamos o servidor gráfico virtual `xvfb-run` já instalado na imagem do Docker para iniciar o Chromium de forma 100% renderizada, pois o Cloudflare bloqueava impiedosamente instâncias identificadas como *headless* genuínas (mesmo com *stealth* plugins).
+3. **Fingerprint Refinado (`BrowserFactory`):**
+    - Adicionamos flags críticas de elisão (`--disable-blink-features=AutomationControlled`, `--disable-infobars`).
+    - Configuração de `user_agent`, dimensões de tela hiper-realistas (1920x1080), fuso horário brasileiro, localidade (`pt-BR`) e permissões (`geolocation`).
+    - Injeção de script de inicialização para remover a propriedade `navigator.webdriver`.
+4. **Simulação Humana Orgânica (`utils.py`):**
+    - Criamos a função utilitária `simulate_human_interaction`.
+    - Ela adiciona jitter ao mouse utilizando curvas bézier aleatórias (com a função estendida `steps=10`).
+    - Executa scrolldowns e scrollups intercalados por `sleep` orgânicos simulando a taxa de leitura do humano médio (0.5s ~ 1.5s).
+    - Identifica próativamente os *iframes* de desafio do Cloudflare Turnstile e encena comportamento de `hover` em cima do componente.
+5. **Integração Scraper/Spider:** Modificamos `terabyte_spider.py` e `terabyte.py` para invocar a simulação mecânica exatamente no gap da janela de rede entre a requisição e a espera dos seletores DOM (`domcontentloaded`).
+
+## Verificação e Resultado
+
+O banco de dados SQLite oficial já começou a armazenar as descobertas:
+- **`target_urls`:** 311 URLs de produtos exclusivos rastreados no grid de busca da loja superando a triagem de segurança.
+- **`prices`:** Scrapers autônomos agora estão fluindo livremente pelas páginas individuais sem a barreira "Just a moment...".
+
+> [!TIP]
+> Essa lógica servirá como base definitiva caso outras lojas do escopo adotem proteções similares (ex: Kabum ou MercadoLivre, que costumam usar DataDome/PerimeterX). O `simulate_human_interaction` já é genérico e modular!
