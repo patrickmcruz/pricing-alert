@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Awaitable, Callable, Dict, Iterable, Optional
 
@@ -5,6 +6,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from src.core.base_scraper import BaseScraper, SelectorOutdatedException
+from src.core.config import settings
 from src.core.contract import PriceContract, StoreConfig
 from src.core.execution import RunStatus
 from src.core.transport import ClientFactory
@@ -102,9 +104,12 @@ class PriceEngine:
             for sku in skus:
                 try:
                     logger.info("Scraping %s...", sku.product_url)
-                    price = await scraper.execute(
-                        sku,
-                        client,
+                    # A single hung page (network stall, dead browser process, an
+                    # anti-bot loop that never resolves) must never block the rest
+                    # of this store's SKUs - or the whole run - indefinitely.
+                    price = await asyncio.wait_for(
+                        scraper.execute(sku, client),
+                        timeout=settings.scraper_timeout_seconds,
                     )
 
                     if price:
@@ -116,6 +121,14 @@ class PriceEngine:
                     else:
                         logger.warning("No price extracted for %s", sku.product_url)
                         skus_failed += 1
+                except asyncio.TimeoutError:
+                    logger.error(
+                        "Scraper %s timed out after %ss on SKU '%s' - treating as failed and moving on.",
+                        scraper.store_name,
+                        settings.scraper_timeout_seconds,
+                        sku.product_url,
+                    )
+                    skus_failed += 1
                 except SelectorOutdatedException as e:
                     logger.critical(
                         "SelectorOutdatedException caught for %s on SKU '%s': %s",

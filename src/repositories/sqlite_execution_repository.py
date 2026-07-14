@@ -115,6 +115,23 @@ class SQLiteExecutionRepository(ExecutionRepository):
             rows = await cursor.fetchall()
         return [self._row_to_record(row) for row in rows]
 
+    async def fail_stale_running_runs(self, error_message: str) -> int:
+        finished_at = datetime.now(timezone.utc).isoformat()
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                """
+                UPDATE scraper_runs
+                SET status = ?, finished_at = ?, error_message = ?
+                WHERE status = ?
+                """,
+                (RunStatus.FAILED.value, finished_at, error_message, RunStatus.RUNNING.value),
+            )
+            await db.commit()
+            count = cursor.rowcount
+        if count:
+            logger.warning("Marked %d orphaned 'running' scraper run(s) as failed on startup.", count)
+        return count
+
     @staticmethod
     def _row_to_record(row: aiosqlite.Row) -> ScraperRunRecord:
         return ScraperRunRecord(

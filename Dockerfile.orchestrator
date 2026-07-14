@@ -17,6 +17,7 @@ RUN playwright install-deps chromium
 # Copy application source code and static data
 # Note: dynamic data (like .db and locales) are managed via volumes in docker-compose
 COPY src/ ./src/
+COPY scripts/ ./scripts/
 COPY data/selectors/ ./data/selectors/
 COPY data/target-stores-list.json ./data/
 COPY main.py ./

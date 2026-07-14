@@ -6,6 +6,7 @@ default_manufacturer = "NVIDIA"
 default_gpus = ["rtx 5070", "rtx 5070 ti"]
 default_stores = []
 default_brands = []
+scraper_timeout_seconds = 120
 
 [staging]
 db_path = "data/prices_staging.db"
@@ -15,6 +16,7 @@ default_manufacturer = "NVIDIA"
 default_gpus = ["rtx 5070", "rtx 5070 ti"]
 default_stores = []
 default_brands = []
+scraper_timeout_seconds = 120
 
 [production]
 db_path = "data/prices.db"
@@ -24,6 +26,7 @@ default_manufacturer = "NVIDIA"
 default_gpus = ["rtx 5070", "rtx 5070 ti"]
 default_stores = []
 default_brands = []
+scraper_timeout_seconds = 120
 
 [test]
 db_path = ":memory:"
@@ -32,3 +35,4 @@ default_manufacturer = "NVIDIA"
 default_gpus = ["rtx 5070", "rtx 5070 ti"]
 default_stores = []
 default_brands = []
+scraper_timeout_seconds = 120

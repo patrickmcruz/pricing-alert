@@ -24,6 +24,12 @@ class AppSettings:
         self.default_brands = self.config_data.get("default_brands", [])
         
         self.headless = self.config_data.get("headless", True)
+
+        # Hard ceiling on a single SKU's fetch+parse (src/engine/scheduler.py
+        # wraps scraper.execute() in asyncio.wait_for with this) - guarantees
+        # one hung page (network stall, dead browser process, anti-bot loop)
+        # can't block an entire store's run indefinitely.
+        self.scraper_timeout_seconds = self.config_data.get("scraper_timeout_seconds", 120)
         
         # Mercado Livre API Credentials (loaded from ENV natively, or config.toml as fallback)
         self.ml_app_id = os.getenv("MERCADOLIVRE_APP_ID", self.config_data.get("MERCADOLIVRE_APP_ID"))

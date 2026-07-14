@@ -1,3 +1,4 @@
+import asyncio
 from decimal import Decimal
 from uuid import uuid4
 
@@ -10,6 +11,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from src.core.base_scraper import BaseScraper
 from src.core.contract import PriceContract, StoreConfig, ProductSKU
 from src.core.execution import RunStatus
+from src.engine import scheduler as scheduler_module
 from src.engine.scheduler import PriceEngine, MissingScraperError
 from src.repositories.base_repository import PriceRepository
 from src.repositories.execution_repository import ExecutionRepository
@@ -109,6 +111,37 @@ async def test_engine_run_scraper(engine, mock_repository, mock_client_factory):
     # Verify repository was called to save prices
     assert mock_repository.save_prices.call_count == 1
     mock_repository.save_prices.assert_any_call([mock_price])
+
+
+@pytest.mark.asyncio
+async def test_engine_run_scraper_times_out_a_hung_sku_instead_of_blocking_forever(
+    engine_with_tracking, mock_repository, mock_execution_repository, monkeypatch
+):
+    # A hung page must not block the whole run - src/engine/scheduler.py wraps
+    # scraper.execute() in asyncio.wait_for(timeout=settings.scraper_timeout_seconds).
+    monkeypatch.setattr(scheduler_module.settings, "scraper_timeout_seconds", 0.05)
+
+    scraper = MockScraper("mock_store")
+
+    async def hang(*args, **kwargs):
+        await asyncio.sleep(10)
+
+    scraper.execute_mock.side_effect = hang
+
+    mock_sku = MagicMock(spec=ProductSKU)
+    mock_sku.product_url = "https://mock"
+    mock_repository.get_target_skus.return_value = [mock_sku]
+
+    # The overall test itself times out (failing loudly) if the watchdog doesn't work.
+    await asyncio.wait_for(engine_with_tracking.run_scraper(scraper), timeout=5)
+
+    mock_repository.save_prices.assert_not_called()
+    mock_execution_repository.finish_run.assert_called_once()
+    call = mock_execution_repository.finish_run.call_args
+    assert call.args[1] == RunStatus.SUCCESS
+    assert call.kwargs["skus_total"] == 1
+    assert call.kwargs["skus_succeeded"] == 0
+    assert call.kwargs["skus_failed"] == 1
 
 
 def test_engine_build_schedule(engine):

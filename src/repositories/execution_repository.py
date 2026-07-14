@@ -39,3 +39,14 @@ class ExecutionRepository(ABC):
     @abstractmethod
     async def get_run_history(self, limit: int = 50) -> List[ScraperRunRecord]:
         """Returns the most recent runs across all stores, newest first."""
+
+    @abstractmethod
+    async def fail_stale_running_runs(self, error_message: str) -> int:
+        """
+        Marks any run still RUNNING as FAILED. Meant to be called once at
+        startup: a RUNNING row can only be legitimate if the orchestrator
+        process that started it is still alive, so after a restart every such
+        row is provably orphaned (the process died mid-run without reaching
+        finish_run) - left alone it would show as "running" forever in the
+        UI. Returns the count of rows reset.
+        """

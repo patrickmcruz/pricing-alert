@@ -62,6 +62,11 @@ class BrowserFactory:
         """)
 
         page = await context.new_page()
+        # Explicit rather than relying on Playwright's own (currently also 30s)
+        # default, so this doesn't silently change if that default ever does -
+        # every action/navigation on this page is bounded, on top of the
+        # per-SKU asyncio.wait_for watchdog in PriceEngine.run_scraper.
+        page.set_default_timeout(30000)
         await Stealth().apply_stealth_async(page)
         return page
 

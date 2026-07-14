@@ -104,3 +104,34 @@ async def test_get_run_history_orders_newest_first_and_respects_limit(repo):
 async def test_get_latest_runs_empty_when_nothing_ran(repo):
     assert await repo.get_latest_runs() == []
     assert await repo.get_run_history() == []
+
+
+@pytest.mark.asyncio
+async def test_fail_stale_running_runs_marks_running_rows_as_failed(repo):
+    stuck_run_id = await repo.start_run("terabyte")
+
+    count = await repo.fail_stale_running_runs("Orphaned: orchestrator restarted while running")
+
+    assert count == 1
+    latest = await repo.get_latest_runs()
+    assert latest[0].run_id == stuck_run_id
+    assert latest[0].status == RunStatus.FAILED
+    assert latest[0].finished_at is not None
+    assert latest[0].error_message == "Orphaned: orchestrator restarted while running"
+
+
+@pytest.mark.asyncio
+async def test_fail_stale_running_runs_leaves_finished_runs_untouched(repo):
+    run_id = await repo.start_run("kabum")
+    await repo.finish_run(run_id, RunStatus.SUCCESS, skus_total=1, skus_succeeded=1, skus_failed=0)
+
+    count = await repo.fail_stale_running_runs("Orphaned: orchestrator restarted while running")
+
+    assert count == 0
+    latest = await repo.get_latest_runs()
+    assert latest[0].status == RunStatus.SUCCESS
+
+
+@pytest.mark.asyncio
+async def test_fail_stale_running_runs_returns_zero_when_nothing_running(repo):
+    assert await repo.fail_stale_running_runs("boom") == 0

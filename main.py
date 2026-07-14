@@ -103,6 +103,11 @@ async def main():
 
     execution_repository = SQLiteExecutionRepository(db_path=DB_PATH)
     await execution_repository.initialize_schema()
+    # Same rationale as fail_stale_processing below: a "running" row can only
+    # be legitimate if this process is still alive, so after a restart it's
+    # provably orphaned - left alone it shows as running forever on the
+    # Execuções dashboard page.
+    await execution_repository.fail_stale_running_runs("Orphaned: orchestrator restarted while running")
 
     trigger_repository = SQLiteTriggerRepository(db_path=DB_PATH)
     await trigger_repository.initialize_schema()
