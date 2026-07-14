@@ -20,9 +20,16 @@ COPY src/ ./src/
 COPY data/selectors/ ./data/selectors/
 COPY data/target-stores-list.json ./data/
 COPY main.py ./
+COPY entrypoint.orchestrator.sh ./
+RUN chmod +x entrypoint.orchestrator.sh
 
 # Environment configuration
 ENV APP_ENV=production
 ENV PYTHONUNBUFFERED=1
+# Maximum log verbosity: config.toml's [production].log_level is already DEBUG
+# for the app's own loggers; this additionally enables Playwright's own
+# protocol/API-level tracing (very verbose - browser launch args, every CDP
+# call). Comment out or unset to quiet it back down once debugging is done.
+ENV DEBUG=pw:api,pw:browser
 
-CMD ["xvfb-run", "-a", "python", "main.py"]
+CMD ["./entrypoint.orchestrator.sh"]
