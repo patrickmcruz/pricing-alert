@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
-from src.core.execution import RunStatus, ScraperRunRecord
+from src.core.execution import RunStatus, ScraperRunRecord, SkuRunRecord, SkuRunStatus
 
 
 class ExecutionRepository(ABC):
@@ -49,4 +49,40 @@ class ExecutionRepository(ABC):
         row is provably orphaned (the process died mid-run without reaching
         finish_run) - left alone it would show as "running" forever in the
         UI. Returns the count of rows reset.
+        """
+
+    @abstractmethod
+    async def start_sku_run(
+        self, run_id: UUID, store_name: str, product_url: str, product_title: str
+    ) -> UUID:
+        """Records a single SKU attempt within a run as RUNNING, returns its sku_run_id."""
+
+    @abstractmethod
+    async def finish_sku_run(
+        self, sku_run_id: UUID, status: SkuRunStatus, error_message: Optional[str] = None
+    ) -> None:
+        """Marks a SKU attempt as finished, with its outcome."""
+
+    @abstractmethod
+    async def get_current_sku_run(self, run_id: UUID) -> Optional[SkuRunRecord]:
+        """
+        Returns the SKU attempt still RUNNING for this run, if any. There's at
+        most one, since the per-SKU loop in PriceEngine.run_scraper is sequential.
+        """
+
+    @abstractmethod
+    async def get_sku_run_counts(self, run_id: UUID) -> Dict[SkuRunStatus, int]:
+        """
+        Returns a count of SKU attempts per status for this run - the live
+        progress readout ("5/12 done"), computed straight from sku_runs
+        instead of waiting for scraper_runs' totals, which are only written
+        once at the very end of the run.
+        """
+
+    @abstractmethod
+    async def fail_stale_running_sku_runs(self, error_message: str) -> int:
+        """
+        Same rationale as fail_stale_running_runs, for sku_runs: a SKU attempt
+        left RUNNING after a restart is provably orphaned. Returns the count
+        of rows reset.
         """

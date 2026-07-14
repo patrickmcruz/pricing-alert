@@ -27,10 +27,13 @@ RUN chmod +x entrypoint.orchestrator.sh
 # Environment configuration
 ENV APP_ENV=production
 ENV PYTHONUNBUFFERED=1
-# Maximum log verbosity: config.toml's [production].log_level is already DEBUG
-# for the app's own loggers; this additionally enables Playwright's own
-# protocol/API-level tracing (very verbose - browser launch args, every CDP
-# call). Comment out or unset to quiet it back down once debugging is done.
-ENV DEBUG=pw:api,pw:browser
+# Playwright's own protocol/API-level tracing (DEBUG=pw:api,pw:browser) used
+# to be enabled here unconditionally - every navigation, every CDP call, full
+# tracking-pixel URLs with their query strings, all outside Python's own
+# logging (this is Playwright's Node-driver DEBUG env var, unaffected by
+# src/core/logging_setup.py). That's a major source of exactly the noise this
+# app's logs were complained about for. Left off by default; uncomment for a
+# one-off Playwright-level debugging session.
+# ENV DEBUG=pw:api,pw:browser
 
 CMD ["./entrypoint.orchestrator.sh"]

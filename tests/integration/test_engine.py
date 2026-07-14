@@ -96,6 +96,7 @@ async def test_engine_run_scraper(engine, mock_repository, mock_client_factory):
 
     mock_sku = MagicMock(spec=ProductSKU)
     mock_sku.product_url = "https://mock"
+    mock_sku.product_title = "Mock Product"
     mock_repository.get_target_skus.return_value = [mock_sku]
 
     await engine.run_scraper(scraper)
@@ -130,6 +131,7 @@ async def test_engine_run_scraper_times_out_a_hung_sku_instead_of_blocking_forev
 
     mock_sku = MagicMock(spec=ProductSKU)
     mock_sku.product_url = "https://mock"
+    mock_sku.product_title = "Mock Product"
     mock_repository.get_target_skus.return_value = [mock_sku]
 
     # The overall test itself times out (failing loudly) if the watchdog doesn't work.
@@ -202,9 +204,10 @@ async def test_engine_run_scraper_records_successful_execution(
 
     mock_sku = MagicMock(spec=ProductSKU)
     mock_sku.product_url = "https://mock"
+    mock_sku.product_title = "Mock Product"
     mock_repository.get_target_skus.return_value = [mock_sku]
 
-    await engine_with_tracking.run_scraper(scraper)
+    result = await engine_with_tracking.run_scraper(scraper)
 
     mock_execution_repository.start_run.assert_called_once_with("mock_store")
     mock_execution_repository.finish_run.assert_called_once()
@@ -215,6 +218,14 @@ async def test_engine_run_scraper_records_successful_execution(
     assert call.kwargs["skus_failed"] == 0
     assert call.kwargs["error_message"] is None
 
+    # run_scraper's return value mirrors what it just persisted, so callers
+    # (main.py's startup_routine summary) don't need a second DB round-trip.
+    assert result.store_name == "mock_store"
+    assert result.status == RunStatus.SUCCESS
+    assert result.skus_total == 1
+    assert result.skus_succeeded == 1
+    assert result.skus_failed == 0
+
 
 @pytest.mark.asyncio
 async def test_engine_run_scraper_records_failed_execution_on_client_error(
@@ -223,6 +234,7 @@ async def test_engine_run_scraper_records_failed_execution_on_client_error(
     scraper = MockScraper("mock_store")
     mock_sku = MagicMock(spec=ProductSKU)
     mock_sku.product_url = "https://mock"
+    mock_sku.product_title = "Mock Product"
     mock_repository.get_target_skus.return_value = [mock_sku]
     mock_client_factory.create.side_effect = RuntimeError("boom")
 

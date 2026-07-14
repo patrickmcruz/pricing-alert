@@ -13,7 +13,11 @@
       "Bash(.venv/Scripts/python scripts/migrate_target_urls.py)",
       "Bash(.venv/Scripts/python -c ' *)",
       "Bash(.venv/Scripts/python -m streamlit run src/ui/Dashboard.py --server.headless true --server.port 8501)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8501)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8501)",
+      "Bash(.venv/Scripts/python -m mypy src/engine/scheduler.py)",
+      "Bash(.venv/Scripts/python -m ruff check src/engine/scheduler.py)",
+      "Bash(.venv/Scripts/python -m mypy src/engine/scheduler.py src/core/execution.py)",
+      "Bash(.venv/Scripts/python -m ruff check src/engine/scheduler.py src/core/execution.py)"
     ]
   }
 }

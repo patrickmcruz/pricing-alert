@@ -76,6 +76,8 @@
   "execution_run_store_now": "Rodar Agora",
   "execution_trigger_queued": "Pedido enviado! O orquestrador deve começar em alguns segundos.",
   "execution_trigger_pending_note": "{count} pedido(s) aguardando o orquestrador processar.",
+  "execution_sku_in_progress": "Raspando agora",
+  "execution_sku_progress": "{done} processado(s) · ✓{ok} ✗{fail}",
   "gpu_manage_title": "🎮 Gerenciar GPUs",
   "gpu_manage_desc": "Adicione, edite ou remova as placas de vídeo rastreadas em cada loja. As alterações valem imediatamente, sem precisar reiniciar o orquestrador.",
   "gpu_add_title": "➕ Adicionar GPU",

@@ -2,14 +2,15 @@ import asyncio
 import json
 import logging
 import os
-import sys
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from src.core.contract import StoreConfig
 from src.core.browser import BrowserFactory
+from src.core.execution import SKU_FAILURE_LABELS_PT, ScraperRunResult
 from src.core.http_client import HTTPClientFactory
 from src.core.config import settings
+from src.core.logging_setup import configure_logging
 from src.engine.scheduler import PriceEngine
 from src.engine.trigger_processor import TriggerProcessor
 from src.repositories.sqlite_repository import SQLitePriceRepository
@@ -24,18 +25,7 @@ from src.alerts.channels.telegram import TelegramChannel
 from apscheduler.triggers.cron import CronTrigger
 from scripts.backup_db import backup_database
 
-level_str = getattr(settings, 'log_level', 'INFO').upper()
-logging_level = getattr(logging, level_str, logging.INFO)
-
-logging.basicConfig(
-    level=logging_level,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler("data/orchestrator.log", encoding="utf-8")
-    ],
-    force=True
-)
+configure_logging(getattr(settings, "log_level", "INFO"))
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +56,48 @@ def load_stores_config() -> list[StoreConfig]:
     return configs
 
 
+def _log_multi_store_summary(results: list) -> None:
+    """
+    One boxed table across every store, instead of only the scattered
+    per-store lines each run_scraper() call already logged - the "what
+    actually happened" readout for a batched startup pass.
+    """
+    rows = [r for r in results if isinstance(r, ScraperRunResult)]
+    if not rows:
+        return
+
+    name_width = max(len(r.store_name) for r in rows)
+    lines = ["=" * 62, "  RESUMO DA EXECUÇÃO".ljust(62), "-" * 62]
+    total_succeeded = 0
+    total_skus = 0
+    for r in rows:
+        total_succeeded += r.skus_succeeded
+        total_skus += r.skus_total
+        icon = "✗" if r.error_message else ("○" if r.skus_total == 0 else ("✓" if r.skus_failed == 0 else "⚠"))
+        counts = f"{r.skus_succeeded}/{r.skus_total} OK" if r.skus_total else "sem SKUs"
+        detail = ""
+        if r.error_message:
+            detail = f"  ({r.error_message})"
+        elif r.failure_breakdown:
+            breakdown = ", ".join(
+                f"{SKU_FAILURE_LABELS_PT.get(reason, reason)}={count}"
+                for reason, count in r.failure_breakdown.items()
+            )
+            detail = f"  ({r.skus_failed} falharam: {breakdown})"
+        lines.append(f"  {icon} {r.store_name.ljust(name_width)}  {counts}{detail}  ({r.duration_seconds:.1f}s)")
+    lines.append("-" * 62)
+    lines.append(f"  TOTAL: {total_succeeded}/{total_skus} SKUs OK em {len(rows)} loja(s)")
+    lines.append("=" * 62)
+
+    summary = "\n".join(lines)
+    if any(r.error_message for r in rows):
+        logger.error(summary)
+    elif any(r.skus_failed for r in rows):
+        logger.warning(summary)
+    else:
+        logger.info(summary)
+
+
 async def startup_routine(engine: PriceEngine):
     """Runs immediately on startup to update graphs for the user."""
     logger.info("Executing immediate startup routine (Scrapers)...")
@@ -75,12 +107,13 @@ async def startup_routine(engine: PriceEngine):
     # scripts/migrate_target_urls.py for one-time seeding from the legacy
     # data/target_urls.json manifest).
     tasks = [engine.run_scraper(scraper) for scraper in engine.scrapers.values()]
-    
+
     results = await asyncio.gather(*tasks, return_exceptions=True)
     for res in results:
         if isinstance(res, Exception):
             logger.error("A scraper failed during startup: %s", res, exc_info=res)
-    
+
+    _log_multi_store_summary(results)
     logger.info("Startup routine complete. Initial data populated.")
 
 
@@ -108,6 +141,7 @@ async def main():
     # provably orphaned - left alone it shows as running forever on the
     # Execuções dashboard page.
     await execution_repository.fail_stale_running_runs("Orphaned: orchestrator restarted while running")
+    await execution_repository.fail_stale_running_sku_runs("Orphaned: orchestrator restarted while running")
 
     trigger_repository = SQLiteTriggerRepository(db_path=DB_PATH)
     await trigger_repository.initialize_schema()
@@ -131,7 +165,13 @@ async def main():
         logger.warning("Telegram credentials not configured - alert events will be recorded but not delivered.")
     dispatcher = AlertDispatcher(alert_repository=alert_repository, channels=channels)
 
-    scheduler = AsyncIOScheduler()
+    # Explicit timezone as the scheduler's own default (used for anything
+    # that doesn't set its own, e.g. jobs added without a trigger timezone).
+    # This alone does NOT make individual CronTrigger instances São
+    # Paulo-aware - each one resolves its own tz independently unless told
+    # otherwise (see the timezone= passed explicitly in build_schedule and
+    # to the daily backup job below).
+    scheduler = AsyncIOScheduler(timezone="America/Sao_Paulo")
     engine = PriceEngine(
         scheduler=scheduler,
         repository=repository,
@@ -150,9 +190,12 @@ async def main():
 
     # Daily DB backup, independent of the boot-time one above - covers
     # long-running deployments that don't restart often.
+    # timezone= is required here too - CronTrigger resolves its own tz via
+    # tzlocal (the container's UTC system clock) unless told otherwise, it
+    # does not inherit the scheduler's own timezone (see src/engine/scheduler.py).
     scheduler.add_job(
         lambda: backup_database(DB_PATH),
-        trigger=CronTrigger(hour=3, minute=0),
+        trigger=CronTrigger(hour=3, minute=0, timezone="America/Sao_Paulo"),
         id="daily_db_backup",
         replace_existing=True,
     )

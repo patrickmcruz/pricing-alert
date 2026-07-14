@@ -29,6 +29,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from src.core.browser import BrowserFactory
 from src.core.config import settings
 from src.core.http_client import HTTPClientFactory
+from src.core.logging_setup import configure_logging
 from src.core.registry import get_registered_scrapers
 from src.core.transport import ClientFactory
 from src.engine.scheduler import PriceEngine
@@ -36,7 +37,7 @@ from src.repositories.sqlite_repository import SQLitePriceRepository
 from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
 import src.scrapers  # noqa: F401 - importing the package triggers @register_scraper
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+configure_logging(getattr(settings, "log_level", "INFO"))
 logger = logging.getLogger(__name__)
 
 
@@ -57,7 +58,7 @@ async def main() -> None:
     # execution_repository is wired the same way main.py wires it, so runs started
     # from this script show up on the execution-monitor UI page too.
     engine = PriceEngine(
-        scheduler=AsyncIOScheduler(),
+        scheduler=AsyncIOScheduler(timezone="America/Sao_Paulo"),
         repository=repository,
         client_factories=client_factories,
         execution_repository=execution_repository,

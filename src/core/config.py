@@ -39,8 +39,6 @@ class AppSettings:
         self.telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", self.config_data.get("TELEGRAM_BOT_TOKEN"))
         self.telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID", self.config_data.get("TELEGRAM_CHAT_ID"))
 
-        self._configure_logging()
-        
     def _load_config(self) -> Dict[str, Any]:
         if not os.path.exists(self.config_path):
             logging.warning("config.toml not found. Falling back to defaults.")
@@ -54,10 +52,6 @@ class AppSettings:
             return full_config.get("develop", {})
             
         return full_config[self.env]
-        
-    def _configure_logging(self) -> None:
-        numeric_level = getattr(logging, self.log_level.upper(), logging.INFO)
-        logging.basicConfig(level=numeric_level)
 
 # Determine the environment from OS variables (defaults to develop)
 app_env = os.getenv("APP_ENV", "develop")

@@ -76,6 +76,8 @@
   "execution_run_store_now": "Run Now",
   "execution_trigger_queued": "Request queued! The orchestrator should pick it up within a few seconds.",
   "execution_trigger_pending_note": "{count} request(s) waiting for the orchestrator to process.",
+  "execution_sku_in_progress": "Scraping now",
+  "execution_sku_progress": "{done} processed · ✓{ok} ✗{fail}",
   "gpu_manage_title": "🎮 Manage GPUs",
   "gpu_manage_desc": "Add, edit, or remove the graphics cards tracked at each store. Changes take effect immediately, no orchestrator restart needed.",
   "gpu_add_title": "➕ Add GPU",

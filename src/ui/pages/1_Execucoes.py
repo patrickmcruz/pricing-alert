@@ -13,7 +13,7 @@ import pandas as pd
 import streamlit as st
 
 from src.core.config import settings
-from src.core.execution import RunStatus, ScraperRunRecord
+from src.core.execution import RunStatus, ScraperRunRecord, SkuRunRecord, SkuRunStatus
 from src.core.i18n import i18n, t
 from src.core.trigger import TriggerRequest
 from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
@@ -68,6 +68,18 @@ def _load_latest_runs() -> list[ScraperRunRecord]:
 
 def _load_run_history(limit: int = 50) -> list[ScraperRunRecord]:
     return asyncio.run(_fetch_run_history(limit))
+
+
+async def _fetch_sku_progress(run_id) -> tuple[SkuRunRecord | None, dict[SkuRunStatus, int]]:
+    repo = SQLiteExecutionRepository(DB_PATH)
+    await repo.initialize_schema()
+    current = await repo.get_current_sku_run(run_id)
+    counts = await repo.get_sku_run_counts(run_id)
+    return current, counts
+
+
+def _load_sku_progress(run_id) -> tuple[SkuRunRecord | None, dict[SkuRunStatus, int]]:
+    return asyncio.run(_fetch_sku_progress(run_id))
 
 
 async def _fetch_active_triggers() -> list[TriggerRequest]:
@@ -137,6 +149,31 @@ def render_live_status() -> None:
                     f"{t('execution_skus_failed', lang=lang)}: {run.skus_failed} · "
                     f"{t('execution_skus_total', lang=lang)}: {run.skus_total}"
                 )
+            else:
+                # scraper_runs' own counters only get written once, at the very
+                # end (finish_run) - while RUNNING they're still zero, so the
+                # live picture comes from sku_runs instead: which SKU is being
+                # scraped right now, and how many have been processed so far.
+                current_sku, sku_counts = _load_sku_progress(run.run_id)
+                succeeded_live = sku_counts.get(SkuRunStatus.SUCCESS, 0)
+                running_live = sku_counts.get(SkuRunStatus.RUNNING, 0)
+                done_live = sum(sku_counts.values()) - running_live
+                failed_live = done_live - succeeded_live
+                if done_live:
+                    st.caption(
+                        t(
+                            "execution_sku_progress",
+                            lang=lang,
+                            done=done_live,
+                            ok=succeeded_live,
+                            fail=failed_live,
+                        )
+                    )
+                if current_sku:
+                    title = current_sku.product_title
+                    if len(title) > 40:
+                        title = title[:40] + "…"
+                    st.caption(f"🔄 {t('execution_sku_in_progress', lang=lang)}: {title}")
             if run.error_message:
                 st.error(f"{t('execution_error', lang=lang)}: {run.error_message}")
 
