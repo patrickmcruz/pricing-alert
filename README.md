@@ -88,7 +88,7 @@ The orchestrator uses `APScheduler` to trigger the scrapers based on cron config
 ### 4. Viewing the Dashboard
 To see the scraped prices:
 ```bash
-streamlit run src/ui/dashboard.py
+streamlit run src/ui/Dashboard.py
 ```
 The dashboard features:
 - **Dynamic Chart Timelines:** The main graphics default to an aggregated "hour-by-hour" view but allow you to dynamically zoom (drill down) into minute-level scrapes seamlessly.
@@ -103,7 +103,7 @@ The dashboard features:
 The application is fully containerized using Docker and Docker Compose. The architecture is split into two independent services that share data via Docker Volumes:
 
 1. **`orchestrator`**: Runs the background scraping engine (`main.py`) with Playwright Chromium bundled.
-2. **`dashboard`**: Runs the Streamlit user interface (`dashboard.py`) and exposes it on port `8501`.
+2. **`dashboard`**: Runs the Streamlit user interface (`Dashboard.py`) and exposes it on port `8501`.
 
 Both containers share the `./data` directory (which holds the SQLite database, CSS selectors, and i18n locales) and the `./config.toml` file, meaning you can edit configurations locally and have them instantly reflected in the containers.
 

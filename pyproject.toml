@@ -36,9 +36,9 @@ dev = [
 extend-exclude = ["scripts", "build", ".gemini"]
 
 [tool.ruff.lint.per-file-ignores]
-# dashboard.py and its pages/ need the same sys.path.insert-before-imports
+# Dashboard.py and its pages/ need the same sys.path.insert-before-imports
 # pattern as scripts/ to run standalone via `streamlit run`.
-"src/ui/dashboard.py" = ["E402"]
+"src/ui/Dashboard.py" = ["E402"]
 "src/ui/pages/*.py" = ["E402"]
 
 [tool.pytest.ini_options]

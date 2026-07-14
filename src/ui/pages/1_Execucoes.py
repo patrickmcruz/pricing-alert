@@ -4,7 +4,7 @@ import sys
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-# Ensure src module is in path (this file lives two levels deeper than dashboard.py)
+# Ensure src module is in path (this file lives two levels deeper than Dashboard.py)
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)

@@ -92,17 +92,12 @@ else:
     default_mf = [settings.default_manufacturer] if settings.default_manufacturer in manufacturers else manufacturers
     selected_mfs = st.sidebar.multiselect(t("select_manufacturer", lang=lang), manufacturers, default=default_mf, placeholder=t("choose_option", lang=lang))
 
-    # 3. Selecionar Marcas
-    brands = df["brand"].dropna().unique().tolist()
-    default_brands = [b for b in settings.default_brands if b in brands] if settings.default_brands else brands
-    selected_brands = st.sidebar.multiselect(t("select_brands", lang=lang), brands, default=default_brands, placeholder=t("choose_option", lang=lang))
-
-    # 4. Selecionar GPUs
+    # 3. Selecionar GPUs
     # Compute intermediate filtered df for GPU options based on selected manufacturer
     mf_df = df[df["manufacturer"].isin(selected_mfs)] if selected_mfs else df
     keyword_min_prices = mf_df.groupby("search_keyword")["price_cash"].min().sort_values()
     keywords = keyword_min_prices.index.tolist()
-    
+
     default_keywords = [k for k in keywords if k in settings.default_gpus]
     if len(default_keywords) < 2:
         for k in keywords:
@@ -110,11 +105,16 @@ else:
                 default_keywords.append(k)
             if len(default_keywords) == 2:
                 break
-                
+
     selected_keywords = st.sidebar.multiselect(
         t("select_gpus", lang=lang), keywords, default=default_keywords, max_selections=2, placeholder=t("choose_option", lang=lang), key="global_keywords"
     )
     selected_keywords = sorted(selected_keywords, key=lambda k: keywords.index(k))
+
+    # 4. Selecionar Marcas
+    brands = df["brand"].dropna().unique().tolist()
+    default_brands = [b for b in settings.default_brands if b in brands] if settings.default_brands else brands
+    selected_brands = st.sidebar.multiselect(t("select_brands", lang=lang), brands, default=default_brands, placeholder=t("choose_option", lang=lang))
 
     # Apply Global Filters
     global_df = df[
