@@ -8,8 +8,8 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, PROJECT_ROOT)
 
 from src.repositories.sqlite_repository import SQLitePriceRepository
-from src.scrappers.kabum import KabumScraper
-from src.scrappers.terabyte import TerabyteScraper
+from src.scrapers.kabum import KabumScraper
+from src.scrapers.terabyte import TerabyteScraper
 
 async def seed():
     from src.core.config import settings

@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 from src.core.contract import ProductSKU
 from src.repositories.sqlite_repository import SQLitePriceRepository
 from src.engine.scheduler import PriceEngine
-from src.scrappers.kabum import KabumScraper
+from src.scrapers.kabum import KabumScraper
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 def get_fixture_content(filename: str) -> str:

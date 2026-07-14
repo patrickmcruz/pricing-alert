@@ -2,7 +2,7 @@ import asyncio
 import logging
 from src.core.config import settings
 from src.repositories.sqlite_repository import SQLitePriceRepository
-from src.scrappers.mercadolivre import MercadoLivreScraper
+from src.scrapers.mercadolivre import MercadoLivreScraper
 
 logging.basicConfig(level=logging.INFO)
 

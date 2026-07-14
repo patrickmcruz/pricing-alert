@@ -2,13 +2,13 @@
 
 ## Visão Geral
 
-O `KabumScraper` (`src/scrappers/kabum.py`) extrai preço, parcelamento e disponibilidade de produtos da Kabum. Assim como a Terabyteshop, a Kabum não expõe uma API pública, então a extração é feita via scraping de HTML renderizado com Playwright.
+O `KabumScraper` (`src/scrapers/kabum.py`) extrai preço, parcelamento e disponibilidade de produtos da Kabum. Assim como a Terabyteshop, a Kabum não expõe uma API pública, então a extração é feita via scraping de HTML renderizado com Playwright.
 
-A classe herda de `BaseScraper` e se registra automaticamente no orquestrador via `@register_scraper` (`src/core/registry.py`) — o único arquivo necessário para adicionar/manter esta loja é o próprio módulo em `src/scrappers/`, importado automaticamente por `src/scrappers/__init__.py`.
+A classe herda de `BaseScraper` e se registra automaticamente no orquestrador via `@register_scraper` (`src/core/registry.py`) — o único arquivo necessário para adicionar/manter esta loja é o próprio módulo em `src/scrapers/`, importado automaticamente por `src/scrapers/__init__.py`.
 
 ## Descoberta de SKUs
 
-Assim como as demais lojas baseadas em HTML, a Kabum não usa mais a antiga camada de "spider" (descontinuada — ver `docs/scrappers/terabyte.md` para o histórico). SKUs vêm do manifesto estático `data/target_urls.json`, carregado pelo `DiscoveryEngine` (`src/engine/discovery.py`) diretamente para a tabela `target_urls`.
+Assim como as demais lojas baseadas em HTML, a Kabum não usa mais a antiga camada de "spider" (descontinuada — ver `docs/scrapers/terabyte.md` para o histórico). SKUs vêm do manifesto estático `data/target_urls.json`, carregado pelo `DiscoveryEngine` (`src/engine/discovery.py`) diretamente para a tabela `target_urls`.
 
 ## Transporte: Playwright (Browser)
 
@@ -42,7 +42,7 @@ installment_count = "span.block.my-12"
 out_of_stock = "indisponível"
 ```
 
-**Importante**: apesar de existirem duas versões no `.toml` (sugerindo suporte a fallback entre layouts), o código atual usa **sempre `v2`**, fixado diretamente em `parse()` (`parser_version = "v2"`). Não há tentativa automática de `v1` como fallback caso `v2` falhe — se a Kabum reverter para o layout antigo, será necessário trocar a versão manualmente no código ou implementar a cadeia de fallback (ver `.gemini/.promtps/Refactoration/scrapper-versioning/analyze.md` para a ideia original de "Strategy Pattern versionado", nunca implementada).
+**Importante**: apesar de existirem duas versões no `.toml` (sugerindo suporte a fallback entre layouts), o código atual usa **sempre `v2`**, fixado diretamente em `parse()` (`parser_version = "v2"`). Não há tentativa automática de `v1` como fallback caso `v2` falhe — se a Kabum reverter para o layout antigo, será necessário trocar a versão manualmente no código ou implementar a cadeia de fallback (ver `.gemini/.promtps/Refactoration/scraper-versioning/analyze.md` para a ideia original de "Strategy Pattern versionado", nunca implementada).
 
 Lógica de parse:
 1. **Título e preço à vista**: se `h1` ou `h4.text-4xl` não forem encontrados, levanta `SelectorOutdatedException`.
@@ -78,4 +78,4 @@ Logs detalhados ficam em `data/orchestrator.log` e em `docker logs pricing_orche
 - Arquitetura e convenções gerais: `.agents/AGENTS.md`
 - Contrato de dados compartilhado: `src/core/contract.py`
 - Helpers de parsing compartilhados: `src/core/parsing_utils.py`, `src/core/contract_factory.py`
-- Comparação com a outra loja baseada em HTML: `docs/scrappers/terabyte.md`
+- Comparação com a outra loja baseada em HTML: `docs/scrapers/terabyte.md`

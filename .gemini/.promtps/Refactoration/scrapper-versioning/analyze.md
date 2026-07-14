@@ -1,4 +1,4 @@
-It is absolutely a **great practice** to think about versioning scrapper engines.
+It is absolutely a **great practice** to think about versioning scraper engines.
 
 Web scraping is inherently fragile because e-commerce sites frequently update their UI, change CSS class names, or run A/B tests that alter the DOM structure. 
 

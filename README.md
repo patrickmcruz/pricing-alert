@@ -24,7 +24,7 @@ Algumas lojas possuem defesas antibot (ex: Kabum). Para essas, nosso ecossistema
 
 Entretanto, o Mercado Livre possui firewalls de última geração (Datadome/Cloudflare) em suas Lojas Oficiais. Para o **Mercado Livre**, contornamos o bloqueio de raspagem de DOM adotando uma arquitetura 100% nativa utilizando a **API Oficial Pública do Mercado Livre** via tokens OAuth 2.0.
 
-Para que o scraper do Mercado Livre funcione, você precisa preencher o `.env` com suas credenciais de parceiro desenvolvedor. Para o passo-a-passo detalhado, leia a [Documentação Oficial do Mercado Livre Scraper](docs/scrappers/mercadolivre.md).
+Para que o scraper do Mercado Livre funcione, você precisa preencher o `.env` com suas credenciais de parceiro desenvolvedor. Para o passo-a-passo detalhado, leia a [Documentação Oficial do Mercado Livre Scraper](docs/scrapers/mercadolivre.md).
 
 ## Configuração do config.toml
 - **Gitflow Configuration**: All app settings are defined in `config.toml` (using native `tomllib`), providing distinct `[develop]`, `[staging]`, and `[production]` environments.
@@ -37,7 +37,7 @@ Para que o scraper do Mercado Livre funcione, você precisa preencher o `.env` c
 /gpu-price-tracker
 ├── /src
 │   ├── /core           # Shared abstractions (BaseScraper, BrowserFactory, config, contracts, registry)
-│   ├── /scrappers      # Product page scraping logic (Kabum, Terabyte, etc.); self-register via @register_scraper
+│   ├── /scrapers      # Product page scraping logic (Kabum, Terabyte, etc.); self-register via @register_scraper
 │   ├── /engine         # APScheduler orchestration and execution
 │   ├── /repositories   # SQLite persistence layer (Repository Pattern)
 │   ├── /alerts         # Alerting domain: rules, evaluation, notification delivery
@@ -155,10 +155,10 @@ When writing tests for parsers, use the static HTML files provided in `tests/fix
 
 ## 💡 Adding a New Store Scraper
 
-1. Create `src/scrappers/newstore.py` inheriting from `BaseScraper`, and decorate the class with `@register_scraper` (`src/core/registry.py`).
+1. Create `src/scrapers/newstore.py` inheriting from `BaseScraper`, and decorate the class with `@register_scraper` (`src/core/registry.py`).
 2. Create `data/selectors/newstore.toml` with `[v1]` selectors (unless the store has a REST API to hit directly, like Mercado Livre - see `transport_type` on `BaseScraper`).
 3. Implement `async def fetch()` using the injected client (`Page` for `transport_type = "browser"`, `httpx.AsyncClient` for `"http"`).
 4. Implement `def parse()` to extract data and return a `PriceContract`.
 5. Add `"enabled": true` for the store in `data/target-stores-list.json`.
 
-That's it - `src/scrappers/__init__.py` auto-imports every module in the package, which triggers the `@register_scraper` decorator, so `main.py` never needs to be touched.
+That's it - `src/scrapers/__init__.py` auto-imports every module in the package, which triggers the `@register_scraper` decorator, so `main.py` never needs to be touched.
