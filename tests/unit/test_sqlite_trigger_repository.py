@@ -1,14 +1,15 @@
 import pytest
 
 from src.core.trigger import TriggerStatus
+from src.db.schema import initialize_schema as initialize_db_schema
 from src.repositories.sqlite_trigger_repository import SQLiteTriggerRepository
 
 
 @pytest.fixture
 async def repo(tmp_path):
     db_path = str(tmp_path / "trigger_test.db")
+    await initialize_db_schema(db_path)
     repository = SQLiteTriggerRepository(db_path)
-    await repository.initialize_schema()
     yield repository
 
 

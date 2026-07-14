@@ -46,7 +46,7 @@ class PriceEngine:
         scheduler: AsyncIOScheduler,
         repository: PriceRepository,
         client_factories: Dict[str, ClientFactory],
-        on_price_saved: Optional[Callable[[PriceContract], Awaitable[None]]] = None,
+        on_price_saved: Optional[Callable[[PriceContract, str], Awaitable[None]]] = None,
         execution_repository: Optional[ExecutionRepository] = None,
     ):
         self.scheduler = scheduler
@@ -101,8 +101,8 @@ class PriceEngine:
             if self.execution_repository
             else None
         )
-        skus_succeeded = 0
-        skus_failed = 0
+        listings_succeeded = 0
+        listings_failed = 0
         failure_breakdown: Counter[str] = Counter()
         run_error: Optional[str] = None
         client = None
@@ -142,14 +142,14 @@ class PriceEngine:
 
                         if price:
                             logger.info("Extracted price for %s: %s (Available: %s)", sku.product_url, price.price_cash, price.is_available)
-                            await self.repository.save_prices([price])
+                            observation_ids = await self.repository.save_prices([price], scraper_run_id=run_id)
                             if self.on_price_saved:
-                                await self.on_price_saved(price)
-                            skus_succeeded += 1
+                                await self.on_price_saved(price, observation_ids[0])
+                            listings_succeeded += 1
                             await self._finish_sku_run(sku_run_id, SkuRunStatus.SUCCESS)
                         else:
                             logger.warning("No price extracted for %s", sku.product_url)
-                            skus_failed += 1
+                            listings_failed += 1
                             failure_breakdown[SkuRunStatus.NO_PRICE.value] += 1
                             await self._finish_sku_run(sku_run_id, SkuRunStatus.NO_PRICE, "No price extracted")
                     except asyncio.TimeoutError:
@@ -159,7 +159,7 @@ class PriceEngine:
                             settings.scraper_timeout_seconds,
                             sku.product_url,
                         )
-                        skus_failed += 1
+                        listings_failed += 1
                         failure_breakdown[SkuRunStatus.TIMEOUT.value] += 1
                         await self._finish_sku_run(
                             sku_run_id, SkuRunStatus.TIMEOUT,
@@ -172,7 +172,7 @@ class PriceEngine:
                             sku.product_url,
                             e,
                         )
-                        skus_failed += 1
+                        listings_failed += 1
                         failure_breakdown[SkuRunStatus.SELECTOR_OUTDATED.value] += 1
                         await self._finish_sku_run(sku_run_id, SkuRunStatus.SELECTOR_OUTDATED, str(e))
                     except Exception as e:
@@ -183,7 +183,7 @@ class PriceEngine:
                             e,
                             exc_info=True
                         )
-                        skus_failed += 1
+                        listings_failed += 1
                         failure_breakdown[SkuRunStatus.FAILED.value] += 1
                         await self._finish_sku_run(sku_run_id, SkuRunStatus.FAILED, str(e))
 
@@ -205,7 +205,7 @@ class PriceEngine:
                     )
 
             duration_seconds = (datetime.now(timezone.utc) - started_at).total_seconds()
-            skus_total = skus_succeeded + skus_failed
+            listings_total = listings_succeeded + listings_failed
             status = RunStatus.FAILED if run_error else RunStatus.SUCCESS
 
             if self.execution_repository and run_id is not None:
@@ -213,9 +213,9 @@ class PriceEngine:
                     await self.execution_repository.finish_run(
                         run_id,
                         status,
-                        skus_total=skus_total,
-                        skus_succeeded=skus_succeeded,
-                        skus_failed=skus_failed,
+                        listings_total=listings_total,
+                        listings_succeeded=listings_succeeded,
+                        listings_failed=listings_failed,
                         error_message=run_error,
                     )
                 except Exception as e:
@@ -228,10 +228,10 @@ class PriceEngine:
             # "did this store's run work" at a glance.
             if run_error:
                 logger.error("✗ %s: falhou - %s (%.1fs)", scraper.store_name, run_error, duration_seconds)
-            elif skus_total == 0:
+            elif listings_total == 0:
                 logger.info("○ %s: nenhum SKU para processar (%.1fs)", scraper.store_name, duration_seconds)
-            elif skus_failed == 0:
-                logger.info("✓ %s: %d/%d SKUs OK (%.1fs)", scraper.store_name, skus_succeeded, skus_total, duration_seconds)
+            elif listings_failed == 0:
+                logger.info("✓ %s: %d/%d SKUs OK (%.1fs)", scraper.store_name, listings_succeeded, listings_total, duration_seconds)
             else:
                 breakdown_str = ", ".join(
                     f"{SKU_FAILURE_LABELS_PT.get(reason, reason)}={count}"
@@ -239,16 +239,16 @@ class PriceEngine:
                 )
                 logger.warning(
                     "⚠ %s: %d/%d SKUs OK, %d falharam [%s] (%.1fs)",
-                    scraper.store_name, skus_succeeded, skus_total, skus_failed, breakdown_str, duration_seconds,
+                    scraper.store_name, listings_succeeded, listings_total, listings_failed, breakdown_str, duration_seconds,
                 )
             logger.info("Completed execution for scraper: %s", scraper.store_name)
 
         return ScraperRunResult(
             store_name=scraper.store_name,
             status=status,
-            skus_total=skus_total,
-            skus_succeeded=skus_succeeded,
-            skus_failed=skus_failed,
+            listings_total=listings_total,
+            listings_succeeded=listings_succeeded,
+            listings_failed=listings_failed,
             duration_seconds=duration_seconds,
             error_message=run_error,
             failure_breakdown=dict(failure_breakdown),

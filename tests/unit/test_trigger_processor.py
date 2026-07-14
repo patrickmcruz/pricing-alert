@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 import aiosqlite
 import pytest
 
+from src.db.schema import initialize_schema as initialize_db_schema
 from src.engine.trigger_processor import TriggerProcessor
 from src.repositories.sqlite_trigger_repository import SQLiteTriggerRepository
 
@@ -10,7 +11,7 @@ from src.repositories.sqlite_trigger_repository import SQLiteTriggerRepository
 async def _fetch_status_and_error(db_path: str, request_id) -> tuple[str, str | None]:
     async with aiosqlite.connect(db_path) as db:
         cursor = await db.execute(
-            "SELECT status, error_message FROM trigger_requests WHERE request_id = ?",
+            "SELECT status, error_message FROM trigger_requests WHERE id = ?",
             (str(request_id),),
         )
         row = await cursor.fetchone()
@@ -27,8 +28,8 @@ def make_scraper(store_name: str) -> MagicMock:
 @pytest.fixture
 async def repo(tmp_path):
     db_path = str(tmp_path / "trigger_processor_test.db")
+    await initialize_db_schema(db_path)
     repository = SQLiteTriggerRepository(db_path)
-    await repository.initialize_schema()
     yield repository
 
 

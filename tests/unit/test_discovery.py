@@ -24,7 +24,7 @@ def mock_catalog_repository():
     )
     catalog.get_or_create_brand.return_value = Brand(id="brand-1", name="MockBrand")
     catalog.get_or_create_gpu_model.return_value = GpuModel(
-        id="gpu-model-1", brand_id="brand-1", chipset_id="chipset-1", variant_name="MockModel"
+        id="gpu-model-1", brand_id="brand-1", chipset_id="chipset-1", model_name="MockModel"
     )
     return catalog
 

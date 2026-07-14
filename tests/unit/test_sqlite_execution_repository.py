@@ -1,14 +1,15 @@
 import pytest
 
 from src.core.execution import RunStatus, SkuRunStatus
+from src.db.schema import initialize_schema as initialize_db_schema
 from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
 
 
 @pytest.fixture
 async def repo(tmp_path):
     db_path = str(tmp_path / "execution_test.db")
+    await initialize_db_schema(db_path)
     repository = SQLiteExecutionRepository(db_path)
-    await repository.initialize_schema()
     yield repository
 
 
@@ -30,16 +31,16 @@ async def test_finish_run_updates_status_and_counters(repo):
     run_id = await repo.start_run("kabum")
 
     await repo.finish_run(
-        run_id, RunStatus.SUCCESS, skus_total=5, skus_succeeded=4, skus_failed=1
+        run_id, RunStatus.SUCCESS, listings_total=5, listings_succeeded=4, listings_failed=1
     )
 
     latest = await repo.get_latest_runs()
 
     assert latest[0].status == RunStatus.SUCCESS
     assert latest[0].finished_at is not None
-    assert latest[0].skus_total == 5
-    assert latest[0].skus_succeeded == 4
-    assert latest[0].skus_failed == 1
+    assert latest[0].listings_total == 5
+    assert latest[0].listings_succeeded == 4
+    assert latest[0].listings_failed == 1
     assert latest[0].error_message is None
 
 
@@ -50,9 +51,9 @@ async def test_finish_run_records_error_message_on_failure(repo):
     await repo.finish_run(
         run_id,
         RunStatus.FAILED,
-        skus_total=0,
-        skus_succeeded=0,
-        skus_failed=0,
+        listings_total=0,
+        listings_succeeded=0,
+        listings_failed=0,
         error_message="boom",
     )
 
@@ -123,7 +124,7 @@ async def test_fail_stale_running_runs_marks_running_rows_as_failed(repo):
 @pytest.mark.asyncio
 async def test_fail_stale_running_runs_leaves_finished_runs_untouched(repo):
     run_id = await repo.start_run("kabum")
-    await repo.finish_run(run_id, RunStatus.SUCCESS, skus_total=1, skus_succeeded=1, skus_failed=0)
+    await repo.finish_run(run_id, RunStatus.SUCCESS, listings_total=1, listings_succeeded=1, listings_failed=0)
 
     count = await repo.fail_stale_running_runs("Orphaned: orchestrator restarted while running")
 

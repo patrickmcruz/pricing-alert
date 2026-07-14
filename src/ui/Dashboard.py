@@ -31,7 +31,20 @@ def load_data():
         return pd.DataFrame()
     try:
         conn = sqlite3.connect(DB_PATH)
-        df = pd.read_sql_query("SELECT * FROM prices", conn)
+        df = pd.read_sql_query(
+            """
+            SELECT po.id AS execution_id, s.slug AS store_name, sl.search_keyword, sl.product_title,
+                   sl.product_url, po.price_cash, po.price_installments, po.installment_count,
+                   po.currency, po.parser_version, po.is_available, b.name AS brand,
+                   gm.model_name AS model, po.discount, po.scraped_at
+            FROM price_observations po
+            JOIN store_listings sl ON sl.id = po.store_listing_id
+            JOIN stores s ON s.id = sl.store_id
+            JOIN gpu_models gm ON gm.id = sl.gpu_model_id
+            JOIN brands b ON b.id = gm.brand_id
+            """,
+            conn,
+        )
         conn.close()
 
         if not df.empty:

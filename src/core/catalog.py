@@ -59,14 +59,14 @@ class GpuChipset(BaseModel):
 
 
 class GpuModel(BaseModel):
-    """A specific product: a Brand's variant of a GpuChipset, e.g. MSI "Shadow 2X OC" RTX 5070 Ti."""
+    """A specific product: a Brand's model of a GpuChipset, e.g. MSI "Shadow 2X OC" RTX 5070 Ti."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     id: str = Field(default_factory=lambda: str(uuid4()))
     brand_id: str
     chipset_id: str
-    variant_name: str
+    model_name: str
 
 
 class ResolvedGpuModel(BaseModel):
@@ -77,4 +77,4 @@ class ResolvedGpuModel(BaseModel):
     id: str
     brand_name: str
     chipset_name: str
-    variant_name: str
+    model_name: str

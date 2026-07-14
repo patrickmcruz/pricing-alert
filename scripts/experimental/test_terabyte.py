@@ -1,6 +1,7 @@
 import asyncio
 import sys
 from src.core.config import settings
+from src.db.schema import initialize_schema as initialize_db_schema
 from src.repositories.sqlite_repository import SQLitePriceRepository
 from src.spiders.terabyte_spider import TerabyteSpider
 from src.scrapers.terabyte import TerabyteScraper
@@ -11,8 +12,8 @@ import logging
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
 async def test_terabyte():
+    await initialize_db_schema(settings.db_path)
     repo = SQLitePriceRepository(settings.db_path)
-    await repo.initialize_schema()
     factory = BrowserFactory()
     
     spider = TerabyteSpider()

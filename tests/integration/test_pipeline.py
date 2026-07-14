@@ -3,6 +3,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock
 
 from src.core.contract import ProductSKU
+from src.db.schema import initialize_schema as initialize_db_schema
 from src.repositories.sqlite_repository import SQLitePriceRepository
 from src.engine.scheduler import PriceEngine
 from src.scrapers.kabum import KabumScraper
@@ -19,8 +20,8 @@ def get_fixture_content(filename: str) -> str:
 @pytest.fixture
 async def repo(tmp_path):
     db_path = str(tmp_path / "integration_test.db")
+    await initialize_db_schema(db_path)
     repository = SQLitePriceRepository(db_path)
-    await repository.initialize_schema()
     yield repository
 
 @pytest.mark.asyncio
@@ -67,7 +68,9 @@ async def test_engine_scraper_pipeline(repo):
     prices = []
     import aiosqlite
     async with aiosqlite.connect(repo.db_path) as db:
-        async with db.execute("SELECT price_cash, price_installments, installment_count FROM prices") as cursor:
+        async with db.execute(
+            "SELECT price_cash, price_installments, installment_count FROM price_observations"
+        ) as cursor:
             prices = await cursor.fetchall()
             
     assert len(prices) == 1

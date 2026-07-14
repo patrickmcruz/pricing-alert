@@ -22,7 +22,12 @@ def make_event() -> AlertEvent:
         is_available=True,
     )
     rule = AlertRule(threshold_type=ThresholdType.ANY_DROP)
-    return AlertEvent(rule_id=rule.rule_id, price=price, reason="Price dropped from R$ 4500.00 to R$ 4200.00")
+    return AlertEvent(
+        rule_id=rule.rule_id,
+        price_observation_id="test-obs-id",
+        price=price,
+        reason="Price dropped from R$ 4500.00 to R$ 4200.00",
+    )
 
 
 @pytest.mark.asyncio

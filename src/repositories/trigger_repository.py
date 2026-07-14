@@ -13,10 +13,6 @@ class TriggerRepository(ABC):
     """
 
     @abstractmethod
-    async def initialize_schema(self) -> None:
-        """Creates the trigger_requests table if it doesn't exist."""
-
-    @abstractmethod
     async def create_request(self, store_name: Optional[str] = None) -> UUID:
         """Enqueues a request. store_name=None means 'run every scraper'."""
 

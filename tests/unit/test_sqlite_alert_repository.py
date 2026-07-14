@@ -6,13 +6,17 @@ import pytest
 from src.alerts.contracts import AlertEvent, AlertRule, ThresholdType
 from src.alerts.sqlite_alert_repository import SQLiteAlertRepository
 from src.core.contract import PriceContract
+from src.db.schema import initialize_schema as initialize_db_schema
+from src.repositories.sqlite_repository import SQLitePriceRepository
+
+from tests.conftest import make_gpu_model_id
 
 
 @pytest.fixture
 async def repo(tmp_path):
     db_path = str(tmp_path / "alerts_test.db")
+    await initialize_db_schema(db_path)
     repository = SQLiteAlertRepository(db_path)
-    await repository.initialize_schema()
     yield repository
 
 
@@ -29,6 +33,31 @@ def make_price(**overrides) -> PriceContract:
     )
     defaults.update(overrides)
     return PriceContract(**defaults)  # type: ignore[arg-type]
+
+
+async def _seed_price_observation(db_path: str, price: PriceContract) -> str:
+    """
+    Persists a real store_listings row + price_observations row for `price`
+    and returns the generated price_observations.id - alert_events.price_observation_id
+    is FK-enforced, so tests need a real id rather than a placeholder string.
+    """
+    from src.core.contract import ProductSKU
+
+    gpu_model_id = await make_gpu_model_id(db_path)
+    price_repo = SQLitePriceRepository(db_path)
+    await price_repo.save_skus(
+        [
+            ProductSKU(
+                product_url=str(price.product_url),
+                store_name=price.store_name,
+                search_keyword=price.search_keyword,
+                gpu_model_id=gpu_model_id,
+                product_title=price.product_title,
+            )
+        ]
+    )
+    observation_ids = await price_repo.save_prices([price])
+    return observation_ids[0]
 
 
 @pytest.mark.asyncio
@@ -79,13 +108,23 @@ async def test_save_rule_upserts_by_rule_id(repo):
 @pytest.mark.asyncio
 async def test_save_event_persists_without_error(repo):
     rule = AlertRule(threshold_type=ThresholdType.ANY_DROP)
+    await repo.save_rule(rule)
     price = make_price()
-    event = AlertEvent(rule_id=rule.rule_id, price=price, reason="test drop")
+    observation_id = await _seed_price_observation(repo.db_path, price)
+    event = AlertEvent(
+        rule_id=rule.rule_id, price_observation_id=observation_id, price=price, reason="test drop"
+    )
 
     await repo.save_event(event)
 
     async with aiosqlite.connect(repo.db_path) as db:
-        cursor = await db.execute("SELECT event_id, reason, price_cash FROM alert_history")
+        cursor = await db.execute(
+            """
+            SELECT ae.id, ae.reason, po.price_cash
+            FROM alert_events ae
+            JOIN price_observations po ON po.id = ae.price_observation_id
+            """
+        )
         row = await cursor.fetchone()
 
     assert row is not None

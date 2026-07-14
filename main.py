@@ -11,10 +11,12 @@ from src.core.execution import SKU_FAILURE_LABELS_PT, ScraperRunResult
 from src.core.http_client import HTTPClientFactory
 from src.core.config import settings
 from src.core.logging_setup import configure_logging
+from src.db.schema import initialize_schema as initialize_db_schema
 from src.engine.scheduler import PriceEngine
 from src.engine.trigger_processor import TriggerProcessor
 from src.repositories.sqlite_repository import SQLitePriceRepository
 from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
+from src.repositories.sqlite_store_repository import SQLiteStoreRepository
 from src.repositories.sqlite_trigger_repository import SQLiteTriggerRepository
 from src.core.registry import get_registered_scrapers
 import src.scrapers  # noqa: F401 - importing the package triggers scraper self-registration
@@ -71,10 +73,10 @@ def _log_multi_store_summary(results: list) -> None:
     total_succeeded = 0
     total_skus = 0
     for r in rows:
-        total_succeeded += r.skus_succeeded
-        total_skus += r.skus_total
-        icon = "✗" if r.error_message else ("○" if r.skus_total == 0 else ("✓" if r.skus_failed == 0 else "⚠"))
-        counts = f"{r.skus_succeeded}/{r.skus_total} OK" if r.skus_total else "sem SKUs"
+        total_succeeded += r.listings_succeeded
+        total_skus += r.listings_total
+        icon = "✗" if r.error_message else ("○" if r.listings_total == 0 else ("✓" if r.listings_failed == 0 else "⚠"))
+        counts = f"{r.listings_succeeded}/{r.listings_total} OK" if r.listings_total else "sem SKUs"
         detail = ""
         if r.error_message:
             detail = f"  ({r.error_message})"
@@ -83,7 +85,7 @@ def _log_multi_store_summary(results: list) -> None:
                 f"{SKU_FAILURE_LABELS_PT.get(reason, reason)}={count}"
                 for reason, count in r.failure_breakdown.items()
             )
-            detail = f"  ({r.skus_failed} falharam: {breakdown})"
+            detail = f"  ({r.listings_failed} falharam: {breakdown})"
         lines.append(f"  {icon} {r.store_name.ljust(name_width)}  {counts}{detail}  ({r.duration_seconds:.1f}s)")
     lines.append("-" * 62)
     lines.append(f"  TOTAL: {total_succeeded}/{total_skus} SKUs OK em {len(rows)} loja(s)")
@@ -92,10 +94,32 @@ def _log_multi_store_summary(results: list) -> None:
     summary = "\n".join(lines)
     if any(r.error_message for r in rows):
         logger.error(summary)
-    elif any(r.skus_failed for r in rows):
+    elif any(r.listings_failed for r in rows):
         logger.warning(summary)
     else:
         logger.info(summary)
+
+
+async def _seed_stores(store_repository: SQLiteStoreRepository) -> None:
+    """
+    Seeds the stores table from data/target-stores-list.json - the same file
+    load_stores_config() reads - so every store referenced elsewhere resolves.
+    Idempotent: get_or_create_store is a no-op for stores that already exist.
+    """
+    stores_file = os.path.join("data", "target-stores-list.json")
+    try:
+        with open(stores_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        logger.error("Failed to load stores config from %s for seeding: %s", stores_file, e)
+        return
+
+    for store_key, store_info in data.items():
+        await store_repository.get_or_create_store(
+            slug=store_key,
+            display_name=store_info["store_name"],
+            base_url=store_info.get("base_url"),
+        )
 
 
 async def startup_routine(engine: PriceEngine):
@@ -127,15 +151,21 @@ async def main():
     if backup_path:
         logger.info("Pre-boot DB backup created: %s", backup_path)
 
-    # 1. Initialize Persistence Layer
+    # 1. Initialize Persistence Layer - single shared schema, applied once
+    # before any repository touches the DB.
+    await initialize_db_schema(DB_PATH)
+
     repository = SQLitePriceRepository(db_path=DB_PATH)
-    await repository.initialize_schema()
-
     alert_repository = SQLiteAlertRepository(db_path=DB_PATH)
-    await alert_repository.initialize_schema()
-
     execution_repository = SQLiteExecutionRepository(db_path=DB_PATH)
-    await execution_repository.initialize_schema()
+    trigger_repository = SQLiteTriggerRepository(db_path=DB_PATH)
+    store_repository = SQLiteStoreRepository(db_path=DB_PATH)
+
+    # Seed the stores table from the same JSON manifest load_stores_config()
+    # already reads, so every store referenced by scraper_runs/store_listings/
+    # trigger_requests/alert_rules resolves to a real row.
+    await _seed_stores(store_repository)
+
     # Same rationale as fail_stale_processing below: a "running" row can only
     # be legitimate if this process is still alive, so after a restart it's
     # provably orphaned - left alone it shows as running forever on the
@@ -143,8 +173,6 @@ async def main():
     await execution_repository.fail_stale_running_runs("Orphaned: orchestrator restarted while running")
     await execution_repository.fail_stale_running_sku_runs("Orphaned: orchestrator restarted while running")
 
-    trigger_repository = SQLiteTriggerRepository(db_path=DB_PATH)
-    await trigger_repository.initialize_schema()
     # Any request still 'processing' belonged to a previous orchestrator process
     # that no longer exists (crash, redeploy, `docker compose up` recreate) - left
     # alone it would silently block its store's (or all stores', for

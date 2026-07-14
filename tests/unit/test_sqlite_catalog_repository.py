@@ -1,14 +1,15 @@
 import pytest
 
 from src.core.catalog import ChipMaker
+from src.db.schema import initialize_schema as initialize_db_schema
 from src.repositories.sqlite_catalog_repository import SQLiteCatalogRepository
 
 
 @pytest.fixture
 async def catalog(tmp_path):
     db_path = str(tmp_path / "catalog_test.db")
+    await initialize_db_schema(db_path)
     repository = SQLiteCatalogRepository(db_path)
-    await repository.initialize_schema()
     yield repository
 
 
@@ -75,4 +76,4 @@ async def test_list_gpu_models_resolved_joins_brand_and_chipset_names(catalog):
     assert resolved[0].id == gpu_model.id
     assert resolved[0].brand_name == "MSI"
     assert resolved[0].chipset_name == "rtx 5070 ti"
-    assert resolved[0].variant_name == "Shadow 2X OC"
+    assert resolved[0].model_name == "Shadow 2X OC"

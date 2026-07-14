@@ -6,7 +6,9 @@ from uuid import UUID, uuid4
 import aiosqlite
 
 from src.core.execution import RunStatus, ScraperRunRecord, SkuRunRecord, SkuRunStatus
+from src.db.schema import connect
 from src.repositories.execution_repository import ExecutionRepository
+from src.repositories.sqlite_store_repository import get_or_create_store_id
 
 logger = logging.getLogger(__name__)
 
@@ -17,60 +19,17 @@ class SQLiteExecutionRepository(ExecutionRepository):
     def __init__(self, db_path: str):
         self.db_path = db_path
 
-    async def initialize_schema(self) -> None:
-        async with aiosqlite.connect(self.db_path) as db:
-            await db.execute(
-                """
-                CREATE TABLE IF NOT EXISTS scraper_runs (
-                    run_id TEXT PRIMARY KEY,
-                    store_name TEXT NOT NULL,
-                    status TEXT NOT NULL,
-                    started_at TIMESTAMP NOT NULL,
-                    finished_at TIMESTAMP,
-                    skus_total INTEGER NOT NULL DEFAULT 0,
-                    skus_succeeded INTEGER NOT NULL DEFAULT 0,
-                    skus_failed INTEGER NOT NULL DEFAULT 0,
-                    error_message TEXT
-                )
-                """
-            )
-            await db.execute(
-                "CREATE INDEX IF NOT EXISTS idx_scraper_runs_store ON scraper_runs(store_name)"
-            )
-            await db.execute(
-                "CREATE INDEX IF NOT EXISTS idx_scraper_runs_started_at ON scraper_runs(started_at)"
-            )
-            await db.execute(
-                """
-                CREATE TABLE IF NOT EXISTS sku_runs (
-                    sku_run_id TEXT PRIMARY KEY,
-                    run_id TEXT NOT NULL REFERENCES scraper_runs(run_id),
-                    store_name TEXT NOT NULL,
-                    product_url TEXT NOT NULL,
-                    product_title TEXT NOT NULL,
-                    status TEXT NOT NULL,
-                    started_at TIMESTAMP NOT NULL,
-                    finished_at TIMESTAMP,
-                    error_message TEXT
-                )
-                """
-            )
-            await db.execute(
-                "CREATE INDEX IF NOT EXISTS idx_sku_runs_run_id ON sku_runs(run_id)"
-            )
-            await db.commit()
-        logger.info("Execution schema initialized successfully.")
-
     async def start_run(self, store_name: str) -> UUID:
         run_id = uuid4()
         started_at = datetime.now(timezone.utc)
-        async with aiosqlite.connect(self.db_path) as db:
+        async with connect(self.db_path) as db:
+            store_id = await get_or_create_store_id(db, store_name)
             await db.execute(
                 """
-                INSERT INTO scraper_runs (run_id, store_name, status, started_at)
+                INSERT INTO scraper_runs (id, store_id, status, started_at)
                 VALUES (?, ?, ?, ?)
                 """,
-                (str(run_id), store_name, RunStatus.RUNNING.value, started_at.isoformat()),
+                (str(run_id), store_id, RunStatus.RUNNING.value, started_at.isoformat()),
             )
             await db.commit()
         return run_id
@@ -79,26 +38,26 @@ class SQLiteExecutionRepository(ExecutionRepository):
         self,
         run_id: UUID,
         status: RunStatus,
-        skus_total: int,
-        skus_succeeded: int,
-        skus_failed: int,
+        listings_total: int,
+        listings_succeeded: int,
+        listings_failed: int,
         error_message: Optional[str] = None,
     ) -> None:
         finished_at = datetime.now(timezone.utc)
-        async with aiosqlite.connect(self.db_path) as db:
+        async with connect(self.db_path) as db:
             await db.execute(
                 """
                 UPDATE scraper_runs
-                SET status = ?, finished_at = ?, skus_total = ?, skus_succeeded = ?,
-                    skus_failed = ?, error_message = ?
-                WHERE run_id = ?
+                SET status = ?, finished_at = ?, listings_total = ?, listings_succeeded = ?,
+                    listings_failed = ?, error_message = ?
+                WHERE id = ?
                 """,
                 (
                     status.value,
                     finished_at.isoformat(),
-                    skus_total,
-                    skus_succeeded,
-                    skus_failed,
+                    listings_total,
+                    listings_succeeded,
+                    listings_failed,
                     error_message,
                     str(run_id),
                 ),
@@ -106,28 +65,33 @@ class SQLiteExecutionRepository(ExecutionRepository):
             await db.commit()
 
     async def get_latest_runs(self) -> List[ScraperRunRecord]:
-        async with aiosqlite.connect(self.db_path) as db:
+        async with connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             cursor = await db.execute(
                 """
-                SELECT r.* FROM scraper_runs r
+                SELECT r.*, s.slug AS store_slug FROM scraper_runs r
+                JOIN stores s ON s.id = r.store_id
                 INNER JOIN (
-                    SELECT store_name, MAX(started_at) AS max_started
+                    SELECT store_id, MAX(started_at) AS max_started
                     FROM scraper_runs
-                    GROUP BY store_name
+                    GROUP BY store_id
                 ) latest
-                ON r.store_name = latest.store_name AND r.started_at = latest.max_started
-                ORDER BY r.store_name
+                ON r.store_id = latest.store_id AND r.started_at = latest.max_started
+                ORDER BY s.slug
                 """
             )
             rows = await cursor.fetchall()
         return [self._row_to_record(row) for row in rows]
 
     async def get_run_history(self, limit: int = 50) -> List[ScraperRunRecord]:
-        async with aiosqlite.connect(self.db_path) as db:
+        async with connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             cursor = await db.execute(
-                "SELECT * FROM scraper_runs ORDER BY started_at DESC LIMIT ?",
+                """
+                SELECT r.*, s.slug AS store_slug FROM scraper_runs r
+                JOIN stores s ON s.id = r.store_id
+                ORDER BY r.started_at DESC LIMIT ?
+                """,
                 (limit,),
             )
             rows = await cursor.fetchall()
@@ -135,7 +99,7 @@ class SQLiteExecutionRepository(ExecutionRepository):
 
     async def fail_stale_running_runs(self, error_message: str) -> int:
         finished_at = datetime.now(timezone.utc).isoformat()
-        async with aiosqlite.connect(self.db_path) as db:
+        async with connect(self.db_path) as db:
             cursor = await db.execute(
                 """
                 UPDATE scraper_runs
@@ -155,17 +119,22 @@ class SQLiteExecutionRepository(ExecutionRepository):
     ) -> UUID:
         sku_run_id = uuid4()
         started_at = datetime.now(timezone.utc)
-        async with aiosqlite.connect(self.db_path) as db:
+        async with connect(self.db_path) as db:
+            cursor = await db.execute(
+                "SELECT id FROM store_listings WHERE product_url = ?", (product_url,)
+            )
+            row = await cursor.fetchone()
+            store_listing_id = row[0] if row else None
             await db.execute(
                 """
-                INSERT INTO sku_runs
-                    (sku_run_id, run_id, store_name, product_url, product_title, status, started_at)
+                INSERT INTO listing_runs
+                    (id, scraper_run_id, store_listing_id, product_url, product_title, status, started_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     str(sku_run_id),
                     str(run_id),
-                    store_name,
+                    store_listing_id,
                     product_url,
                     product_title,
                     SkuRunStatus.RUNNING.value,
@@ -179,31 +148,38 @@ class SQLiteExecutionRepository(ExecutionRepository):
         self, sku_run_id: UUID, status: SkuRunStatus, error_message: Optional[str] = None
     ) -> None:
         finished_at = datetime.now(timezone.utc)
-        async with aiosqlite.connect(self.db_path) as db:
+        async with connect(self.db_path) as db:
             await db.execute(
                 """
-                UPDATE sku_runs
+                UPDATE listing_runs
                 SET status = ?, finished_at = ?, error_message = ?
-                WHERE sku_run_id = ?
+                WHERE id = ?
                 """,
                 (status.value, finished_at.isoformat(), error_message, str(sku_run_id)),
             )
             await db.commit()
 
     async def get_current_sku_run(self, run_id: UUID) -> Optional[SkuRunRecord]:
-        async with aiosqlite.connect(self.db_path) as db:
+        async with connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             cursor = await db.execute(
-                "SELECT * FROM sku_runs WHERE run_id = ? AND status = ? ORDER BY started_at DESC LIMIT 1",
+                """
+                SELECT lr.*, s.slug AS store_slug
+                FROM listing_runs lr
+                JOIN scraper_runs sr ON sr.id = lr.scraper_run_id
+                JOIN stores s ON s.id = sr.store_id
+                WHERE lr.scraper_run_id = ? AND lr.status = ?
+                ORDER BY lr.started_at DESC LIMIT 1
+                """,
                 (str(run_id), SkuRunStatus.RUNNING.value),
             )
             row = await cursor.fetchone()
-        return self._row_to_sku_record(row) if row else None
+        return self._row_to_sku_record(row, run_id) if row else None
 
     async def get_sku_run_counts(self, run_id: UUID) -> Dict[SkuRunStatus, int]:
-        async with aiosqlite.connect(self.db_path) as db:
+        async with connect(self.db_path) as db:
             cursor = await db.execute(
-                "SELECT status, COUNT(*) FROM sku_runs WHERE run_id = ? GROUP BY status",
+                "SELECT status, COUNT(*) FROM listing_runs WHERE scraper_run_id = ? GROUP BY status",
                 (str(run_id),),
             )
             rows = await cursor.fetchall()
@@ -211,10 +187,10 @@ class SQLiteExecutionRepository(ExecutionRepository):
 
     async def fail_stale_running_sku_runs(self, error_message: str) -> int:
         finished_at = datetime.now(timezone.utc).isoformat()
-        async with aiosqlite.connect(self.db_path) as db:
+        async with connect(self.db_path) as db:
             cursor = await db.execute(
                 """
-                UPDATE sku_runs
+                UPDATE listing_runs
                 SET status = ?, finished_at = ?, error_message = ?
                 WHERE status = ?
                 """,
@@ -227,11 +203,11 @@ class SQLiteExecutionRepository(ExecutionRepository):
         return count
 
     @staticmethod
-    def _row_to_sku_record(row: aiosqlite.Row) -> SkuRunRecord:
+    def _row_to_sku_record(row: aiosqlite.Row, run_id: UUID) -> SkuRunRecord:
         return SkuRunRecord(
-            sku_run_id=row["sku_run_id"],
-            run_id=row["run_id"],
-            store_name=row["store_name"],
+            sku_run_id=row["id"],
+            run_id=run_id,
+            store_name=row["store_slug"],
             product_url=row["product_url"],
             product_title=row["product_title"],
             status=row["status"],
@@ -243,13 +219,13 @@ class SQLiteExecutionRepository(ExecutionRepository):
     @staticmethod
     def _row_to_record(row: aiosqlite.Row) -> ScraperRunRecord:
         return ScraperRunRecord(
-            run_id=row["run_id"],
-            store_name=row["store_name"],
+            run_id=row["id"],
+            store_name=row["store_slug"],
             status=row["status"],
             started_at=row["started_at"],
             finished_at=row["finished_at"],
-            skus_total=row["skus_total"],
-            skus_succeeded=row["skus_succeeded"],
-            skus_failed=row["skus_failed"],
+            listings_total=row["listings_total"],
+            listings_succeeded=row["listings_succeeded"],
+            listings_failed=row["listings_failed"],
             error_message=row["error_message"],
         )

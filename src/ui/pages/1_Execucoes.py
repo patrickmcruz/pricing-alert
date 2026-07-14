@@ -16,6 +16,7 @@ from src.core.config import settings
 from src.core.execution import RunStatus, ScraperRunRecord, SkuRunRecord, SkuRunStatus
 from src.core.i18n import i18n, t
 from src.core.trigger import TriggerRequest
+from src.db.schema import initialize_schema as initialize_db_schema
 from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
 from src.repositories.sqlite_trigger_repository import SQLiteTriggerRepository
 
@@ -52,13 +53,13 @@ async def _fetch_latest_runs() -> list[ScraperRunRecord]:
     # This page only ever reads, but the orchestrator/script that writes runs
     # may not have started yet on a fresh DB - initialize_schema is a no-op
     # CREATE TABLE IF NOT EXISTS, so it's safe to call from here too.
-    await repo.initialize_schema()
+    await initialize_db_schema(DB_PATH)
     return await repo.get_latest_runs()
 
 
 async def _fetch_run_history(limit: int) -> list[ScraperRunRecord]:
     repo = SQLiteExecutionRepository(DB_PATH)
-    await repo.initialize_schema()
+    await initialize_db_schema(DB_PATH)
     return await repo.get_run_history(limit=limit)
 
 
@@ -72,7 +73,7 @@ def _load_run_history(limit: int = 50) -> list[ScraperRunRecord]:
 
 async def _fetch_sku_progress(run_id) -> tuple[SkuRunRecord | None, dict[SkuRunStatus, int]]:
     repo = SQLiteExecutionRepository(DB_PATH)
-    await repo.initialize_schema()
+    await initialize_db_schema(DB_PATH)
     current = await repo.get_current_sku_run(run_id)
     counts = await repo.get_sku_run_counts(run_id)
     return current, counts
@@ -84,7 +85,7 @@ def _load_sku_progress(run_id) -> tuple[SkuRunRecord | None, dict[SkuRunStatus, 
 
 async def _fetch_active_triggers() -> list[TriggerRequest]:
     repo = SQLiteTriggerRepository(DB_PATH)
-    await repo.initialize_schema()
+    await initialize_db_schema(DB_PATH)
     return await repo.get_active_requests()
 
 
@@ -94,7 +95,7 @@ def _load_active_triggers() -> list[TriggerRequest]:
 
 async def _submit_trigger(store_name: str | None) -> None:
     repo = SQLiteTriggerRepository(DB_PATH)
-    await repo.initialize_schema()
+    await initialize_db_schema(DB_PATH)
     await repo.create_request(store_name)
 
 
@@ -145,9 +146,9 @@ def render_live_status() -> None:
                 st.caption(f"{t('execution_finished_at', lang=lang)}: {_fmt_local(run.finished_at)}")
             if run.status != RunStatus.RUNNING:
                 st.caption(
-                    f"{t('execution_skus_succeeded', lang=lang)}: {run.skus_succeeded} · "
-                    f"{t('execution_skus_failed', lang=lang)}: {run.skus_failed} · "
-                    f"{t('execution_skus_total', lang=lang)}: {run.skus_total}"
+                    f"{t('execution_skus_succeeded', lang=lang)}: {run.listings_succeeded} · "
+                    f"{t('execution_skus_failed', lang=lang)}: {run.listings_failed} · "
+                    f"{t('execution_skus_total', lang=lang)}: {run.listings_total}"
                 )
             else:
                 # scraper_runs' own counters only get written once, at the very
@@ -206,8 +207,8 @@ else:
                 t("execution_finished_at", lang=lang): (
                     _fmt_local(r.finished_at) if r.finished_at else "—"
                 ),
-                t("execution_skus_succeeded", lang=lang): r.skus_succeeded,
-                t("execution_skus_failed", lang=lang): r.skus_failed,
+                t("execution_skus_succeeded", lang=lang): r.listings_succeeded,
+                t("execution_skus_failed", lang=lang): r.listings_failed,
                 t("execution_error", lang=lang): r.error_message or "",
             }
             for r in history

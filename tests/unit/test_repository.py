@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import uuid
 
 from src.core.contract import PriceContract, ProductSKU
+from src.db.schema import initialize_schema as initialize_db_schema
 from src.repositories.sqlite_repository import SQLitePriceRepository
 
 from tests.conftest import make_gpu_model_id
@@ -13,8 +14,8 @@ from tests.conftest import make_gpu_model_id
 async def repo(tmp_path):
     # Use a file-based temporary database so we can open new connections to verify data
     db_path = str(tmp_path / "test.db")
+    await initialize_db_schema(db_path)
     repository = SQLitePriceRepository(db_path)
-    await repository.initialize_schema()
     yield repository
 
 @pytest.mark.asyncio
@@ -96,6 +97,18 @@ async def test_repository_delete_sku_missing_url_is_noop(repo):
 
 @pytest.mark.asyncio
 async def test_repository_save_prices(repo):
+    gpu_model_id = await make_gpu_model_id(repo.db_path, brand="Nvidia", variant="Founders")
+    sku = ProductSKU(
+        product_url="https://example.com/gpu",
+        store_name="example",
+        search_keyword="rtx 5070",
+        gpu_model_id=gpu_model_id,
+        brand="Nvidia",
+        model="Founders",
+        product_title="RTX 5070",
+    )
+    await repo.save_skus([sku])
+
     contract = PriceContract(
         execution_id=uuid.uuid4(),
         store_name="example",
@@ -110,12 +123,15 @@ async def test_repository_save_prices(repo):
         is_available=True,
         scraped_at=datetime.now(timezone.utc)
     )
-    
-    await repo.save_prices([contract])
+
+    observation_ids = await repo.save_prices([contract])
+    assert len(observation_ids) == 1
 
     # Query directly to verify
     async with aiosqlite.connect(repo.db_path) as db:
-        async with db.execute("SELECT price_cash, price_installments, installment_count FROM prices") as cursor:
+        async with db.execute(
+            "SELECT price_cash, price_installments, installment_count FROM price_observations"
+        ) as cursor:
             row = await cursor.fetchone()
             assert row is not None
             assert row[0] == 5000.00
@@ -124,7 +140,51 @@ async def test_repository_save_prices(repo):
 
 
 @pytest.mark.asyncio
+async def test_repository_save_prices_raises_for_untracked_listing(repo):
+    contract = PriceContract(
+        store_name="example",
+        search_keyword="rtx 5070",
+        product_title="RTX 5070",
+        product_url="https://example.com/untracked-gpu",
+        price_cash=Decimal("5000.00"),
+        currency="BRL",
+        parser_version="v1",
+        is_available=True,
+    )
+
+    with pytest.raises(ValueError):
+        await repo.save_prices([contract])
+
+
+@pytest.mark.asyncio
 async def test_repository_get_prices_by_keyword(repo):
+    gpu_model_id = await make_gpu_model_id(repo.db_path, brand="Nvidia", variant="Founders")
+    other_gpu_model_id = await make_gpu_model_id(
+        repo.db_path, brand="Nvidia", chipset="rtx 5080", variant="Founders"
+    )
+    await repo.save_skus(
+        [
+            ProductSKU(
+                product_url="https://example.com/gpu",
+                store_name="example",
+                search_keyword="rtx 5070",
+                gpu_model_id=gpu_model_id,
+                brand="Nvidia",
+                model="Founders",
+                product_title="RTX 5070",
+            ),
+            ProductSKU(
+                product_url="https://example.com/other",
+                store_name="example",
+                search_keyword="rtx 5080",
+                gpu_model_id=other_gpu_model_id,
+                brand="Nvidia",
+                model="Founders",
+                product_title="RTX 5080",
+            ),
+        ]
+    )
+
     contract = PriceContract(
         store_name="example",
         search_keyword="rtx 5070",
@@ -150,4 +210,3 @@ async def test_repository_get_prices_by_keyword(repo):
 async def test_repository_get_prices_by_keyword_no_matches(repo):
     results = await repo.get_prices_by_keyword("does-not-exist")
     assert results == []
-

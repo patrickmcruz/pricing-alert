@@ -18,6 +18,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, PROJECT_ROOT)
 
 from src.core.config import settings
+from src.db.schema import initialize_schema as initialize_db_schema
 from src.engine.discovery import DiscoveryEngine
 from src.repositories.sqlite_catalog_repository import SQLiteCatalogRepository
 from src.repositories.sqlite_repository import SQLitePriceRepository
@@ -30,10 +31,9 @@ async def migrate():
         print(f"Backed up {settings.db_path} to {backup_path} before migrating.")
 
     print(f"Migrating data/target_urls.json into {settings.db_path} ...")
+    await initialize_db_schema(settings.db_path)
     repo = SQLitePriceRepository(db_path=settings.db_path)
-    await repo.initialize_schema()
     catalog_repo = SQLiteCatalogRepository(db_path=settings.db_path)
-    await catalog_repo.initialize_schema()
 
     engine = DiscoveryEngine(repository=repo, catalog_repository=catalog_repo)  # defaults to data/target_urls.json
     await engine.run_discovery(configs=[])

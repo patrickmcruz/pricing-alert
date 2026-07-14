@@ -13,10 +13,6 @@ class CatalogRepository(ABC):
     """
 
     @abstractmethod
-    async def initialize_schema(self) -> None:
-        """Creates the brands/gpu_chipsets/gpu_models tables if they don't exist."""
-
-    @abstractmethod
     async def get_or_create_brand(self, name: str) -> Brand:
         """Case-insensitive get-or-create by name."""
 
@@ -28,9 +24,9 @@ class CatalogRepository(ABC):
 
     @abstractmethod
     async def get_or_create_gpu_model(
-        self, brand_id: str, chipset_id: str, variant_name: str
+        self, brand_id: str, chipset_id: str, model_name: str
     ) -> GpuModel:
-        """Case-insensitive get-or-create by (brand_id, chipset_id, variant_name)."""
+        """Case-insensitive get-or-create by (brand_id, chipset_id, model_name)."""
 
     @abstractmethod
     async def get_gpu_model(self, gpu_model_id: str) -> Optional[GpuModel]:

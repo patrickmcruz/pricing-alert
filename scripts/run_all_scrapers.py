@@ -32,6 +32,7 @@ from src.core.http_client import HTTPClientFactory
 from src.core.logging_setup import configure_logging
 from src.core.registry import get_registered_scrapers
 from src.core.transport import ClientFactory
+from src.db.schema import initialize_schema as initialize_db_schema
 from src.engine.scheduler import PriceEngine
 from src.repositories.sqlite_repository import SQLitePriceRepository
 from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
@@ -42,11 +43,9 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
+    await initialize_db_schema(settings.db_path)
     repository = SQLitePriceRepository(db_path=settings.db_path)
-    await repository.initialize_schema()
-
     execution_repository = SQLiteExecutionRepository(db_path=settings.db_path)
-    await execution_repository.initialize_schema()
 
     client_factories: dict[str, ClientFactory] = {
         "browser": BrowserFactory(),
@@ -88,8 +87,14 @@ async def main() -> None:
 async def _print_summary(db_path: str, started_at: datetime) -> None:
     async with aiosqlite.connect(db_path) as db:
         cursor = await db.execute(
-            "SELECT store_name, COUNT(*), SUM(is_available) FROM prices "
-            "WHERE scraped_at >= ? GROUP BY store_name",
+            """
+            SELECT s.slug, COUNT(*), SUM(po.is_available)
+            FROM price_observations po
+            JOIN store_listings sl ON sl.id = po.store_listing_id
+            JOIN stores s ON s.id = sl.store_id
+            WHERE po.scraped_at >= ?
+            GROUP BY s.slug
+            """,
             (started_at.isoformat(),),
         )
         rows = await cursor.fetchall()

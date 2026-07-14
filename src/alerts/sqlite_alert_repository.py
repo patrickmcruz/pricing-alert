@@ -1,11 +1,13 @@
 import logging
+from datetime import datetime, timezone
 from typing import List
 
 import aiosqlite
 
 from src.alerts.contracts import AlertEvent, AlertRule
 from src.alerts.repository import AlertRepository
-from src.core.contract import PriceContract
+from src.db.schema import connect
+from src.repositories.sqlite_store_repository import get_or_create_store_id
 
 logger = logging.getLogger(__name__)
 
@@ -16,57 +18,31 @@ class SQLiteAlertRepository(AlertRepository):
     def __init__(self, db_path: str):
         self.db_path = db_path
 
-    async def initialize_schema(self) -> None:
-        async with aiosqlite.connect(self.db_path) as db:
-            await db.execute(
-                """
-                CREATE TABLE IF NOT EXISTS alert_rules (
-                    rule_id TEXT PRIMARY KEY,
-                    store_name TEXT,
-                    search_keyword TEXT,
-                    brand TEXT,
-                    model TEXT,
-                    threshold_type TEXT NOT NULL,
-                    threshold_value DECIMAL(10, 2),
-                    is_active BOOLEAN NOT NULL,
-                    created_at TIMESTAMP NOT NULL
-                )
-                """
-            )
-            await db.execute(
-                """
-                CREATE TABLE IF NOT EXISTS alert_history (
-                    event_id TEXT PRIMARY KEY,
-                    rule_id TEXT NOT NULL,
-                    store_name TEXT NOT NULL,
-                    search_keyword TEXT NOT NULL,
-                    product_title TEXT NOT NULL,
-                    product_url TEXT NOT NULL,
-                    price_cash DECIMAL(10, 2) NOT NULL,
-                    reason TEXT NOT NULL,
-                    price_snapshot TEXT NOT NULL,
-                    triggered_at TIMESTAMP NOT NULL
-                )
-                """
-            )
-            await db.commit()
-        logger.info("Alert schema initialized successfully.")
-
     async def save_rule(self, rule: AlertRule) -> None:
-        async with aiosqlite.connect(self.db_path) as db:
+        async with connect(self.db_path) as db:
+            store_id = rule.store_id
+            if store_id is None and rule.store_name:
+                store_id = await get_or_create_store_id(db, rule.store_name)
             await db.execute(
                 """
-                INSERT OR REPLACE INTO alert_rules (
-                    rule_id, store_name, search_keyword, brand, model,
+                INSERT INTO alert_rules (
+                    id, store_id, gpu_model_id, search_keyword,
                     threshold_type, threshold_value, is_active, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    store_id = excluded.store_id,
+                    gpu_model_id = excluded.gpu_model_id,
+                    search_keyword = excluded.search_keyword,
+                    threshold_type = excluded.threshold_type,
+                    threshold_value = excluded.threshold_value,
+                    is_active = excluded.is_active,
+                    created_at = excluded.created_at
                 """,
                 (
                     str(rule.rule_id),
-                    rule.store_name,
+                    store_id,
+                    rule.gpu_model_id,
                     rule.search_keyword,
-                    rule.brand,
-                    rule.model,
                     rule.threshold_type.value,
                     float(rule.threshold_value) if rule.threshold_value is not None else None,
                     rule.is_active,
@@ -76,18 +52,25 @@ class SQLiteAlertRepository(AlertRepository):
             await db.commit()
 
     async def get_active_rules(self) -> List[AlertRule]:
-        async with aiosqlite.connect(self.db_path) as db:
+        async with connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
-            cursor = await db.execute("SELECT * FROM alert_rules WHERE is_active = 1")
+            cursor = await db.execute(
+                """
+                SELECT ar.*, s.slug AS store_slug
+                FROM alert_rules ar
+                LEFT JOIN stores s ON s.id = ar.store_id
+                WHERE ar.is_active = 1
+                """
+            )
             rows = await cursor.fetchall()
 
         return [
             AlertRule(
-                rule_id=row["rule_id"],
-                store_name=row["store_name"],
+                rule_id=row["id"],
+                store_id=row["store_id"],
+                store_name=row["store_slug"],
+                gpu_model_id=row["gpu_model_id"],
                 search_keyword=row["search_keyword"],
-                brand=row["brand"],
-                model=row["model"],
                 threshold_type=row["threshold_type"],
                 threshold_value=row["threshold_value"],
                 is_active=bool(row["is_active"]),
@@ -97,25 +80,18 @@ class SQLiteAlertRepository(AlertRepository):
         ]
 
     async def save_event(self, event: AlertEvent) -> None:
-        price: PriceContract = event.price
-        async with aiosqlite.connect(self.db_path) as db:
+        async with connect(self.db_path) as db:
             await db.execute(
                 """
-                INSERT OR REPLACE INTO alert_history (
-                    event_id, rule_id, store_name, search_keyword, product_title,
-                    product_url, price_cash, reason, price_snapshot, triggered_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO alert_events (
+                    id, alert_rule_id, price_observation_id, reason, triggered_at
+                ) VALUES (?, ?, ?, ?, ?)
                 """,
                 (
                     str(event.event_id),
                     str(event.rule_id),
-                    price.store_name,
-                    price.search_keyword,
-                    price.product_title,
-                    str(price.product_url),
-                    float(price.price_cash),
+                    event.price_observation_id,
                     event.reason,
-                    price.model_dump_json(),
                     event.triggered_at.isoformat(),
                 ),
             )
@@ -124,6 +100,6 @@ class SQLiteAlertRepository(AlertRepository):
             "Recorded alert event %s for rule %s (%s): %s",
             event.event_id,
             event.rule_id,
-            price.store_name,
+            event.price.store_name,
             event.reason,
         )

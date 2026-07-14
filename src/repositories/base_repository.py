@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
+from uuid import UUID
 
 from src.core.contract import LegacyTargetUrlRow, PriceContract, ProductSKU
 
@@ -10,9 +11,13 @@ class PriceRepository(ABC):
     """
 
     @abstractmethod
-    async def save_prices(self, prices: List[PriceContract]) -> None:
+    async def save_prices(
+        self, prices: List[PriceContract], scraper_run_id: Optional[UUID] = None
+    ) -> List[str]:
         """
         Persists a list of PriceContract objects to the underlying database.
+        Returns the generated price_observations.id values, in the same order
+        as the input list.
         """
         pass
 
@@ -47,7 +52,9 @@ class PriceRepository(ABC):
     @abstractmethod
     async def delete_sku(self, product_url: str) -> None:
         """
-        Removes a tracked SKU by its product URL. No-op if it doesn't exist.
+        Soft-deletes a tracked SKU by its product URL (is_active = 0), so its
+        price_observations/listing_runs history isn't orphaned. No-op if it
+        doesn't exist.
         """
         pass
 

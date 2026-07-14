@@ -13,10 +13,6 @@ class ExecutionRepository(ABC):
     """
 
     @abstractmethod
-    async def initialize_schema(self) -> None:
-        """Creates the scraper_runs table if it doesn't exist."""
-
-    @abstractmethod
     async def start_run(self, store_name: str) -> UUID:
         """Records a new run as RUNNING and returns its run_id."""
 
@@ -25,9 +21,9 @@ class ExecutionRepository(ABC):
         self,
         run_id: UUID,
         status: RunStatus,
-        skus_total: int,
-        skus_succeeded: int,
-        skus_failed: int,
+        listings_total: int,
+        listings_succeeded: int,
+        listings_failed: int,
         error_message: Optional[str] = None,
     ) -> None:
         """Marks a run as finished (SUCCESS or FAILED) with final counters."""

@@ -20,7 +20,15 @@ class AlertEvaluator:
         price: PriceContract,
         rules: List[AlertRule],
         previous_price: Optional[Decimal] = None,
+        price_observation_id: str = "",
     ) -> List[AlertEvent]:
+        """
+        price_observation_id is threaded onto every AlertEvent produced, so it
+        can be persisted as the FK into price_observations (see
+        src/alerts/repository.py). Defaults to "" to keep this call ergonomic
+        for callers/tests that don't care about the FK; real callers
+        (AlertDispatcher.handle_price) always pass the real id.
+        """
         if not price.is_available:
             return []
 
@@ -31,7 +39,14 @@ class AlertEvaluator:
 
             reason = AlertEvaluator._check_threshold(rule, price, previous_price)
             if reason:
-                events.append(AlertEvent(rule_id=rule.rule_id, price=price, reason=reason))
+                events.append(
+                    AlertEvent(
+                        rule_id=rule.rule_id,
+                        price_observation_id=price_observation_id,
+                        price=price,
+                        reason=reason,
+                    )
+                )
 
         return events
 

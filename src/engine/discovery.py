@@ -55,9 +55,9 @@ class DiscoveryEngine:
             chipset_name, chip_maker=infer_chip_maker(chipset_name)
         )
         brand_entity = await self.catalog_repository.get_or_create_brand(brand or "Unknown")
-        variant_name = model or product_title or "Unknown"
+        model_name = model or product_title or "Unknown"
         gpu_model = await self.catalog_repository.get_or_create_gpu_model(
-            brand_entity.id, chipset.id, variant_name
+            brand_entity.id, chipset.id, model_name
         )
         return chipset, brand_entity, gpu_model
 
@@ -104,7 +104,7 @@ class DiscoveryEngine:
                         product_url=item["product_url"],
                         gpu_model_id=gpu_model.id,
                         brand=brand_entity.name,
-                        model=gpu_model.variant_name,
+                        model=gpu_model.model_name,
                         product_title=item.get("product_title", "Unknown"),
                     )
                 )

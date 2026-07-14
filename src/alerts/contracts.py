@@ -20,17 +20,17 @@ class ThresholdType(str, Enum):
 class AlertRule(BaseModel):
     """
     A user-defined condition that, when matched by an incoming PriceContract,
-    should produce an AlertEvent. Filters (store_name/search_keyword/brand/model)
+    should produce an AlertEvent. Filters (store_name/search_keyword/gpu_model_id)
     are optional - None means "match any".
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     rule_id: UUID = Field(default_factory=uuid4)
-    store_name: Optional[str] = None
+    store_id: Optional[str] = None
+    store_name: Optional[str] = None  # resolved/joined from stores.slug at read time for matching+display, like ProductSKU.brand/model - never hand-set without a matching store_id
+    gpu_model_id: Optional[str] = None
     search_keyword: Optional[str] = None
-    brand: Optional[str] = None
-    model: Optional[str] = None
     threshold_type: ThresholdType
     threshold_value: Optional[Decimal] = Field(
         default=None,
@@ -45,12 +45,7 @@ class AlertRule(BaseModel):
             return False
         if self.search_keyword and price.search_keyword != self.search_keyword:
             return False
-        # Case-insensitive: brand/model canonicalization (see src/core/catalog.py)
-        # can change display casing over time (e.g. "xfx" -> "XFX"), and a rule
-        # saved before that shouldn't silently stop matching.
-        if self.brand and (price.brand or "").strip().lower() != self.brand.strip().lower():
-            return False
-        if self.model and (price.model or "").strip().lower() != self.model.strip().lower():
+        if self.gpu_model_id and price.gpu_model_id != self.gpu_model_id:
             return False
         return True
 
@@ -62,6 +57,7 @@ class AlertEvent(BaseModel):
 
     event_id: UUID = Field(default_factory=uuid4)
     rule_id: UUID
+    price_observation_id: str
     price: PriceContract
     reason: str
     triggered_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

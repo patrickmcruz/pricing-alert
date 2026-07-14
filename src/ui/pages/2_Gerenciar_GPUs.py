@@ -15,6 +15,7 @@ from src.core.config import settings
 from src.core.contract import ProductSKU
 from src.core.i18n import i18n, t
 from src.core.registry import get_registered_scrapers
+from src.db.schema import initialize_schema as initialize_db_schema
 from src.repositories.sqlite_catalog_repository import SQLiteCatalogRepository
 from src.repositories.sqlite_repository import SQLitePriceRepository
 import src.scrapers  # noqa: F401 - importing the package triggers scraper self-registration
@@ -33,10 +34,9 @@ st.markdown(t("gpu_manage_desc", lang=lang))
 
 
 async def _fetch_page_data() -> tuple[list[ProductSKU], list[Brand], list[GpuChipset]]:
+    await initialize_db_schema(DB_PATH)
     price_repo = SQLitePriceRepository(DB_PATH)
-    await price_repo.initialize_schema()
     catalog_repo = SQLiteCatalogRepository(DB_PATH)
-    await catalog_repo.initialize_schema()
     all_skus = await price_repo.list_all_skus()
     brands = await catalog_repo.list_brands()
     chipsets = await catalog_repo.list_chipsets()
@@ -48,8 +48,8 @@ def _load_page_data() -> tuple[list[ProductSKU], list[Brand], list[GpuChipset]]:
 
 
 async def _fetch_gpu_model(gpu_model_id: str) -> GpuModel | None:
+    await initialize_db_schema(DB_PATH)
     catalog_repo = SQLiteCatalogRepository(DB_PATH)
-    await catalog_repo.initialize_schema()
     return await catalog_repo.get_gpu_model(gpu_model_id)
 
 
@@ -65,8 +65,8 @@ async def _resolve_and_save_sku(
     product_url: str,
     product_title: str,
 ) -> None:
+    await initialize_db_schema(DB_PATH)
     catalog_repo = SQLiteCatalogRepository(DB_PATH)
-    await catalog_repo.initialize_schema()
     chipset = await catalog_repo.get_or_create_chipset(
         chipset_name, chip_maker=infer_chip_maker(chipset_name)
     )
@@ -79,18 +79,17 @@ async def _resolve_and_save_sku(
         product_url=product_url,
         gpu_model_id=gpu_model.id,
         brand=brand.name,
-        model=gpu_model.variant_name,
+        model=gpu_model.model_name,
         product_title=product_title,
     )
 
     price_repo = SQLitePriceRepository(DB_PATH)
-    await price_repo.initialize_schema()
     await price_repo.save_skus([sku])
 
 
 async def _remove_sku(product_url: str) -> None:
     repo = SQLitePriceRepository(DB_PATH)
-    await repo.initialize_schema()
+    await initialize_db_schema(DB_PATH)
     await repo.delete_sku(product_url)
 
 
@@ -169,7 +168,7 @@ with st.form(key=f"gpu_form_{edit_suffix}", clear_on_submit=not bool(editing_sku
         st.caption(t("gpu_url_readonly_note", lang=lang))
     variant_name = st.text_input(
         t("gpu_field_model", lang=lang),
-        value=(editing_gpu_model.variant_name if editing_gpu_model else "") if editing_sku else "",
+        value=(editing_gpu_model.model_name if editing_gpu_model else "") if editing_sku else "",
         key=f"gpu_variant_{edit_suffix}",
     )
     product_title = st.text_input(

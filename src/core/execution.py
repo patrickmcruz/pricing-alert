@@ -28,9 +28,9 @@ class ScraperRunRecord(BaseModel):
     status: RunStatus
     started_at: datetime
     finished_at: Optional[datetime] = None
-    skus_total: int = 0
-    skus_succeeded: int = 0
-    skus_failed: int = 0
+    listings_total: int = 0
+    listings_succeeded: int = 0
+    listings_failed: int = 0
     error_message: Optional[str] = None
 
 
@@ -46,9 +46,9 @@ class ScraperRunResult(BaseModel):
 
     store_name: str
     status: RunStatus
-    skus_total: int = 0
-    skus_succeeded: int = 0
-    skus_failed: int = 0
+    listings_total: int = 0
+    listings_succeeded: int = 0
+    listings_failed: int = 0
     duration_seconds: float = 0.0
     error_message: Optional[str] = None
     # Failure reason -> count, e.g. {"timeout": 2, "selector_outdated": 1} -

@@ -12,10 +12,6 @@ class AlertRepository(ABC):
     """
 
     @abstractmethod
-    async def initialize_schema(self) -> None:
-        """Creates the alert_rules/alert_history tables if they don't exist."""
-
-    @abstractmethod
     async def save_rule(self, rule: AlertRule) -> None:
         """Persists (or replaces) an alert rule."""
 

@@ -45,12 +45,12 @@ async def test_dispatcher_records_and_sends_on_price_drop(mock_repo, mock_channe
     dispatcher = AlertDispatcher(alert_repository=mock_repo, channels=[mock_channel])
 
     # First price: nothing to compare against yet, no event expected.
-    await dispatcher.handle_price(make_price("4500.00"))
+    await dispatcher.handle_price(make_price("4500.00"), "obs-1")
     mock_repo.save_event.assert_not_called()
     mock_channel.send.assert_not_called()
 
     # Second, lower price: ANY_DROP rule should fire.
-    await dispatcher.handle_price(make_price("4200.00"))
+    await dispatcher.handle_price(make_price("4200.00"), "obs-2")
     mock_repo.save_event.assert_called_once()
     mock_channel.send.assert_called_once()
 
@@ -63,8 +63,8 @@ async def test_dispatcher_isolates_channel_failures(mock_repo):
 
     dispatcher = AlertDispatcher(alert_repository=mock_repo, channels=[failing_channel, healthy_channel])
 
-    await dispatcher.handle_price(make_price("4500.00"))
-    await dispatcher.handle_price(make_price("4000.00"))
+    await dispatcher.handle_price(make_price("4500.00"), "obs-1")
+    await dispatcher.handle_price(make_price("4000.00"), "obs-2")
 
     failing_channel.send.assert_called_once()
     healthy_channel.send.assert_called_once()

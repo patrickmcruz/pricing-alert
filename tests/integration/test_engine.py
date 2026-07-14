@@ -111,7 +111,7 @@ async def test_engine_run_scraper(engine, mock_repository, mock_client_factory):
 
     # Verify repository was called to save prices
     assert mock_repository.save_prices.call_count == 1
-    mock_repository.save_prices.assert_any_call([mock_price])
+    mock_repository.save_prices.assert_any_call([mock_price], scraper_run_id=None)
 
 
 @pytest.mark.asyncio
@@ -141,9 +141,9 @@ async def test_engine_run_scraper_times_out_a_hung_sku_instead_of_blocking_forev
     mock_execution_repository.finish_run.assert_called_once()
     call = mock_execution_repository.finish_run.call_args
     assert call.args[1] == RunStatus.SUCCESS
-    assert call.kwargs["skus_total"] == 1
-    assert call.kwargs["skus_succeeded"] == 0
-    assert call.kwargs["skus_failed"] == 1
+    assert call.kwargs["listings_total"] == 1
+    assert call.kwargs["listings_succeeded"] == 0
+    assert call.kwargs["listings_failed"] == 1
 
 
 def test_engine_build_schedule(engine):
@@ -213,18 +213,18 @@ async def test_engine_run_scraper_records_successful_execution(
     mock_execution_repository.finish_run.assert_called_once()
     call = mock_execution_repository.finish_run.call_args
     assert call.args[1] == RunStatus.SUCCESS
-    assert call.kwargs["skus_total"] == 1
-    assert call.kwargs["skus_succeeded"] == 1
-    assert call.kwargs["skus_failed"] == 0
+    assert call.kwargs["listings_total"] == 1
+    assert call.kwargs["listings_succeeded"] == 1
+    assert call.kwargs["listings_failed"] == 0
     assert call.kwargs["error_message"] is None
 
     # run_scraper's return value mirrors what it just persisted, so callers
     # (main.py's startup_routine summary) don't need a second DB round-trip.
     assert result.store_name == "mock_store"
     assert result.status == RunStatus.SUCCESS
-    assert result.skus_total == 1
-    assert result.skus_succeeded == 1
-    assert result.skus_failed == 0
+    assert result.listings_total == 1
+    assert result.listings_succeeded == 1
+    assert result.listings_failed == 0
 
 
 @pytest.mark.asyncio
@@ -258,4 +258,4 @@ async def test_engine_run_scraper_records_success_with_zero_skus(
     mock_execution_repository.start_run.assert_called_once_with("mock_store")
     call = mock_execution_repository.finish_run.call_args
     assert call.args[1] == RunStatus.SUCCESS
-    assert call.kwargs["skus_total"] == 0
+    assert call.kwargs["listings_total"] == 0

@@ -23,10 +23,11 @@ async def make_gpu_model_id(
     real gpu_model_id, not a placeholder string, or get_target_skus/list_all_skus
     will silently filter the row out.
     """
+    from src.db.schema import initialize_schema as initialize_db_schema
     from src.repositories.sqlite_catalog_repository import SQLiteCatalogRepository
 
+    await initialize_db_schema(db_path)
     catalog = SQLiteCatalogRepository(db_path)
-    await catalog.initialize_schema()
     brand_entity = await catalog.get_or_create_brand(brand)
     chipset_entity = await catalog.get_or_create_chipset(chipset)
     gpu_model = await catalog.get_or_create_gpu_model(brand_entity.id, chipset_entity.id, variant)

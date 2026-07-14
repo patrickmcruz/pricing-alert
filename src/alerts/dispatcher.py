@@ -26,12 +26,12 @@ class AlertDispatcher:
         # simply not have a "previous_price" to compare against yet.
         self._last_seen_prices: Dict[Tuple[str, str], Decimal] = {}
 
-    async def handle_price(self, price: PriceContract) -> None:
+    async def handle_price(self, price: PriceContract, price_observation_id: str) -> None:
         key = (price.store_name, price.search_keyword)
         previous_price = self._last_seen_prices.get(key)
 
         rules = await self.alert_repository.get_active_rules()
-        events = AlertEvaluator.evaluate(price, rules, previous_price)
+        events = AlertEvaluator.evaluate(price, rules, previous_price, price_observation_id)
 
         if price.is_available:
             self._last_seen_prices[key] = price.price_cash
