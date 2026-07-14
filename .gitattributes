@@ -1,0 +1,7 @@
+# Shell scripts run inside Linux containers via their shebang line - a CRLF
+# line ending corrupts `#!/bin/sh` into an unresolvable interpreter path
+# (`/bin/sh\r`), which fails with a confusing "no such file or directory".
+# Force LF regardless of core.autocrlf so this can't reappear on a Windows
+# checkout (this exact bug happened once already: the entrypoint script came
+# back as CRLF after a branch merge and crash-looped the orchestrator).
+*.sh text eol=lf
