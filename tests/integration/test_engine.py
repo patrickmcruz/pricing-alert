@@ -6,7 +6,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from src.core.base_scraper import BaseScraper
 from src.core.contract import PriceContract, StoreConfig, ProductSKU
-from src.engine.scheduler import PriceEngine
+from src.engine.scheduler import PriceEngine, MissingScraperError
 from src.repositories.base_repository import PriceRepository
 
 
@@ -43,7 +43,7 @@ def mock_client_factory():
 @pytest.fixture
 def engine(mock_repository, mock_client_factory):
     scheduler = AsyncIOScheduler()
-    return PriceEngine(scheduler, mock_repository, mock_client_factory)
+    return PriceEngine(scheduler, mock_repository, {"browser": mock_client_factory})
 
 
 @pytest.mark.asyncio
@@ -96,3 +96,26 @@ def test_engine_build_schedule(engine):
     job2_trigger = jobs[1].trigger
     assert str(job2_trigger.fields[5]) == "15"  # hour
     assert str(job2_trigger.fields[6]) == "45"  # minute
+
+
+def test_engine_build_schedule_skips_disabled_store_without_scraper(engine):
+    config = StoreConfig(
+        store_name="unregistered_store",
+        cron_times=["08:00"],
+        enabled=False,
+    )
+
+    # Should not raise - disabled stores are allowed to have no scraper.
+    engine.build_schedule([config])
+    assert engine.scheduler.get_jobs() == []
+
+
+def test_engine_build_schedule_raises_for_enabled_store_without_scraper(engine):
+    config = StoreConfig(
+        store_name="unregistered_store",
+        cron_times=["08:00"],
+        enabled=True,
+    )
+
+    with pytest.raises(MissingScraperError):
+        engine.build_schedule([config])

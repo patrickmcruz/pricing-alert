@@ -121,12 +121,36 @@ class SQLitePriceRepository(PriceRepository):
 
     async def get_prices_by_keyword(self, keyword: str) -> List[PriceContract]:
         """
-        Retrieves pricing history for a specific keyword.
+        Retrieves pricing history for a specific keyword, newest first.
         """
-        # NOTE: Deserialization mapping back to PriceContract logic goes here.
-        # This will be fully implemented when the UI requires it.
-        # For now, it returns an empty list to satisfy the abstract method signature.
-        return []
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                "SELECT * FROM prices WHERE search_keyword = ? ORDER BY scraped_at DESC",
+                (keyword,),
+            )
+            rows = await cursor.fetchall()
+
+        return [
+            PriceContract(
+                execution_id=row["execution_id"],
+                store_name=row["store_name"],
+                search_keyword=row["search_keyword"],
+                product_title=row["product_title"],
+                product_url=row["product_url"],
+                price_cash=row["price_cash"],
+                price_installments=row["price_installments"],
+                installment_count=row["installment_count"],
+                currency=row["currency"],
+                parser_version=row["parser_version"],
+                is_available=bool(row["is_available"]),
+                brand=row["brand"],
+                model=row["model"],
+                discount=row["discount"],
+                scraped_at=row["scraped_at"],
+            )
+            for row in rows
+        ]
 
     async def save_skus(self, skus: List[ProductSKU]) -> None:
         """

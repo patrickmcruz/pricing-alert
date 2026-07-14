@@ -5,6 +5,12 @@ from playwright.async_api import Page
 
 logger = logging.getLogger(__name__)
 
+
+async def apply_jitter(min_seconds: float = 3.0, max_seconds: float = 8.0) -> None:
+    """Applies a randomized asynchronous delay to reduce deterministic request patterns."""
+    await asyncio.sleep(random.uniform(min_seconds, max_seconds))
+
+
 async def simulate_human_interaction(page: Page, max_attempts: int = 3):
     """
     Simulates human behavior to bypass anti-bot protections like Cloudflare.

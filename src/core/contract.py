@@ -77,6 +77,12 @@ class StoreConfig(BaseModel):
         description="Daily execution schedule using the 24-hour 'HH:MM' format.",
     )
 
+    enabled: bool = Field(
+        default=True,
+        description="Whether this store should be scheduled. If True but no scraper "
+        "is registered for it, PriceEngine.build_schedule raises MissingScraperError.",
+    )
+
 class ProductSKU(BaseModel):
     """
     Discovered SKU mapping for the tracker.

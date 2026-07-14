@@ -28,7 +28,11 @@ class AppSettings:
         # Mercado Livre API Credentials (loaded from ENV natively, or config.toml as fallback)
         self.ml_app_id = os.getenv("MERCADOLIVRE_APP_ID", self.config_data.get("MERCADOLIVRE_APP_ID"))
         self.ml_secret_key = os.getenv("MERCADOLIVRE_APP_SECRET_KEY", os.getenv("MERCADOLIVRE_APP_SECRET", self.config_data.get("MERCADOLIVRE_APP_SECRET")))
-        
+
+        # Telegram alert channel credentials (loaded from ENV natively, or config.toml as fallback)
+        self.telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", self.config_data.get("TELEGRAM_BOT_TOKEN"))
+        self.telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID", self.config_data.get("TELEGRAM_CHAT_ID"))
+
         self._configure_logging()
         
     def _load_config(self) -> Dict[str, Any]:

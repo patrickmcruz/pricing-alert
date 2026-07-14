@@ -1,58 +1,72 @@
 {
   "mercado-livre": {
     "store_name": "mercado-livre",
-    "base_url": "https://www.mercadolivre.com.br"
-  },
-  "amazon": {
-    "store_name": "amazon",
-    "base_url": "https://www.amazon.com.br"
+    "base_url": "https://www.mercadolivre.com.br",
+    "enabled": true
   },
   "kabum": {
     "store_name": "kabum",
-    "base_url": "https://www.kabum.com.br"
+    "base_url": "https://www.kabum.com.br",
+    "enabled": true
   },
   "terabyte": {
     "store_name": "terabyte",
-    "base_url": "https://www.terabyteshop.com.br"
+    "base_url": "https://www.terabyteshop.com.br",
+    "enabled": true
+  },
+  "amazon": {
+    "store_name": "amazon",
+    "base_url": "https://www.amazon.com.br",
+    "enabled": false
   },
   "pichau": {
     "store_name": "pichau",
-    "base_url": "https://www.pichau.com.br"
+    "base_url": "https://www.pichau.com.br",
+    "enabled": false
   },
   "microgem": {
     "store_name": "microgem",
-    "base_url": "https://www.microgem.com.br"
+    "base_url": "https://www.microgem.com.br",
+    "enabled": false
   },
   "magalu": {
     "store_name": "magalu",
-    "base_url": "https://www.magazineluiza.com.br"
+    "base_url": "https://www.magazineluiza.com.br",
+    "enabled": false
   },
   "patoloco": {
     "store_name": "patoloco",
-    "base_url": "https://www.patoloco.com.br"
+    "base_url": "https://www.patoloco.com.br",
+    "enabled": false
   },
   "infostore": {
     "store_name": "infostore",
-    "base_url": "https://www.infostore.com.br"
+    "base_url": "https://www.infostore.com.br",
+    "enabled": false
   },
   "gk-infostore": {
     "store_name": "gk-infostore",
-    "base_url": "https://www.gkinfostore.com.br"
+    "base_url": "https://www.gkinfostore.com.br",
+    "enabled": false
   },
   "vitrine-informatica": {
     "store_name": "vitrine-informatica",
-    "base_url": "https://www.vitrineinformatica.com.br"
+    "base_url": "https://www.vitrineinformatica.com.br",
+    "enabled": false
   },
   "alligator-shop": {
     "store_name": "alligator-shop",
-    "base_url": "https://www.alligatorshop.com.br"
+    "base_url": "https://www.alligatorshop.com.br",
+    "enabled": false
   },
   "gigantec": {
     "store_name": "gigantec",
-    "base_url": "https://www.gigantec.com.br"
+    "base_url": "https://www.gigantec.com.br",
+    "enabled": false
   },
   "bemol": {
     "store_name": "bemol",
-    "base_url": "https://www.bemol.com.br"
+    "base_url": "https://www.bemol.com.br",
+    "enabled": false
   }
 }

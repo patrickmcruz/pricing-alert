@@ -50,7 +50,7 @@ async def test_repository_save_prices(repo):
     )
     
     await repo.save_prices([contract])
-    
+
     # Query directly to verify
     async with aiosqlite.connect(repo.db_path) as db:
         async with db.execute("SELECT price_cash, price_installments, installment_count FROM prices") as cursor:
@@ -59,4 +59,33 @@ async def test_repository_save_prices(repo):
             assert row[0] == 5000.00
             assert row[1] == 5500.00
             assert row[2] == 10
+
+
+@pytest.mark.asyncio
+async def test_repository_get_prices_by_keyword(repo):
+    contract = PriceContract(
+        store_name="example",
+        search_keyword="rtx 5070",
+        product_title="RTX 5070",
+        product_url="https://example.com/gpu",
+        price_cash=Decimal("5000.00"),
+        currency="BRL",
+        parser_version="v1",
+        is_available=True,
+    )
+    other_keyword = contract.model_copy(update={"search_keyword": "rtx 5080", "product_url": "https://example.com/other"})
+
+    await repo.save_prices([contract, other_keyword])
+
+    results = await repo.get_prices_by_keyword("rtx 5070")
+
+    assert len(results) == 1
+    assert results[0].search_keyword == "rtx 5070"
+    assert results[0].price_cash == Decimal("5000.00")
+
+
+@pytest.mark.asyncio
+async def test_repository_get_prices_by_keyword_no_matches(repo):
+    results = await repo.get_prices_by_keyword("does-not-exist")
+    assert results == []
 

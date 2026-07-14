@@ -1,7 +1,6 @@
 import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from decimal import Decimal
 
 from src.core.contract import ProductSKU
 from src.repositories.sqlite_repository import SQLitePriceRepository
@@ -53,7 +52,7 @@ async def test_engine_scraper_pipeline(repo):
     
     # 3. Orchestrate
     scheduler = AsyncIOScheduler()
-    engine = PriceEngine(scheduler, repo, mock_client_factory)
+    engine = PriceEngine(scheduler, repo, {"browser": mock_client_factory})
     
     scraper = KabumScraper()
     engine.register_scraper(scraper)

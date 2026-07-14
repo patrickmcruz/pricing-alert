@@ -32,14 +32,23 @@ You are a Senior Full-Stack Software Architect and Data Engineer. Your objective
 │   │   ├── config.py                 # Application configuration via tomllib
 │   │   ├── browser.py                # Playwright factory
 │   │   ├── http_client.py            # HTTPX client factory
-│   │   └── utils.py                  # Shared helper functions
-│   ├── /spiders                      # Discovery Engine (crawls grids for URLs)
-│   ├── /scrapers                     # Scraper Engine (parses specific Product Pages)
+│   │   ├── parsing_utils.py          # Shared parsing helpers (price cleaning, discount, stock)
+│   │   ├── contract_factory.py       # Shared PriceContract construction helpers
+│   │   ├── registry.py               # @register_scraper self-registration for scraper classes
+│   │   ├── transport.py              # ClientFactory Protocol shared by BrowserFactory/HTTPClientFactory
+│   │   └── utils.py                  # Shared helper functions (jitter, anti-bot simulation)
+│   ├── /scrapers                     # Scraper Engine (parses specific Product Pages); self-registers via @register_scraper
 │   ├── /engine                       # Orchestration (scheduler.py, discovery.py)
-│   ├── /repositories                 # Persistence layer (SQLite implementation)
+│   ├── /repositories                 # Price persistence layer (SQLite implementation)
+│   ├── /alerts                       # Alerting domain: rules, evaluation, notification delivery
+│   │   ├── contracts.py              # AlertRule, AlertEvent (Pydantic v2)
+│   │   ├── evaluator.py              # Pure AlertEvaluator (no I/O, fixture-testable)
+│   │   ├── repository.py             # AlertRepository ABC + sqlite_alert_repository.py
+│   │   ├── dispatcher.py             # AlertDispatcher - wired into PriceEngine via on_price_saved
+│   │   └── channels/                 # Pluggable NotificationChannel implementations (e.g. telegram.py)
 │   ├── /ui                           # Streamlit application
 │   └── /data
-│       └── target-stores-list.json   # Store definitions (Cron configs)
+│       └── target-stores-list.json   # Store definitions (Cron configs, enabled flag)
 ├── /data/selectors                   # TOML config files for externalized CSS selectors
 ├── /tests
 │   ├── /fixtures                     # Static HTML for parser tests
@@ -59,12 +68,13 @@ All extracted data must be normalized into the `PriceContract` model before leav
 * Extract both Cash (À vista) and Installment (Parcelado) prices, as well as the maximum `installment_count` (e.g. `10`).
 * Timestamps must use timezone-aware UTC (`datetime.now(timezone.utc)`).
 
-## 5. Spider & Scraper Architecture (The Two-Tier Strategy)
+## 5. Scraper Architecture & Pluggable Registry
 
-The extraction process is strictly divided into two independent engines:
+Discovery of new SKUs is handled by `DiscoveryEngine` (`src/engine/discovery.py`) reading a static manifest (`data/target_urls.json`) and persisting `ProductSKU` records into the `target_urls` table. **The earlier "two-tier spider/scraper" design (live search-grid crawling via `src/spiders/`) was deprecated and removed**: it never reached a working state (`DiscoveryEngine` never invoked it, and its network-fetch half was an unimplemented stub), so it added coupling and duplicated logic without delivering functionality. Live search-grid discovery may be reintroduced later as its own scoped initiative — it is a materially different problem (higher anti-bot risk, grid parsing) from single-product-page scraping and should not be rebuilt as a parallel class hierarchy without a clear need.
 
-* **Discovery Engine (Spiders):** Responsible for crawling search grids (e.g., searching for "rtx 5070"), extracting URLs, Brands, and Models, and persisting them as `ProductSKU` records in the `target_urls` database table.
-* **Scraper Engine (Scrapers):** Concrete scrapers inherit from `BaseScraper` and visit the exact product URLs discovered by the Spiders.
+**Scraper Engine (Scrapers):** Concrete scrapers inherit from `BaseScraper` and visit the exact product URLs discovered by the Discovery Engine.
+
+Every concrete scraper class **must** be decorated with `@register_scraper` (`src/core/registry.py`) so it self-registers by `store_name` when `src/scrapers/__init__.py` auto-imports the package — this is what lets `main.py` wire up scrapers via `get_registered_scrapers()` without per-store edits. Adding a new store means: one new `src/scrapers/<store>.py` (decorated, using the shared helpers in `src/core/parsing_utils.py`/`contract_factory.py`), one `data/selectors/<store>.toml` if HTML-based, and `"enabled": true` for that store in `data/target-stores-list.json`. No other file should need changes. If a store is marked `enabled: true` in that manifest but has no matching registered scraper, `PriceEngine.build_schedule()` raises `MissingScraperError` at startup rather than silently skipping it.
 
 Concrete scrapers must implement strictly separated methods:
 1. **`fetch(self, sku: ProductSKU, client: Any) -> str`**: Performs ONLY network I/O. Returns raw HTML. 
@@ -76,8 +86,9 @@ Scrapers MUST NOT hardcode CSS classes, IDs, or XPath expressions under any circ
 
 ## 6. Orchestration & Persistence
 
-* **Scheduler (`PriceEngine`):** Responsible for loading `ProductSKU` records from the repository and coordinating execution of the Scrapers. Catches `SelectorOutdatedException` gracefully to prevent batch crashes.
+* **Scheduler (`PriceEngine`):** Responsible for loading `ProductSKU` records from the repository and coordinating execution of the Scrapers. Catches `SelectorOutdatedException` gracefully to prevent batch crashes. Also selects the correct `ClientFactory` per scraper via `BaseScraper.transport_type` (`"browser"` for Playwright HTML scrapers, `"http"` for JSON/REST scrapers like Mercado Livre) - `PriceEngine` is constructed with a `client_factories: dict[str, ClientFactory]`, never a single factory.
 * **Repository Pattern:** Database operations are isolated behind `PriceRepository`. Scrapers never talk to SQLite.
+* **Alerting (`src/alerts/`):** A separate domain, decoupled from orchestration. `PriceEngine` accepts an optional `on_price_saved: Callable[[PriceContract], Awaitable[None]]` hook, called right after each price is persisted; `main.py` wires this to `AlertDispatcher.handle_price`. `PriceEngine` depends only on that `Callable` type - it never imports `src/alerts` - so orchestration stays decoupled from notification internals. `AlertEvaluator` is pure (no I/O) and takes the previous known price as an explicit argument rather than fetching history itself, keeping it fixture-testable like scraper `parse()` methods.
 
 ## 7. QA Strategy & Testing Gates
 

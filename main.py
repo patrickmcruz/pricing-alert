@@ -8,15 +8,17 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from src.core.contract import StoreConfig
 from src.core.browser import BrowserFactory
+from src.core.http_client import HTTPClientFactory
 from src.core.config import settings
 from src.engine.scheduler import PriceEngine
 from src.engine.discovery import DiscoveryEngine
 from src.repositories.sqlite_repository import SQLitePriceRepository
-from src.scrapers.kabum import KabumScraper
-from src.scrapers.terabyte import TerabyteScraper
-from src.scrapers.mercadolivre import MercadoLivreScraper
-from src.spiders.kabum_spider import KabumSpider
-from src.spiders.terabyte_spider import TerabyteSpider
+from src.core.registry import get_registered_scrapers
+import src.scrapers  # noqa: F401 - importing the package triggers scraper self-registration
+from src.alerts.sqlite_alert_repository import SQLiteAlertRepository
+from src.alerts.dispatcher import AlertDispatcher
+from src.alerts.channels.base import NotificationChannel
+from src.alerts.channels.telegram import TelegramChannel
 
 level_str = getattr(settings, 'log_level', 'INFO').upper()
 logging_level = getattr(logging, level_str, logging.INFO)
@@ -54,6 +56,7 @@ def load_stores_config() -> list[StoreConfig]:
                 store_name=store_info["store_name"],
                 target_keywords=settings.default_gpus,
                 cron_times=["08:00", "12:00", "16:00", "20:00"],
+                enabled=store_info.get("enabled", False),
             )
         )
     return configs
@@ -85,33 +88,34 @@ async def main():
     repository = SQLitePriceRepository(db_path=DB_PATH)
     await repository.initialize_schema()
 
-    # 2. Initialize Dependency Factories
-    client_factory = BrowserFactory()
+    alert_repository = SQLiteAlertRepository(db_path=DB_PATH)
+    await alert_repository.initialize_schema()
+
+    # 2. Initialize Dependency Factories (one per transport_type a scraper may declare)
+    client_factories = {
+        "browser": BrowserFactory(),
+        "http": HTTPClientFactory(),
+    }
 
     # 3. Initialize Engines
+    channels: list[NotificationChannel] = []
+    if settings.telegram_bot_token and settings.telegram_chat_id:
+        channels.append(TelegramChannel(settings.telegram_bot_token, settings.telegram_chat_id))
+    else:
+        logger.warning("Telegram credentials not configured - alert events will be recorded but not delivered.")
+    dispatcher = AlertDispatcher(alert_repository=alert_repository, channels=channels)
+
     scheduler = AsyncIOScheduler()
     engine = PriceEngine(
-        scheduler=scheduler, repository=repository, client_factory=client_factory
+        scheduler=scheduler,
+        repository=repository,
+        client_factories=client_factories,
+        on_price_saved=dispatcher.handle_price,
     )
-    discovery = DiscoveryEngine(
-        repository=repository, client_factory=client_factory
-    )
+    discovery = DiscoveryEngine(repository=repository)
 
-    # 4. Register Concrete Scrapers & Spiders
-    engine.register_scrapers(
-        [
-            KabumScraper(),
-            TerabyteScraper(),
-            MercadoLivreScraper(),
-        ]
-    )
-    
-    discovery.register_spiders(
-        [
-            KabumSpider(),
-            TerabyteSpider(),
-        ]
-    )
+    # 4. Register Concrete Scrapers (auto-discovered via @register_scraper)
+    engine.register_scrapers(get_registered_scrapers().values())
 
     # 5. Build Schedule
     configs = load_stores_config()

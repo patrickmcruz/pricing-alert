@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional
-import asyncio
+from typing import Any, ClassVar, Optional
 import logging
-import random
 
 import os
 import tomllib
 
 from src.core.contract import PriceContract, ProductSKU
+from src.core.utils import apply_jitter
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +24,11 @@ class BaseScraper(ABC):
     Concrete scrapers should implement only document retrieval
     and parsing logic.
     """
+
+    #: Selects which ClientFactory PriceEngine injects into fetch() - "browser"
+    #: (Playwright Page, default) for HTML scraping or "http" (httpx.AsyncClient)
+    #: for scrapers hitting a JSON/REST API directly.
+    transport_type: ClassVar[str] = "browser"
 
     def __init__(self, store_name: str, base_url: str):
         self.store_name = store_name
@@ -45,17 +49,6 @@ class BaseScraper(ABC):
             raise ValueError(f"Version '{version}' not found in {self.store_name}.toml")
             
         return data[version]
-
-    async def apply_jitter(
-        self,
-        min_seconds: float = 3.0,
-        max_seconds: float = 8.0,
-    ) -> None:
-        """
-        Applies a randomized asynchronous delay to reduce
-        deterministic request patterns.
-        """
-        await asyncio.sleep(random.uniform(min_seconds, max_seconds))
 
     @abstractmethod
     async def fetch(
@@ -92,7 +85,7 @@ class BaseScraper(ABC):
         Executes the complete scraping pipeline.
         """
 
-        await self.apply_jitter()
+        await apply_jitter()
 
         logger.info(
             "Starting scraper '%s' for sku '%s'",

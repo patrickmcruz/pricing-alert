@@ -18,6 +18,7 @@ htmlcov/
 coverage.xml
 
 # Databases
+*.db
 *.sqlite3
 *.db-journal
 
@@ -32,3 +33,14 @@ coverage.xml
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Build artifacts (setuptools mirror of src/, do not hand-edit or track)
+build/
+*.egg-info/
+
+# Leftover test-run databases
+.pytest_tmp/
+
+# Runtime logs
+*.log
+orchestrator.log
