@@ -3,7 +3,16 @@ import tomllib
 import logging
 from typing import Any, Dict
 
+from dotenv import load_dotenv
+
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+# Docker Compose injects .env into the container via env_file, so os.environ
+# already has these variables there - but running locally (python main.py,
+# scripts, tests) never sources .env on its own. load_dotenv() fills that gap;
+# override=False (its default) means any variable Docker/the shell already
+# set wins, so this changes nothing for the containerized path.
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 class AppSettings:
     """Global configuration parsed from config.toml based on APP_ENV."""
