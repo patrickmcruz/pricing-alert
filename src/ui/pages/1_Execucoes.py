@@ -13,7 +13,9 @@ import streamlit as st
 from src.core.config import settings
 from src.core.execution import RunStatus, ScraperRunRecord
 from src.core.i18n import i18n, t
+from src.core.trigger import TriggerRequest
 from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
+from src.repositories.sqlite_trigger_repository import SQLiteTriggerRepository
 
 # Force reload of translations so JSON updates are picked up without restarting Streamlit
 i18n.load_locales()
@@ -57,16 +59,55 @@ def _load_run_history(limit: int = 50) -> list[ScraperRunRecord]:
     return asyncio.run(_fetch_run_history(limit))
 
 
+async def _fetch_active_triggers() -> list[TriggerRequest]:
+    repo = SQLiteTriggerRepository(DB_PATH)
+    await repo.initialize_schema()
+    return await repo.get_active_requests()
+
+
+def _load_active_triggers() -> list[TriggerRequest]:
+    return asyncio.run(_fetch_active_triggers())
+
+
+async def _submit_trigger(store_name: str | None) -> None:
+    repo = SQLiteTriggerRepository(DB_PATH)
+    await repo.initialize_schema()
+    await repo.create_request(store_name)
+
+
+def _request_run(store_name: str | None = None) -> None:
+    asyncio.run(_submit_trigger(store_name))
+    st.toast(t("execution_trigger_queued", lang=lang), icon="🚀")
+
+
 @st.fragment(run_every="3s")
 def render_live_status() -> None:
     if not os.path.exists(DB_PATH):
         st.info(t("execution_no_data", lang=lang))
         return
 
+    active_triggers = _load_active_triggers()
+    run_all_pending = any(tr.store_name is None for tr in active_triggers)
+
+    action_col, note_col = st.columns([1, 3])
+    with action_col:
+        if st.button(
+            f"▶️ {t('execution_run_all_now', lang=lang)}",
+            disabled=run_all_pending,
+            width="stretch",
+            key="run_all_now_btn",
+        ):
+            _request_run(None)
+    with note_col:
+        if active_triggers:
+            st.caption(f"⏳ {t('execution_trigger_pending_note', lang=lang, count=len(active_triggers))}")
+
     latest_runs = _load_latest_runs()
     if not latest_runs:
         st.info(t("execution_no_data", lang=lang))
         return
+
+    pending_stores = {tr.store_name for tr in active_triggers if tr.store_name}
 
     st.subheader(t("execution_live_status", lang=lang))
     cols = st.columns(len(latest_runs))
@@ -87,6 +128,14 @@ def render_live_status() -> None:
                 )
             if run.error_message:
                 st.error(f"{t('execution_error', lang=lang)}: {run.error_message}")
+
+            if st.button(
+                f"▶️ {t('execution_run_store_now', lang=lang)}",
+                key=f"run_now_{run.store_name}",
+                disabled=run.status == RunStatus.RUNNING or run.store_name in pending_stores,
+                width="stretch",
+            ):
+                _request_run(run.store_name)
 
     st.caption(f"🔄 {t('execution_auto_refresh_note', lang=lang)}")
 

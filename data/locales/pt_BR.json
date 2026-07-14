@@ -71,5 +71,9 @@
   "execution_error": "Erro",
   "execution_history_title": "🕒 Histórico de Execuções",
   "execution_no_data": "Nenhuma execução registrada ainda. Rode o orquestrador ou scripts/run_all_scrapers.py.",
-  "execution_auto_refresh_note": "Esta tela atualiza automaticamente a cada poucos segundos."
+  "execution_auto_refresh_note": "Esta tela atualiza automaticamente a cada poucos segundos.",
+  "execution_run_all_now": "Rodar Todos os Scrapers Agora",
+  "execution_run_store_now": "Rodar Agora",
+  "execution_trigger_queued": "Pedido enviado! O orquestrador deve começar em alguns segundos.",
+  "execution_trigger_pending_note": "{count} pedido(s) aguardando o orquestrador processar."
 }

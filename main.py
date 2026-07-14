@@ -12,8 +12,10 @@ from src.core.http_client import HTTPClientFactory
 from src.core.config import settings
 from src.engine.scheduler import PriceEngine
 from src.engine.discovery import DiscoveryEngine
+from src.engine.trigger_processor import TriggerProcessor
 from src.repositories.sqlite_repository import SQLitePriceRepository
 from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
+from src.repositories.sqlite_trigger_repository import SQLiteTriggerRepository
 from src.core.registry import get_registered_scrapers
 import src.scrapers  # noqa: F401 - importing the package triggers scraper self-registration
 from src.alerts.sqlite_alert_repository import SQLiteAlertRepository
@@ -95,6 +97,9 @@ async def main():
     execution_repository = SQLiteExecutionRepository(db_path=DB_PATH)
     await execution_repository.initialize_schema()
 
+    trigger_repository = SQLiteTriggerRepository(db_path=DB_PATH)
+    await trigger_repository.initialize_schema()
+
     # 2. Initialize Dependency Factories (one per transport_type a scraper may declare)
     client_factories = {
         "browser": BrowserFactory(),
@@ -118,6 +123,7 @@ async def main():
         execution_repository=execution_repository,
     )
     discovery = DiscoveryEngine(repository=repository)
+    trigger_processor = TriggerProcessor(trigger_repository=trigger_repository, engine=engine)
 
     # 4. Register Concrete Scrapers (auto-discovered via @register_scraper)
     engine.register_scrapers(get_registered_scrapers().values())
@@ -135,10 +141,10 @@ async def main():
     await startup_routine(discovery, engine, configs)
 
     logger.info("Orchestrator running. Press Ctrl+C to exit.")
-    
-    # Block the main thread to keep the asyncio event loop alive
-    while True:
-        await asyncio.sleep(3600)
+
+    # Keeps the event loop alive AND polls for "run now" requests from the
+    # dashboard (which has no browser of its own - see TriggerProcessor).
+    await trigger_processor.run_forever()
 
 
 if __name__ == "__main__":

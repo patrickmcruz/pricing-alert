@@ -71,5 +71,9 @@
   "execution_error": "Error",
   "execution_history_title": "🕒 Execution History",
   "execution_no_data": "No runs recorded yet. Run the orchestrator or scripts/run_all_scrapers.py.",
-  "execution_auto_refresh_note": "This screen refreshes automatically every few seconds."
+  "execution_auto_refresh_note": "This screen refreshes automatically every few seconds.",
+  "execution_run_all_now": "Run All Scrapers Now",
+  "execution_run_store_now": "Run Now",
+  "execution_trigger_queued": "Request queued! The orchestrator should pick it up within a few seconds.",
+  "execution_trigger_pending_note": "{count} request(s) waiting for the orchestrator to process."
 }
