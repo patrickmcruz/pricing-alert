@@ -22,7 +22,7 @@ def make_price(price_cash: str, **overrides) -> PriceContract:
         is_available=True,
     )
     defaults.update(overrides)
-    return PriceContract(**defaults)
+    return PriceContract(**defaults)  # type: ignore[arg-type]
 
 
 @pytest.fixture

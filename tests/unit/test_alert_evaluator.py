@@ -19,7 +19,7 @@ def make_price(**overrides) -> PriceContract:
         model="rtx 5070",
     )
     defaults.update(overrides)
-    return PriceContract(**defaults)
+    return PriceContract(**defaults)  # type: ignore[arg-type]
 
 
 def test_absolute_price_rule_triggers_when_price_at_or_below_threshold():
