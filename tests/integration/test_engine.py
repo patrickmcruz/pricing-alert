@@ -1,3 +1,6 @@
+from decimal import Decimal
+from uuid import uuid4
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
@@ -6,8 +9,25 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from src.core.base_scraper import BaseScraper
 from src.core.contract import PriceContract, StoreConfig, ProductSKU
+from src.core.execution import RunStatus
 from src.engine.scheduler import PriceEngine, MissingScraperError
 from src.repositories.base_repository import PriceRepository
+from src.repositories.execution_repository import ExecutionRepository
+
+
+def make_price_contract(**overrides) -> PriceContract:
+    defaults: dict[str, Any] = dict(
+        store_name="mock_store",
+        search_keyword="rtx 5070",
+        product_title="Mock Product",
+        product_url="https://mock.example.com/product",
+        price_cash=Decimal("1000.00"),
+        currency="BRL",
+        parser_version="mock_v1",
+        is_available=True,
+    )
+    defaults.update(overrides)
+    return PriceContract(**defaults)  # type: ignore[arg-type]
 
 
 class MockScraper(BaseScraper):
@@ -46,14 +66,32 @@ def engine(mock_repository, mock_client_factory):
     return PriceEngine(scheduler, mock_repository, {"browser": mock_client_factory})
 
 
+@pytest.fixture
+def mock_execution_repository():
+    repo = AsyncMock(spec=ExecutionRepository)
+    repo.start_run.return_value = uuid4()
+    return repo
+
+
+@pytest.fixture
+def engine_with_tracking(mock_repository, mock_client_factory, mock_execution_repository):
+    scheduler = AsyncIOScheduler()
+    return PriceEngine(
+        scheduler,
+        mock_repository,
+        {"browser": mock_client_factory},
+        execution_repository=mock_execution_repository,
+    )
+
+
 @pytest.mark.asyncio
 async def test_engine_run_scraper(engine, mock_repository, mock_client_factory):
     scraper = MockScraper("mock_store")
 
     # Simulate scraper returning some mock prices
-    mock_price = MagicMock(spec=PriceContract)
+    mock_price = make_price_contract()
     scraper.execute_mock.return_value = mock_price
-    
+
     mock_sku = MagicMock(spec=ProductSKU)
     mock_sku.product_url = "https://mock"
     mock_repository.get_target_skus.return_value = [mock_sku]
@@ -119,3 +157,60 @@ def test_engine_build_schedule_raises_for_enabled_store_without_scraper(engine):
 
     with pytest.raises(MissingScraperError):
         engine.build_schedule([config])
+
+
+@pytest.mark.asyncio
+async def test_engine_run_scraper_records_successful_execution(
+    engine_with_tracking, mock_repository, mock_execution_repository
+):
+    scraper = MockScraper("mock_store")
+    mock_price = make_price_contract()
+    scraper.execute_mock.return_value = mock_price
+
+    mock_sku = MagicMock(spec=ProductSKU)
+    mock_sku.product_url = "https://mock"
+    mock_repository.get_target_skus.return_value = [mock_sku]
+
+    await engine_with_tracking.run_scraper(scraper)
+
+    mock_execution_repository.start_run.assert_called_once_with("mock_store")
+    mock_execution_repository.finish_run.assert_called_once()
+    call = mock_execution_repository.finish_run.call_args
+    assert call.args[1] == RunStatus.SUCCESS
+    assert call.kwargs["skus_total"] == 1
+    assert call.kwargs["skus_succeeded"] == 1
+    assert call.kwargs["skus_failed"] == 0
+    assert call.kwargs["error_message"] is None
+
+
+@pytest.mark.asyncio
+async def test_engine_run_scraper_records_failed_execution_on_client_error(
+    engine_with_tracking, mock_repository, mock_client_factory, mock_execution_repository
+):
+    scraper = MockScraper("mock_store")
+    mock_sku = MagicMock(spec=ProductSKU)
+    mock_sku.product_url = "https://mock"
+    mock_repository.get_target_skus.return_value = [mock_sku]
+    mock_client_factory.create.side_effect = RuntimeError("boom")
+
+    await engine_with_tracking.run_scraper(scraper)
+
+    mock_execution_repository.finish_run.assert_called_once()
+    call = mock_execution_repository.finish_run.call_args
+    assert call.args[1] == RunStatus.FAILED
+    assert call.kwargs["error_message"] == "boom"
+
+
+@pytest.mark.asyncio
+async def test_engine_run_scraper_records_success_with_zero_skus(
+    engine_with_tracking, mock_repository, mock_execution_repository
+):
+    mock_repository.get_target_skus.return_value = []
+    scraper = MockScraper("mock_store")
+
+    await engine_with_tracking.run_scraper(scraper)
+
+    mock_execution_repository.start_run.assert_called_once_with("mock_store")
+    call = mock_execution_repository.finish_run.call_args
+    assert call.args[1] == RunStatus.SUCCESS
+    assert call.kwargs["skus_total"] == 0

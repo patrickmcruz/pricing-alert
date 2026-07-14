@@ -55,5 +55,21 @@
   "label_spread": "Custo do Parcelamento",
   "yaxis_price": "Preço (R$)",
   "yaxis_tax": "Taxa / Juros (R$)",
-  "hover_tax": "Spread / Juros"
+  "hover_tax": "Spread / Juros",
+  "execution_monitor_title": "📡 Execuções dos Scrapers",
+  "execution_monitor_desc": "Acompanhe em tempo real quais scrapers estão rodando, o resultado da última execução de cada loja e o histórico recente.",
+  "execution_live_status": "Status Atual por Loja",
+  "execution_status_running": "🟡 Rodando",
+  "execution_status_success": "🟢 Concluído",
+  "execution_status_failed": "🔴 Falhou",
+  "execution_status_col": "Status",
+  "execution_started_at": "Início",
+  "execution_finished_at": "Fim",
+  "execution_skus_total": "Total",
+  "execution_skus_succeeded": "Sucesso",
+  "execution_skus_failed": "Falhas",
+  "execution_error": "Erro",
+  "execution_history_title": "🕒 Histórico de Execuções",
+  "execution_no_data": "Nenhuma execução registrada ainda. Rode o orquestrador ou scripts/run_all_scrapers.py.",
+  "execution_auto_refresh_note": "Esta tela atualiza automaticamente a cada poucos segundos."
 }

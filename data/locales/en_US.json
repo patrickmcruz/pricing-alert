@@ -55,5 +55,21 @@
   "label_spread": "Installment Spread (Cost)",
   "yaxis_price": "Price (R$)",
   "yaxis_tax": "Tax / Interest (R$)",
-  "hover_tax": "Spread / Interest"
+  "hover_tax": "Spread / Interest",
+  "execution_monitor_title": "📡 Scraper Execution Monitor",
+  "execution_monitor_desc": "Track which scrapers are running right now, each store's latest run result, and recent history.",
+  "execution_live_status": "Current Status by Store",
+  "execution_status_running": "🟡 Running",
+  "execution_status_success": "🟢 Completed",
+  "execution_status_failed": "🔴 Failed",
+  "execution_status_col": "Status",
+  "execution_started_at": "Started",
+  "execution_finished_at": "Finished",
+  "execution_skus_total": "Total",
+  "execution_skus_succeeded": "Succeeded",
+  "execution_skus_failed": "Failed",
+  "execution_error": "Error",
+  "execution_history_title": "🕒 Execution History",
+  "execution_no_data": "No runs recorded yet. Run the orchestrator or scripts/run_all_scrapers.py.",
+  "execution_auto_refresh_note": "This screen refreshes automatically every few seconds."
 }

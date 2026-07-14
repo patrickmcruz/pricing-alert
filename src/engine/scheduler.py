@@ -6,8 +6,10 @@ from apscheduler.triggers.cron import CronTrigger
 
 from src.core.base_scraper import BaseScraper, SelectorOutdatedException
 from src.core.contract import PriceContract, StoreConfig
+from src.core.execution import RunStatus
 from src.core.transport import ClientFactory
 from src.repositories.base_repository import PriceRepository
+from src.repositories.execution_repository import ExecutionRepository
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +34,7 @@ class PriceEngine:
         repository: PriceRepository,
         client_factories: Dict[str, ClientFactory],
         on_price_saved: Optional[Callable[[PriceContract], Awaitable[None]]] = None,
+        execution_repository: Optional[ExecutionRepository] = None,
     ):
         self.scheduler = scheduler
         self.repository = repository
@@ -41,6 +44,9 @@ class PriceEngine:
         # PriceEngine only depends on this Callable type - never on src/alerts - so
         # orchestration stays decoupled from notification internals.
         self.on_price_saved = on_price_saved
+        # Optional run/execution-state tracking (see src/ui/pages for the monitor UI).
+        # Covers both cron-triggered runs and manual ones, since both call run_scraper().
+        self.execution_repository = execution_repository
 
     def register_scraper(
         self,
@@ -67,20 +73,30 @@ class PriceEngine:
         """
         logger.info("Starting execution for scraper: %s", scraper.store_name)
 
-        skus = await self.repository.get_target_skus(scraper.store_name)
-        if not skus:
-            logger.info("No SKUs found for store %s", scraper.store_name)
-            return
-
-        client_factory = self.client_factories.get(scraper.transport_type)
-        if client_factory is None:
-            raise UnknownTransportError(
-                f"No client factory registered for transport '{scraper.transport_type}' "
-                f"(scraper: {scraper.store_name})"
-            )
-
+        run_id = (
+            await self.execution_repository.start_run(scraper.store_name)
+            if self.execution_repository
+            else None
+        )
+        skus_succeeded = 0
+        skus_failed = 0
+        run_error: Optional[str] = None
         client = None
+        client_factory = None
+
         try:
+            skus = await self.repository.get_target_skus(scraper.store_name)
+            if not skus:
+                logger.info("No SKUs found for store %s", scraper.store_name)
+                return
+
+            client_factory = self.client_factories.get(scraper.transport_type)
+            if client_factory is None:
+                raise UnknownTransportError(
+                    f"No client factory registered for transport '{scraper.transport_type}' "
+                    f"(scraper: {scraper.store_name})"
+                )
+
             client = await client_factory.create(scraper)
 
             for sku in skus:
@@ -96,8 +112,10 @@ class PriceEngine:
                         await self.repository.save_prices([price])
                         if self.on_price_saved:
                             await self.on_price_saved(price)
+                        skus_succeeded += 1
                     else:
                         logger.warning("No price extracted for %s", sku.product_url)
+                        skus_failed += 1
                 except SelectorOutdatedException as e:
                     logger.critical(
                         "SelectorOutdatedException caught for %s on SKU '%s': %s",
@@ -105,6 +123,7 @@ class PriceEngine:
                         sku.product_url,
                         e,
                     )
+                    skus_failed += 1
                 except Exception as e:
                     logger.error(
                         "Scraper %s failed on SKU '%s': %s",
@@ -113,6 +132,7 @@ class PriceEngine:
                         e,
                         exc_info=True
                     )
+                    skus_failed += 1
 
         except Exception as e:
             logger.error(
@@ -121,8 +141,9 @@ class PriceEngine:
                 e,
                 exc_info=True
             )
+            run_error = str(e)
         finally:
-            if client is not None:
+            if client is not None and client_factory is not None:
                 try:
                     await client_factory.close(client)
                 except Exception as e:
@@ -130,6 +151,22 @@ class PriceEngine:
                         "Failed to close client for %s: %s", scraper.store_name, e
                     )
             logger.info("Completed execution for scraper: %s", scraper.store_name)
+
+            if self.execution_repository and run_id is not None:
+                status = RunStatus.FAILED if run_error else RunStatus.SUCCESS
+                try:
+                    await self.execution_repository.finish_run(
+                        run_id,
+                        status,
+                        skus_total=skus_succeeded + skus_failed,
+                        skus_succeeded=skus_succeeded,
+                        skus_failed=skus_failed,
+                        error_message=run_error,
+                    )
+                except Exception as e:
+                    logger.error(
+                        "Failed to record execution state for %s: %s", scraper.store_name, e
+                    )
 
     def build_schedule(
         self,

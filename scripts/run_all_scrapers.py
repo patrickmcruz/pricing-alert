@@ -33,6 +33,7 @@ from src.core.registry import get_registered_scrapers
 from src.core.transport import ClientFactory
 from src.engine.scheduler import PriceEngine
 from src.repositories.sqlite_repository import SQLitePriceRepository
+from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
 import src.scrapers  # noqa: F401 - importing the package triggers @register_scraper
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -43,6 +44,9 @@ async def main() -> None:
     repository = SQLitePriceRepository(db_path=settings.db_path)
     await repository.initialize_schema()
 
+    execution_repository = SQLiteExecutionRepository(db_path=settings.db_path)
+    await execution_repository.initialize_schema()
+
     client_factories: dict[str, ClientFactory] = {
         "browser": BrowserFactory(),
         "http": HTTPClientFactory(),
@@ -50,10 +54,13 @@ async def main() -> None:
 
     # AsyncIOScheduler is required by PriceEngine's constructor but never started -
     # this script drives run_scraper() directly instead of waiting for cron ticks.
+    # execution_repository is wired the same way main.py wires it, so runs started
+    # from this script show up on the execution-monitor UI page too.
     engine = PriceEngine(
         scheduler=AsyncIOScheduler(),
         repository=repository,
         client_factories=client_factories,
+        execution_repository=execution_repository,
     )
     engine.register_scrapers(get_registered_scrapers().values())
 

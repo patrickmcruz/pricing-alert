@@ -13,6 +13,7 @@ from src.core.config import settings
 from src.engine.scheduler import PriceEngine
 from src.engine.discovery import DiscoveryEngine
 from src.repositories.sqlite_repository import SQLitePriceRepository
+from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
 from src.core.registry import get_registered_scrapers
 import src.scrapers  # noqa: F401 - importing the package triggers scraper self-registration
 from src.alerts.sqlite_alert_repository import SQLiteAlertRepository
@@ -91,6 +92,9 @@ async def main():
     alert_repository = SQLiteAlertRepository(db_path=DB_PATH)
     await alert_repository.initialize_schema()
 
+    execution_repository = SQLiteExecutionRepository(db_path=DB_PATH)
+    await execution_repository.initialize_schema()
+
     # 2. Initialize Dependency Factories (one per transport_type a scraper may declare)
     client_factories = {
         "browser": BrowserFactory(),
@@ -111,6 +115,7 @@ async def main():
         repository=repository,
         client_factories=client_factories,
         on_price_saved=dispatcher.handle_price,
+        execution_repository=execution_repository,
     )
     discovery = DiscoveryEngine(repository=repository)
 
