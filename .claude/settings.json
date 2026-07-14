@@ -2,7 +2,18 @@
   "permissions": {
     "allow": [
       "Bash(poetry env *)",
-      "Bash(./venv/Scripts/python.exe -m pytest tests/unit tests/integration -q)"
+      "Bash(./venv/Scripts/python.exe -m pytest tests/unit tests/integration -q)",
+      "Bash(.venv/Scripts/python -m pytest tests/unit/test_repository.py -q)",
+      "Bash(.venv/Scripts/python -m pytest -q -m \"not e2e\")",
+      "Bash(.venv/Scripts/python -m pytest tests/unit/test_discovery.py -q)",
+      "Bash(.venv/Scripts/python -c \"import ast; ast.parse\\(open\\('src/ui/pages/2_Gerenciar_GPUs.py', encoding='utf-8'\\).read\\(\\)\\)\")",
+      "Bash(.venv/Scripts/python -m pytest tests/unit/test_sqlite_catalog_repository.py -q)",
+      "Bash(.venv/Scripts/python -m ruff check .)",
+      "Bash(.venv/Scripts/python -m mypy src/)",
+      "Bash(.venv/Scripts/python scripts/migrate_target_urls.py)",
+      "Bash(.venv/Scripts/python -c ' *)",
+      "Bash(.venv/Scripts/python -m streamlit run src/ui/dashboard.py --server.headless true --server.port 8501)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8501)"
     ]
   }
 }

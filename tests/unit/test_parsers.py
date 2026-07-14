@@ -20,6 +20,7 @@ def test_kabum_product_parser():
         store_name="kabum",
         search_keyword="rtx 5070",
         product_url="https://www.kabum.com.br/produto/123", # type: ignore
+        gpu_model_id="test-gpu-model-id",
         brand="MockBrand",
         model="MockModel",
         product_title="MockTitle"
@@ -52,6 +53,7 @@ def test_terabyte_product_parser():
         store_name="terabyte",
         search_keyword="rtx 5070",
         product_url="https://www.terabyteshop.com.br/produto/123", # type: ignore
+        gpu_model_id="test-gpu-model-id",
         brand="MockBrandTB",
         model="MockModelTB",
         product_title="MockTitleTB"

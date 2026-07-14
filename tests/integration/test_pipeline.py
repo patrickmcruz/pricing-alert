@@ -8,6 +8,8 @@ from src.engine.scheduler import PriceEngine
 from src.scrapers.kabum import KabumScraper
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+from tests.conftest import make_gpu_model_id
+
 def get_fixture_content(filename: str) -> str:
     current_dir = os.path.dirname(os.path.abspath(__file__))
     fixture_path = os.path.join(current_dir, "..", "fixtures", filename)
@@ -31,10 +33,12 @@ async def test_engine_scraper_pipeline(repo):
     4. Assert PriceContract was parsed and saved to Repo
     """
     # 1. Seed
+    gpu_model_id = await make_gpu_model_id(repo.db_path, brand="MockBrand", variant="MockModel")
     sku = ProductSKU(
         product_url="https://www.kabum.com.br/produto/123",
         store_name="kabum",
         search_keyword="rtx 5070",
+        gpu_model_id=gpu_model_id,
         brand="MockBrand",
         model="MockModel",
         product_title="MockTitle"

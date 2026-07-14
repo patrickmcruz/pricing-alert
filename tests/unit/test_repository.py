@@ -7,6 +7,8 @@ import uuid
 from src.core.contract import PriceContract, ProductSKU
 from src.repositories.sqlite_repository import SQLitePriceRepository
 
+from tests.conftest import make_gpu_model_id
+
 @pytest.fixture
 async def repo(tmp_path):
     # Use a file-based temporary database so we can open new connections to verify data
@@ -17,20 +19,80 @@ async def repo(tmp_path):
 
 @pytest.mark.asyncio
 async def test_repository_save_target_urls(repo):
+    gpu_model_id = await make_gpu_model_id(repo.db_path, brand="Nvidia", variant="Founders")
     sku = ProductSKU(
         product_url="https://example.com/gpu",
         store_name="example",
         search_keyword="rtx 5070",
+        gpu_model_id=gpu_model_id,
         brand="Nvidia",
         model="Founders",
         product_title="RTX 5070"
     )
     await repo.save_skus([sku])
-    
+
     urls = await repo.get_target_skus("example")
     assert len(urls) == 1
     assert str(urls[0].product_url) == "https://example.com/gpu"
     assert urls[0].store_name == "example"
+
+@pytest.mark.asyncio
+async def test_repository_list_all_skus(repo):
+    kabum_gpu_model_id = await make_gpu_model_id(repo.db_path, brand="Nvidia", variant="Founders")
+    terabyte_gpu_model_id = await make_gpu_model_id(
+        repo.db_path, brand="MSI", chipset="rtx 5070 ti", variant="Gaming Trio"
+    )
+    kabum_sku = ProductSKU(
+        product_url="https://example.com/kabum-gpu",
+        store_name="kabum",
+        search_keyword="rtx 5070",
+        gpu_model_id=kabum_gpu_model_id,
+        brand="Nvidia",
+        model="Founders",
+        product_title="RTX 5070 Kabum",
+    )
+    terabyte_sku = ProductSKU(
+        product_url="https://example.com/terabyte-gpu",
+        store_name="terabyte",
+        search_keyword="rtx 5070 ti",
+        gpu_model_id=terabyte_gpu_model_id,
+        brand="MSI",
+        model="Gaming Trio",
+        product_title="RTX 5070 Ti Terabyte",
+    )
+    await repo.save_skus([kabum_sku, terabyte_sku])
+
+    all_skus = await repo.list_all_skus()
+
+    assert len(all_skus) == 2
+    assert {sku.store_name for sku in all_skus} == {"kabum", "terabyte"}
+
+
+@pytest.mark.asyncio
+async def test_repository_delete_sku(repo):
+    gpu_model_id = await make_gpu_model_id(repo.db_path, brand="Nvidia", variant="Founders")
+    sku = ProductSKU(
+        product_url="https://example.com/gpu-to-delete",
+        store_name="example",
+        search_keyword="rtx 5070",
+        gpu_model_id=gpu_model_id,
+        brand="Nvidia",
+        model="Founders",
+        product_title="RTX 5070",
+    )
+    await repo.save_skus([sku])
+
+    await repo.delete_sku("https://example.com/gpu-to-delete")
+
+    assert await repo.list_all_skus() == []
+    assert await repo.get_target_skus("example") == []
+
+
+@pytest.mark.asyncio
+async def test_repository_delete_sku_missing_url_is_noop(repo):
+    await repo.delete_sku("https://example.com/does-not-exist")
+    assert await repo.list_all_skus() == []
+
 
 @pytest.mark.asyncio
 async def test_repository_save_prices(repo):

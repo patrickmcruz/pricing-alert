@@ -11,7 +11,6 @@ from src.core.browser import BrowserFactory
 from src.core.http_client import HTTPClientFactory
 from src.core.config import settings
 from src.engine.scheduler import PriceEngine
-from src.engine.discovery import DiscoveryEngine
 from src.engine.trigger_processor import TriggerProcessor
 from src.repositories.sqlite_repository import SQLitePriceRepository
 from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
@@ -65,15 +64,14 @@ def load_stores_config() -> list[StoreConfig]:
     return configs
 
 
-async def startup_routine(discovery: DiscoveryEngine, engine: PriceEngine, configs: list[StoreConfig]):
+async def startup_routine(engine: PriceEngine):
     """Runs immediately on startup to update graphs for the user."""
-    logger.info("Executing immediate startup routine (Discovery + Scrapers)...")
-    
-    # 1. Run Discovery to find any new URLs
-    await discovery.run_discovery(configs)
-    
-    # 2. Run all scrapers concurrently to fetch prices
-    logger.info("Discovery complete. Running scrapers...")
+    logger.info("Executing immediate startup routine (Scrapers)...")
+
+    # Run all scrapers concurrently against the SKUs already tracked in the DB
+    # (added/edited/removed via the "Gerenciar GPUs" dashboard page - see
+    # scripts/migrate_target_urls.py for one-time seeding from the legacy
+    # data/target_urls.json manifest).
     tasks = [engine.run_scraper(scraper) for scraper in engine.scrapers.values()]
     
     results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -127,7 +125,6 @@ async def main():
         on_price_saved=dispatcher.handle_price,
         execution_repository=execution_repository,
     )
-    discovery = DiscoveryEngine(repository=repository)
     trigger_processor = TriggerProcessor(trigger_repository=trigger_repository, engine=engine)
 
     # 4. Register Concrete Scrapers (auto-discovered via @register_scraper)
@@ -148,8 +145,8 @@ async def main():
     # silently ignore any dashboard trigger created during that whole window.
     trigger_task = asyncio.create_task(trigger_processor.run_forever())
 
-    # 7. Run initial discovery and scrape
-    await startup_routine(discovery, engine, configs)
+    # 7. Run initial scrape against the SKUs already tracked in the DB
+    await startup_routine(engine)
 
     logger.info("Orchestrator running. Press Ctrl+C to exit.")
 

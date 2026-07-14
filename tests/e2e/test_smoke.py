@@ -19,6 +19,7 @@ async def test_kabum_smoke():
         product_url="https://www.kabum.com.br/produto/875474/placa-de-video-msi-rtx-5070-12gb-gddr7-192-bits-shadow-2x-oc-912-v532-011",
         store_name="kabum",
         search_keyword="rtx 5070",
+        gpu_model_id="test-gpu-model-id",
         brand="MSI",
         model="Shadow 2x OC",
         product_title="RTX 5070"

@@ -2,8 +2,9 @@ import logging
 from typing import List
 import aiosqlite
 
-from src.core.contract import PriceContract, ProductSKU
+from src.core.contract import LegacyTargetUrlRow, PriceContract, ProductSKU
 from src.repositories.base_repository import PriceRepository
+from src.repositories.sqlite_catalog_repository import ensure_catalog_tables
 
 logger = logging.getLogger(__name__)
 
@@ -41,14 +42,21 @@ class SQLitePriceRepository(PriceRepository):
                         scraped_at TIMESTAMP NOT NULL
                     )
                 """)
-                
+
                 # Safe migration: Add column if it doesn't exist
                 try:
                     await db.execute("ALTER TABLE prices ADD COLUMN installment_count INTEGER")
                 except aiosqlite.OperationalError:
                     pass # Column already exists
-                
-                
+
+                # Safe migration: FK into the catalog's gpu_models table (see
+                # src/repositories/sqlite_catalog_repository.py). Nullable - historical
+                # rows scraped before the catalog existed won't have one.
+                try:
+                    await db.execute("ALTER TABLE prices ADD COLUMN gpu_model_id TEXT")
+                except aiosqlite.OperationalError:
+                    pass # Column already exists
+
                 await db.execute("""
                     CREATE TABLE IF NOT EXISTS target_urls (
                         product_url TEXT PRIMARY KEY,
@@ -59,7 +67,21 @@ class SQLitePriceRepository(PriceRepository):
                         product_title TEXT NOT NULL
                     )
                 """)
-                
+
+                # Safe migration: brand/model above are no longer written to (they're
+                # superseded by gpu_model_id, resolved via a JOIN on read - see
+                # get_target_skus/list_all_skus below) and are kept only so existing
+                # rows aren't destructively rewritten. New/updated rows carry a real
+                # FK into gpu_models instead of free text.
+                try:
+                    await db.execute("ALTER TABLE target_urls ADD COLUMN gpu_model_id TEXT")
+                except aiosqlite.OperationalError:
+                    pass # Column already exists
+
+                # get_target_skus/list_all_skus JOIN against these - see ensure_catalog_tables
+                # for why initializing the price schema alone must create them too.
+                await ensure_catalog_tables(db)
+
                 # Create indexes for faster queries
                 await db.execute(
                     "CREATE INDEX IF NOT EXISTS idx_search_keyword ON prices(search_keyword)"
@@ -84,8 +106,8 @@ class SQLitePriceRepository(PriceRepository):
             INSERT INTO prices (
                 execution_id, store_name, search_keyword, product_title, product_url,
                 brand, model, price_cash, price_installments, installment_count, discount, currency, parser_version,
-                is_available, scraped_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                is_available, scraped_at, gpu_model_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
 
         values = []
@@ -107,6 +129,7 @@ class SQLitePriceRepository(PriceRepository):
                     p.parser_version,
                     p.is_available,
                     p.scraped_at.isoformat(),
+                    p.gpu_model_id,
                 )
             )
 
@@ -148,21 +171,24 @@ class SQLitePriceRepository(PriceRepository):
                 model=row["model"],
                 discount=row["discount"],
                 scraped_at=row["scraped_at"],
+                gpu_model_id=row["gpu_model_id"],
             )
             for row in rows
         ]
 
     async def save_skus(self, skus: List[ProductSKU]) -> None:
         """
-        Persists discovered SKUs to the database (upsert).
+        Persists discovered SKUs to the database (upsert). brand/model are not
+        written - target_urls stores gpu_model_id (a FK into the catalog) instead;
+        see get_target_skus/list_all_skus for how they're resolved back on read.
         """
         if not skus:
             return
 
         query = """
             INSERT OR REPLACE INTO target_urls (
-                product_url, store_name, search_keyword, brand, model, product_title
-            ) VALUES (?, ?, ?, ?, ?, ?)
+                product_url, store_name, search_keyword, gpu_model_id, product_title
+            ) VALUES (?, ?, ?, ?, ?)
         """
 
         values = [
@@ -170,8 +196,7 @@ class SQLitePriceRepository(PriceRepository):
                 str(sku.product_url),
                 sku.store_name,
                 sku.search_keyword,
-                sku.brand,
-                sku.model,
+                sku.gpu_model_id,
                 sku.product_title,
             )
             for sku in skus
@@ -182,23 +207,86 @@ class SQLitePriceRepository(PriceRepository):
             await db.commit()
             logger.info("Saved %d SKUs to the database.", len(skus))
 
+    _TARGET_SKU_JOIN_SELECT = """
+        SELECT t.product_url, t.store_name, t.search_keyword, t.gpu_model_id, t.product_title,
+               b.name, gm.variant_name
+        FROM target_urls t
+        JOIN gpu_models gm ON gm.id = t.gpu_model_id
+        JOIN brands b ON b.id = gm.brand_id
+    """
+
+    @staticmethod
+    def _row_to_sku(row) -> ProductSKU:
+        return ProductSKU(
+            product_url=row[0],  # type: ignore
+            store_name=row[1],
+            search_keyword=row[2],
+            gpu_model_id=row[3],
+            product_title=row[4],
+            brand=row[5],
+            model=row[6],
+        )
+
     async def get_target_skus(self, store_name: str) -> List[ProductSKU]:
         """
-        Retrieves all SKUs to be scraped for a specific store.
+        Retrieves all SKUs to be scraped for a specific store. Rows whose
+        gpu_model_id hasn't been resolved yet (see DiscoveryEngine's backfill
+        pass) are excluded by the JOIN rather than raising.
         """
         async with aiosqlite.connect(self.db_path) as db:
             cursor = await db.execute(
-                "SELECT product_url, store_name, search_keyword, brand, model, product_title FROM target_urls WHERE store_name = ?", (store_name,)
+                self._TARGET_SKU_JOIN_SELECT + " WHERE t.store_name = ?", (store_name,)
+            )
+            rows = await cursor.fetchall()
+            return [self._row_to_sku(row) for row in rows]
+
+    async def list_all_skus(self) -> List[ProductSKU]:
+        """
+        Retrieves all tracked SKUs across every store. Rows whose gpu_model_id
+        hasn't been resolved yet are excluded by the JOIN rather than raising.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(self._TARGET_SKU_JOIN_SELECT)
+            rows = await cursor.fetchall()
+            return [self._row_to_sku(row) for row in rows]
+
+    async def delete_sku(self, product_url: str) -> None:
+        """
+        Removes a tracked SKU by its product URL. No-op if it doesn't exist.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("DELETE FROM target_urls WHERE product_url = ?", (product_url,))
+            await db.commit()
+            logger.info("Deleted SKU %s from the database.", product_url)
+
+    async def list_target_urls_missing_gpu_model(self) -> List[LegacyTargetUrlRow]:
+        """
+        Returns target_urls rows whose gpu_model_id hasn't been resolved yet.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                "SELECT product_url, store_name, search_keyword, brand, model, product_title "
+                "FROM target_urls WHERE gpu_model_id IS NULL"
             )
             rows = await cursor.fetchall()
             return [
-                ProductSKU(
-                    product_url=row[0], # type: ignore
-                    store_name=row[1],
-                    search_keyword=row[2],
-                    brand=row[3],
-                    model=row[4],
-                    product_title=row[5]
+                LegacyTargetUrlRow(
+                    product_url=row["product_url"],
+                    store_name=row["store_name"],
+                    search_keyword=row["search_keyword"],
+                    brand=row["brand"],
+                    model=row["model"],
+                    product_title=row["product_title"],
                 )
                 for row in rows
             ]
+
+    async def set_sku_gpu_model_id(self, product_url: str, gpu_model_id: str) -> None:
+        """Backfills gpu_model_id for a single target_urls row, by product_url."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "UPDATE target_urls SET gpu_model_id = ? WHERE product_url = ?",
+                (gpu_model_id, product_url),
+            )
+            await db.commit()

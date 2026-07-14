@@ -45,9 +45,12 @@ class AlertRule(BaseModel):
             return False
         if self.search_keyword and price.search_keyword != self.search_keyword:
             return False
-        if self.brand and price.brand != self.brand:
+        # Case-insensitive: brand/model canonicalization (see src/core/catalog.py)
+        # can change display casing over time (e.g. "xfx" -> "XFX"), and a rule
+        # saved before that shouldn't silently stop matching.
+        if self.brand and (price.brand or "").strip().lower() != self.brand.strip().lower():
             return False
-        if self.model and price.model != self.model:
+        if self.model and (price.model or "").strip().lower() != self.model.strip().lower():
             return False
         return True
 

@@ -49,14 +49,20 @@ class PriceContract(BaseModel):
     )
 
     brand: str | None = Field(default=None, description="Product brand name.")
-    
+
     model: str | None = Field(default=None, description="Product model identifier.")
-    
+
     discount: Decimal | None = Field(default=None, description="Discount amount applied.")
 
     scraped_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         description="UTC timestamp when the record was created.",
+    )
+
+    gpu_model_id: str | None = Field(
+        default=None,
+        description="FK into the catalog's gpu_models table. Nullable: historical rows "
+        "predate the catalog, and any code path without a resolved SKU won't have one.",
     )
 
 
@@ -86,12 +92,37 @@ class StoreConfig(BaseModel):
 class ProductSKU(BaseModel):
     """
     Discovered SKU mapping for the tracker.
+
+    `gpu_model_id` is the FK into the catalog (src/core/catalog.py) and is
+    what actually gets persisted for a target_urls row. `brand`/`model` are
+    populated by the repository at read time (joined from the catalog) for
+    convenience - they're not written directly to storage, so don't hand-set
+    them without a matching gpu_model_id resolved via CatalogRepository.
     """
     model_config = ConfigDict(frozen=True, extra="forbid")
-    
+
     store_name: str
     search_keyword: str
     product_url: HttpUrl
+    gpu_model_id: str
+    brand: str | None = None
+    model: str | None = None
+    product_title: str
+
+
+class LegacyTargetUrlRow(BaseModel):
+    """
+    A target_urls row still carrying its pre-catalog free-text brand/model
+    instead of a resolved gpu_model_id. Only used by
+    DiscoveryEngine._backfill_existing_rows to resolve/create the matching
+    catalog entry for rows written before the catalog existed.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    product_url: str
+    store_name: str
+    search_keyword: str
     brand: str | None = None
     model: str | None = None
     product_title: str
