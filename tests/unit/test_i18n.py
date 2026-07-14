@@ -1,5 +1,4 @@
 import pytest
-import os
 import json
 from unittest.mock import patch, mock_open
 from src.core.i18n import I18n

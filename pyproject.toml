@@ -29,6 +29,17 @@ dev = [
     "black"
 ]
 
+[tool.ruff]
+# scripts/ holds ad-hoc dev/QA tools that need `sys.path.insert` before their
+# imports (E402) to run standalone outside the package - not held to the same
+# lint bar as src/tests.
+extend-exclude = ["scripts", "build", ".gemini"]
+
+[tool.ruff.lint.per-file-ignores]
+# dashboard.py needs the same sys.path.insert-before-imports pattern as
+# scripts/ to run standalone via `streamlit run`.
+"src/ui/dashboard.py" = ["E402"]
+
 [tool.pytest.ini_options]
 pythonpath = "."
 asyncio_mode = "auto"
@@ -52,3 +63,7 @@ explicit_package_bases = true
 namespace_packages = true
 ignore_missing_imports = true
 mypy_path = "."
+# src/ui is excluded from coverage (see [tool.coverage.run]) and from the same
+# strict-typing bar as core/scrapers/engine - Streamlit's dynamic Literal-typed
+# kwargs (e.g. delta_color) don't type-check cleanly against plain str values.
+exclude = ["^src/ui/"]

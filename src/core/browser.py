@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from typing import Any
-from playwright.async_api import async_playwright, BrowserContext, Page
+from playwright.async_api import async_playwright, Page
 from playwright_stealth import Stealth
 from src.core.config import settings
 

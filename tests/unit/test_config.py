@@ -1,4 +1,3 @@
-import os
 from src.core.config import AppSettings
 
 def test_load_config_test_env():

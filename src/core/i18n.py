@@ -4,7 +4,8 @@ from typing import Dict, Any
 
 class I18n:
     _instance = None
-    
+    locales: Dict[str, Any]
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
