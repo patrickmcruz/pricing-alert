@@ -1,6 +1,6 @@
 import pytest
 from src.core.browser import BrowserFactory
-from src.scrapers.kabum import KabumScraper
+from src.scrappers.kabum import KabumScraper
 from src.core.contract import ProductSKU
 
 @pytest.mark.e2e

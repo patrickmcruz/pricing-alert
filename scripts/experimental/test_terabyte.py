@@ -3,7 +3,7 @@ import sys
 from src.core.config import settings
 from src.repositories.sqlite_repository import SQLitePriceRepository
 from src.spiders.terabyte_spider import TerabyteSpider
-from src.scrapers.terabyte import TerabyteScraper
+from src.scrappers.terabyte import TerabyteScraper
 from src.core.contract import StoreConfig
 from src.core.browser import BrowserFactory
 import logging

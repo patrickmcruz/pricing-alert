@@ -2,8 +2,8 @@ import os
 from decimal import Decimal
 
 from src.core.contract import ProductSKU
-from src.scrapers.kabum import KabumScraper
-from src.scrapers.terabyte import TerabyteScraper
+from src.scrappers.kabum import KabumScraper
+from src.scrappers.terabyte import TerabyteScraper
 
 def get_fixture_content(filename: str) -> str:
     current_dir = os.path.dirname(os.path.abspath(__file__))

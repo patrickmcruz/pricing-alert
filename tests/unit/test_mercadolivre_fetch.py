@@ -6,7 +6,7 @@ import respx
 
 from src.core.config import settings
 from src.core.contract import ProductSKU
-from src.scrapers.mercadolivre import MercadoLivreScraper
+from src.scrappers.mercadolivre import MercadoLivreScraper
 
 
 @pytest.fixture

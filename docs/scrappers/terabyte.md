@@ -2,9 +2,9 @@
 
 ## Visão Geral
 
-O `TerabyteScraper` (`src/scrapers/terabyte.py`) é responsável por extrair preço, parcelamento e disponibilidade de produtos da Terabyteshop. Ao contrário do Mercado Livre, a Terabyteshop não expõe uma API REST pública, então a extração é feita via scraping de HTML renderizado com Playwright.
+O `TerabyteScraper` (`src/scrappers/terabyte.py`) é responsável por extrair preço, parcelamento e disponibilidade de produtos da Terabyteshop. Ao contrário do Mercado Livre, a Terabyteshop não expõe uma API REST pública, então a extração é feita via scraping de HTML renderizado com Playwright.
 
-A classe herda de `BaseScraper` e se registra automaticamente no orquestrador através do decorator `@register_scraper` (`src/core/registry.py`) — o único arquivo do scraper que precisa existir para que ele seja descoberto é o próprio módulo em `src/scrapers/`, importado automaticamente por `src/scrapers/__init__.py`. Não há necessidade de editar `main.py` para registrar a loja.
+A classe herda de `BaseScraper` e se registra automaticamente no orquestrador através do decorator `@register_scraper` (`src/core/registry.py`) — o único arquivo do scraper que precisa existir para que ele seja descoberto é o próprio módulo em `src/scrappers/`, importado automaticamente por `src/scrappers/__init__.py`. Não há necessidade de editar `main.py` para registrar a loja.
 
 ## Descoberta de SKUs
 

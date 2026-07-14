@@ -36,11 +36,11 @@ Para que o scraper do Mercado Livre funcione, você precisa preencher o `.env` c
 ```text
 /gpu-price-tracker
 ├── /src
-│   ├── /core           # Shared abstractions (BaseScraper, BrowserFactory, config, contracts)
-│   ├── /spiders        # Grid-level discovery logic
-│   ├── /scrapers       # Product page scraping logic (Kabum, Terabyte, etc.)
+│   ├── /core           # Shared abstractions (BaseScraper, BrowserFactory, config, contracts, registry)
+│   ├── /scrappers      # Product page scraping logic (Kabum, Terabyte, etc.); self-register via @register_scraper
 │   ├── /engine         # APScheduler orchestration and execution
 │   ├── /repositories   # SQLite persistence layer (Repository Pattern)
+│   ├── /alerts         # Alerting domain: rules, evaluation, notification delivery
 │   └── /ui             # Streamlit Dashboard
 ├── /data
 │   ├── /selectors      # Externalized CSS classes in TOML
@@ -155,8 +155,10 @@ When writing tests for parsers, use the static HTML files provided in `tests/fix
 
 ## 💡 Adding a New Store Scraper
 
-1. Create `src/scrapers/newstore.py` inheriting from `BaseScraper`.
-2. Create `data/selectors/newstore.toml` with `[v1]` selectors.
-3. Implement `async def fetch()` using the injected Playwright `client`.
+1. Create `src/scrappers/newstore.py` inheriting from `BaseScraper`, and decorate the class with `@register_scraper` (`src/core/registry.py`).
+2. Create `data/selectors/newstore.toml` with `[v1]` selectors (unless the store has a REST API to hit directly, like Mercado Livre - see `transport_type` on `BaseScraper`).
+3. Implement `async def fetch()` using the injected client (`Page` for `transport_type = "browser"`, `httpx.AsyncClient` for `"http"`).
 4. Implement `def parse()` to extract data and return a `PriceContract`.
-5. Register it in `main.py` inside `engine.register_scrapers()`.
+5. Add `"enabled": true` for the store in `data/target-stores-list.json`.
+
+That's it - `src/scrappers/__init__.py` auto-imports every module in the package, which triggers the `@register_scraper` decorator, so `main.py` never needs to be touched.

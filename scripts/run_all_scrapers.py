@@ -34,7 +34,7 @@ from src.core.transport import ClientFactory
 from src.engine.scheduler import PriceEngine
 from src.repositories.sqlite_repository import SQLitePriceRepository
 from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
-import src.scrapers  # noqa: F401 - importing the package triggers @register_scraper
+import src.scrappers  # noqa: F401 - importing the package triggers @register_scraper
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ async def main() -> None:
     engine.register_scrapers(get_registered_scrapers().values())
 
     if not engine.scrapers:
-        print("No scrapers registered - check src/scrapers/__init__.py auto-import.")
+        print("No scrapers registered - check src/scrappers/__init__.py auto-import.")
         return
 
     store_names = sorted(engine.scrapers)

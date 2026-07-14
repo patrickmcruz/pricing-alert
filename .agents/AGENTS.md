@@ -37,7 +37,7 @@ You are a Senior Full-Stack Software Architect and Data Engineer. Your objective
 │   │   ├── registry.py               # @register_scraper self-registration for scraper classes
 │   │   ├── transport.py              # ClientFactory Protocol shared by BrowserFactory/HTTPClientFactory
 │   │   └── utils.py                  # Shared helper functions (jitter, anti-bot simulation)
-│   ├── /scrapers                     # Scraper Engine (parses specific Product Pages); self-registers via @register_scraper
+│   ├── /scrappers                    # Scraper Engine (parses specific Product Pages); self-registers via @register_scraper
 │   ├── /engine                       # Orchestration (scheduler.py, discovery.py)
 │   ├── /repositories                 # Price persistence layer (SQLite implementation)
 │   ├── /alerts                       # Alerting domain: rules, evaluation, notification delivery
@@ -74,7 +74,7 @@ Discovery of new SKUs is handled by `DiscoveryEngine` (`src/engine/discovery.py`
 
 **Scraper Engine (Scrapers):** Concrete scrapers inherit from `BaseScraper` and visit the exact product URLs discovered by the Discovery Engine.
 
-Every concrete scraper class **must** be decorated with `@register_scraper` (`src/core/registry.py`) so it self-registers by `store_name` when `src/scrapers/__init__.py` auto-imports the package — this is what lets `main.py` wire up scrapers via `get_registered_scrapers()` without per-store edits. Adding a new store means: one new `src/scrapers/<store>.py` (decorated, using the shared helpers in `src/core/parsing_utils.py`/`contract_factory.py`), one `data/selectors/<store>.toml` if HTML-based, and `"enabled": true` for that store in `data/target-stores-list.json`. No other file should need changes. If a store is marked `enabled: true` in that manifest but has no matching registered scraper, `PriceEngine.build_schedule()` raises `MissingScraperError` at startup rather than silently skipping it.
+Every concrete scraper class **must** be decorated with `@register_scraper` (`src/core/registry.py`) so it self-registers by `store_name` when `src/scrappers/__init__.py` auto-imports the package — this is what lets `main.py` wire up scrapers via `get_registered_scrapers()` without per-store edits. Adding a new store means: one new `src/scrappers/<store>.py` (decorated, using the shared helpers in `src/core/parsing_utils.py`/`contract_factory.py`), one `data/selectors/<store>.toml` if HTML-based, and `"enabled": true` for that store in `data/target-stores-list.json`. No other file should need changes. If a store is marked `enabled: true` in that manifest but has no matching registered scraper, `PriceEngine.build_schedule()` raises `MissingScraperError` at startup rather than silently skipping it.
 
 Concrete scrapers must implement strictly separated methods:
 1. **`fetch(self, sku: ProductSKU, client: Any) -> str`**: Performs ONLY network I/O. Returns raw HTML. 

@@ -17,7 +17,7 @@ from src.repositories.sqlite_repository import SQLitePriceRepository
 from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
 from src.repositories.sqlite_trigger_repository import SQLiteTriggerRepository
 from src.core.registry import get_registered_scrapers
-import src.scrapers  # noqa: F401 - importing the package triggers scraper self-registration
+import src.scrappers  # noqa: F401 - importing the package triggers scraper self-registration
 from src.alerts.sqlite_alert_repository import SQLiteAlertRepository
 from src.alerts.dispatcher import AlertDispatcher
 from src.alerts.channels.base import NotificationChannel

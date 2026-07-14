@@ -2,9 +2,9 @@
 
 ## Visão Geral
 
-O `KabumScraper` (`src/scrapers/kabum.py`) extrai preço, parcelamento e disponibilidade de produtos da Kabum. Assim como a Terabyteshop, a Kabum não expõe uma API pública, então a extração é feita via scraping de HTML renderizado com Playwright.
+O `KabumScraper` (`src/scrappers/kabum.py`) extrai preço, parcelamento e disponibilidade de produtos da Kabum. Assim como a Terabyteshop, a Kabum não expõe uma API pública, então a extração é feita via scraping de HTML renderizado com Playwright.
 
-A classe herda de `BaseScraper` e se registra automaticamente no orquestrador via `@register_scraper` (`src/core/registry.py`) — o único arquivo necessário para adicionar/manter esta loja é o próprio módulo em `src/scrapers/`, importado automaticamente por `src/scrapers/__init__.py`.
+A classe herda de `BaseScraper` e se registra automaticamente no orquestrador via `@register_scraper` (`src/core/registry.py`) — o único arquivo necessário para adicionar/manter esta loja é o próprio módulo em `src/scrappers/`, importado automaticamente por `src/scrappers/__init__.py`.
 
 ## Descoberta de SKUs
 
