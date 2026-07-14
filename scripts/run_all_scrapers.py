@@ -38,7 +38,7 @@ from src.repositories.sqlite_repository import SQLitePriceRepository
 from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
 import src.scrapers  # noqa: F401 - importing the package triggers @register_scraper
 
-configure_logging(getattr(settings, "log_level", "INFO"))
+configure_logging(getattr(settings, "log_level", "INFO"), log_file=settings.log_file_path)
 logger = logging.getLogger(__name__)
 
 
@@ -57,7 +57,7 @@ async def main() -> None:
     # execution_repository is wired the same way main.py wires it, so runs started
     # from this script show up on the execution-monitor UI page too.
     engine = PriceEngine(
-        scheduler=AsyncIOScheduler(timezone="America/Sao_Paulo"),
+        scheduler=AsyncIOScheduler(timezone=settings.display_timezone),
         repository=repository,
         client_factories=client_factories,
         execution_repository=execution_repository,

@@ -26,7 +26,7 @@ from scripts.backup_db import backup_database
 
 
 async def migrate():
-    backup_path = backup_database(settings.db_path)
+    backup_path = backup_database(settings.db_path, keep=settings.backup_retention_count)
     if backup_path:
         print(f"Backed up {settings.db_path} to {backup_path} before migrating.")
 

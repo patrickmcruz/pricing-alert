@@ -38,14 +38,14 @@ STATUS_LABEL_KEYS = {
     RunStatus.FAILED: "execution_status_failed",
 }
 
-SAO_PAULO_TZ = ZoneInfo("America/Sao_Paulo")
+DISPLAY_TZ = ZoneInfo(settings.display_timezone)
 
 
 def _fmt_local(dt: datetime) -> str:
-    """Converts a UTC (or naive-assumed-UTC) timestamp to America/Sao_Paulo for display."""
+    """Converts a UTC (or naive-assumed-UTC) timestamp to settings.display_timezone for display."""
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(SAO_PAULO_TZ).strftime("%Y-%m-%d %H:%M:%S")
+    return dt.astimezone(DISPLAY_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
 
 async def _fetch_latest_runs() -> list[ScraperRunRecord]:

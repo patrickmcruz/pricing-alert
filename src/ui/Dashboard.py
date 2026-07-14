@@ -55,10 +55,10 @@ def load_data():
                     df[col] = pd.NA
                     
             df["scraped_at"] = pd.to_datetime(df["scraped_at"])
-            # Convert from UTC to America/Sao_Paulo (GMT-3)
+            # Convert from UTC to settings.display_timezone (GMT-3 for the default São Paulo)
             if df["scraped_at"].dt.tz is None:
                 df["scraped_at"] = df["scraped_at"].dt.tz_localize("UTC")
-            df["scraped_at"] = df["scraped_at"].dt.tz_convert("America/Sao_Paulo")
+            df["scraped_at"] = df["scraped_at"].dt.tz_convert(settings.display_timezone)
             # Remove tzinfo so Streamlit formats it cleanly
             df["scraped_at"] = df["scraped_at"].dt.tz_localize(None)
             

@@ -6,6 +6,7 @@ from typing import Any, Optional
 from bs4 import BeautifulSoup
 
 from src.core.base_scraper import BaseScraper, SelectorOutdatedException
+from src.core.config import settings
 from src.core.contract import PriceContract, ProductSKU
 from src.core.contract_factory import build_price_contract
 from src.core.parsing_utils import clean_brl_price, compute_discount, has_out_of_stock_marker
@@ -31,7 +32,11 @@ class TerabyteScraper(BaseScraper):
         """
         from src.core.utils import simulate_human_interaction
         try:
-            await client.goto(str(sku.product_url), wait_until="domcontentloaded", timeout=45000)
+            await client.goto(
+                str(sku.product_url),
+                wait_until="domcontentloaded",
+                timeout=settings.terabyte_navigation_timeout_ms,
+            )
             await simulate_human_interaction(client)
             return await client.content()
         except Exception as e:

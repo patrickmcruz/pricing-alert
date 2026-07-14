@@ -47,7 +47,7 @@ class BrowserFactory:
                 "height": random.randint(1000, 1080),
             },
             locale="pt-BR",
-            timezone_id="America/Sao_Paulo",
+            timezone_id=settings.display_timezone,
             permissions=["geolocation"],
         )
 
@@ -66,7 +66,7 @@ class BrowserFactory:
         # default, so this doesn't silently change if that default ever does -
         # every action/navigation on this page is bounded, on top of the
         # per-SKU asyncio.wait_for watchdog in PriceEngine.run_scraper.
-        page.set_default_timeout(30000)
+        page.set_default_timeout(settings.navigation_timeout_ms)
         await Stealth().apply_stealth_async(page)
         return page
 

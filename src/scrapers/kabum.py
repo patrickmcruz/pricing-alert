@@ -5,6 +5,7 @@ from typing import Any, Optional
 from bs4 import BeautifulSoup
 
 from src.core.base_scraper import BaseScraper, SelectorOutdatedException
+from src.core.config import settings
 from src.core.contract import PriceContract, ProductSKU
 from src.core.contract_factory import build_price_contract
 from src.core.parsing_utils import clean_brl_price, compute_discount, has_out_of_stock_marker
@@ -28,7 +29,9 @@ class KabumScraper(BaseScraper):
         """
         try:
             # client is a Playwright Page object here
-            await client.goto(str(sku.product_url), wait_until="networkidle", timeout=30000)
+            await client.goto(
+                str(sku.product_url), wait_until="networkidle", timeout=settings.navigation_timeout_ms
+            )
             return await client.content()
         except Exception as e:
             logger.error("[%s] Network fetch failed for %s: %s", self.store_name, sku.product_url, e)

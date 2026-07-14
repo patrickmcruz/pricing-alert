@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import os
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -27,7 +26,7 @@ from src.alerts.channels.telegram import TelegramChannel
 from apscheduler.triggers.cron import CronTrigger
 from scripts.backup_db import backup_database
 
-configure_logging(getattr(settings, "log_level", "INFO"))
+configure_logging(getattr(settings, "log_level", "INFO"), log_file=settings.log_file_path)
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ DB_PATH = settings.db_path
 
 def load_stores_config() -> list[StoreConfig]:
     """Loads configuration and returns StoreConfig instances based on the JSON definitions."""
-    stores_file = os.path.join("data", "target-stores-list.json")
+    stores_file = settings.stores_config_path
     try:
         with open(stores_file, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -51,7 +50,7 @@ def load_stores_config() -> list[StoreConfig]:
             StoreConfig(
                 store_name=store_info["store_name"],
                 target_keywords=settings.default_gpus,
-                cron_times=["08:00", "12:00", "16:00", "20:00"],
+                cron_times=settings.default_cron_times,
                 enabled=store_info.get("enabled", False),
             )
         )
@@ -106,7 +105,7 @@ async def _seed_stores(store_repository: SQLiteStoreRepository) -> None:
     load_stores_config() reads - so every store referenced elsewhere resolves.
     Idempotent: get_or_create_store is a no-op for stores that already exist.
     """
-    stores_file = os.path.join("data", "target-stores-list.json")
+    stores_file = settings.stores_config_path
     try:
         with open(stores_file, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -147,7 +146,7 @@ async def main():
     # 0. Snapshot the DB before touching it - cheap insurance against any
     # mistake in this boot sequence or a subsequent manual script/migration.
     # Uses SQLite's online backup API, so it's safe even against a live db.
-    backup_path = backup_database(DB_PATH)
+    backup_path = backup_database(DB_PATH, keep=settings.backup_retention_count)
     if backup_path:
         logger.info("Pre-boot DB backup created: %s", backup_path)
 
@@ -199,7 +198,7 @@ async def main():
     # Paulo-aware - each one resolves its own tz independently unless told
     # otherwise (see the timezone= passed explicitly in build_schedule and
     # to the daily backup job below).
-    scheduler = AsyncIOScheduler(timezone="America/Sao_Paulo")
+    scheduler = AsyncIOScheduler(timezone=settings.display_timezone)
     engine = PriceEngine(
         scheduler=scheduler,
         repository=repository,
@@ -222,8 +221,12 @@ async def main():
     # tzlocal (the container's UTC system clock) unless told otherwise, it
     # does not inherit the scheduler's own timezone (see src/engine/scheduler.py).
     scheduler.add_job(
-        lambda: backup_database(DB_PATH),
-        trigger=CronTrigger(hour=3, minute=0, timezone="America/Sao_Paulo"),
+        lambda: backup_database(DB_PATH, keep=settings.backup_retention_count),
+        trigger=CronTrigger(
+            hour=settings.backup_cron_hour,
+            minute=settings.backup_cron_minute,
+            timezone=settings.display_timezone,
+        ),
         id="daily_db_backup",
         replace_existing=True,
     )

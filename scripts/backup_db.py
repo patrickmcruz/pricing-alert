@@ -69,7 +69,7 @@ def _prune_old_backups(backup_dir: str, db_name: str, keep: int) -> None:
 if __name__ == "__main__":
     from src.core.config import settings
 
-    result = backup_database(settings.db_path)
+    result = backup_database(settings.db_path, keep=settings.backup_retention_count)
     if result:
         print(f"Backup created: {result}")
     else:

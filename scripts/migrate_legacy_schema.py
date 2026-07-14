@@ -41,7 +41,7 @@ _RENAME_TO_LEGACY = {
     "gpu_models": "legacy_gpu_models",
 }
 
-STORES_JSON_PATH = os.path.join(PROJECT_ROOT, "data", "target-stores-list.json")
+STORES_JSON_PATH = settings.stores_config_path
 
 
 def _table_exists(conn: sqlite3.Connection, name: str) -> bool:
@@ -417,7 +417,7 @@ def migrate_legacy_schema(db_path: str) -> None:
         print(f"{db_path!r} doesn't exist - nothing to migrate.")
         return
 
-    backup_path = backup_database(db_path)
+    backup_path = backup_database(db_path, keep=settings.backup_retention_count)
     if backup_path is None:
         print(f"WARNING: expected to back up {db_path} but backup_database() returned None.")
     else:

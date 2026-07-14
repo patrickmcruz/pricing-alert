@@ -1,12 +1,12 @@
 import asyncio
 import logging
+from typing import Optional
 
+from src.core.config import settings
 from src.engine.scheduler import PriceEngine
 from src.repositories.trigger_repository import TriggerRepository
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_POLL_INTERVAL_SECONDS = 5.0
 
 
 class TriggerProcessor:
@@ -46,7 +46,10 @@ class TriggerProcessor:
                 )
                 await self.trigger_repository.mark_failed(request.request_id, str(e))
 
-    async def run_forever(self, interval_seconds: float = DEFAULT_POLL_INTERVAL_SECONDS) -> None:
+    async def run_forever(self, interval_seconds: Optional[float] = None) -> None:
+        interval_seconds = (
+            interval_seconds if interval_seconds is not None else settings.trigger_poll_interval_seconds
+        )
         logger.info("Trigger processor polling every %.1fs for manual run requests.", interval_seconds)
         while True:
             try:

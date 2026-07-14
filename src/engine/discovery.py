@@ -3,13 +3,14 @@ import logging
 import os
 
 from src.core.catalog import Brand, GpuChipset, GpuModel, infer_chip_maker
+from src.core.config import settings
 from src.core.contract import ProductSKU, StoreConfig
 from src.repositories.base_repository import PriceRepository
 from src.repositories.catalog_repository import CatalogRepository
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_TARGET_URLS_PATH = os.path.join("data", "target_urls.json")
+DEFAULT_TARGET_URLS_PATH = settings.target_urls_path
 
 # search_keyword -> canonical chipset name. Keeps spelling/noise variations
 # ("rx 9070 oc" is search noise, not part of the chipset) from becoming

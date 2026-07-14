@@ -18,15 +18,6 @@ from src.repositories.execution_repository import ExecutionRepository
 
 logger = logging.getLogger(__name__)
 
-# CronTrigger resolves its own timezone independently of whatever timezone
-# the scheduler it's added to was constructed with - if `timezone=` isn't
-# passed here explicitly, APScheduler falls back to tzlocal.get_localzone()
-# (the *container's* system tz, which is UTC), not the scheduler's tz. Every
-# cron_time in config.toml/target-stores-list.json is a São Paulo wall-clock
-# hour, so this has to be explicit on each trigger, not just on the scheduler.
-_SCHEDULE_TZ = "America/Sao_Paulo"
-
-
 class MissingScraperError(Exception):
     """Raised when a StoreConfig marked enabled=True has no matching registered scraper."""
 
@@ -280,7 +271,15 @@ class PriceEngine:
                     hour = int(hour_str)
                     minute = int(minute_str)
 
-                    trigger = CronTrigger(hour=hour, minute=minute, timezone=_SCHEDULE_TZ)
+                    # CronTrigger resolves its own timezone independently of whatever
+                    # timezone the scheduler it's added to was constructed with - if
+                    # timezone= isn't passed here explicitly, APScheduler falls back to
+                    # tzlocal.get_localzone() (the *container's* system tz, which is
+                    # UTC), not the scheduler's tz. Every cron_time in config.toml/
+                    # target-stores-list.json is a settings.display_timezone wall-clock
+                    # hour, so this has to be explicit on each trigger, not just on the
+                    # scheduler.
+                    trigger = CronTrigger(hour=hour, minute=minute, timezone=settings.display_timezone)
                     job_id = f"scrape_{config.store_name}_{hour}_{minute}"
 
                     self.scheduler.add_job(

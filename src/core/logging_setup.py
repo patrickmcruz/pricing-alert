@@ -16,7 +16,9 @@ from datetime import datetime
 from typing import Optional
 from zoneinfo import ZoneInfo
 
-_SAO_PAULO_TZ = ZoneInfo("America/Sao_Paulo")
+from src.core.config import settings
+
+_DISPLAY_TZ = ZoneInfo(settings.display_timezone)
 
 _LEVEL_COLORS = {
     logging.DEBUG: "\033[2;37m",  # dim gray
@@ -40,13 +42,14 @@ _THIRD_PARTY_LOGGERS = ("aiosqlite", "asyncio", "apscheduler", "httpcore", "hpac
 
 
 class SaoPauloTimeFormatter(logging.Formatter):
-    """Renders %(asctime)s in America/Sao_Paulo (UTC-3) instead of the
-    system/container timezone - the orchestrator container's system tz is
-    UTC (same root cause as configure_logging's AsyncIOScheduler note), so
-    without this every log line reads 3h ahead of local time."""
+    """Renders %(asctime)s in settings.display_timezone (América/São Paulo by
+    default, UTC-3) instead of the system/container timezone - the
+    orchestrator container's system tz is UTC (same root cause as
+    configure_logging's AsyncIOScheduler note), so without this every log
+    line reads 3h ahead of local time."""
 
     def formatTime(self, record: logging.LogRecord, datefmt: Optional[str] = None) -> str:
-        dt = datetime.fromtimestamp(record.created, tz=_SAO_PAULO_TZ)
+        dt = datetime.fromtimestamp(record.created, tz=_DISPLAY_TZ)
         return dt.strftime(datefmt) if datefmt else dt.strftime("%Y-%m-%d %H:%M:%S %z")
 
 
@@ -64,7 +67,7 @@ class ColorFormatter(SaoPauloTimeFormatter):
         return f"{color}{message}{_RESET}" if color else message
 
 
-def configure_logging(level_name: str, log_file: str = "data/orchestrator.log") -> None:
+def configure_logging(level_name: str, log_file: str = settings.log_file_path) -> None:
     """Configures the root logger with a colored console handler and a plain
     file handler, and quiets known-noisy third-party loggers."""
     numeric_level = getattr(logging, level_name.upper(), logging.INFO)

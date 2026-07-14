@@ -39,7 +39,56 @@ class AppSettings:
         # one hung page (network stall, dead browser process, anti-bot loop)
         # can't block an entire store's run indefinitely.
         self.scraper_timeout_seconds = self.config_data.get("scraper_timeout_seconds", 120)
-        
+
+        # Timezone used for cron scheduling (main.py, PriceEngine), the daily
+        # backup job, Playwright's context locale/tz spoofing, and every
+        # timestamp displayed in logs/the dashboard - single source of truth
+        # instead of "America/Sao_Paulo" duplicated across half a dozen files.
+        self.display_timezone = self.config_data.get("display_timezone", "America/Sao_Paulo")
+
+        # Applied to every store loaded from stores_config_path unless/until
+        # per-store cron overrides exist.
+        self.default_cron_times = self.config_data.get(
+            "default_cron_times", ["08:00", "12:00", "16:00", "20:00"]
+        )
+
+        # Playwright navigation/action timeouts (ms). Terabyte gets its own,
+        # longer value - its fetch() also runs simulate_human_interaction()
+        # before capturing the HTML, and its anti-bot challenge can be slower
+        # to clear than Kabum's - not arbitrary drift.
+        self.navigation_timeout_ms = self.config_data.get("navigation_timeout_ms", 30000)
+        self.terabyte_navigation_timeout_ms = self.config_data.get(
+            "terabyte_navigation_timeout_ms", 45000
+        )
+
+        # httpx AsyncClient timeout (seconds) for REST-based scrapers (Mercado Livre).
+        self.http_timeout_seconds = self.config_data.get("http_timeout_seconds", 30.0)
+
+        # Store registry and legacy discovery manifest paths - resolved against
+        # PROJECT_ROOT so they don't depend on the process's working directory.
+        self.stores_config_path = os.path.join(
+            PROJECT_ROOT, self.config_data.get("stores_config_path", "data/target-stores-list.json")
+        )
+        self.target_urls_path = os.path.join(
+            PROJECT_ROOT, self.config_data.get("target_urls_path", "data/target_urls.json")
+        )
+
+        # Plain-text log file (see src/core/logging_setup.py:configure_logging).
+        self.log_file_path = os.path.join(
+            PROJECT_ROOT, self.config_data.get("log_file_path", "data/orchestrator.log")
+        )
+
+        # How many timestamped snapshots scripts/backup_db.py keeps before
+        # pruning, and what time of day main.py schedules the daily one.
+        self.backup_retention_count = self.config_data.get("backup_retention_count", 30)
+        self.backup_cron_hour = self.config_data.get("backup_cron_hour", 3)
+        self.backup_cron_minute = self.config_data.get("backup_cron_minute", 0)
+
+        # How often TriggerProcessor polls for "run now" dashboard requests.
+        self.trigger_poll_interval_seconds = self.config_data.get(
+            "trigger_poll_interval_seconds", 5.0
+        )
+
         # Mercado Livre API Credentials (loaded from ENV natively, or config.toml as fallback)
         self.ml_app_id = os.getenv("MERCADOLIVRE_APP_ID", self.config_data.get("MERCADOLIVRE_APP_ID"))
         self.ml_secret_key = os.getenv("MERCADOLIVRE_APP_SECRET_KEY", os.getenv("MERCADOLIVRE_APP_SECRET", self.config_data.get("MERCADOLIVRE_APP_SECRET")))
