@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import random
 from typing import Any
 from playwright.async_api import async_playwright, Page
 from playwright_stealth import Stealth
@@ -35,13 +36,21 @@ class BrowserFactory:
     async def create(self, scraper: Any) -> Page:
         await self._init_browser()
         context = await self.browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            viewport={'width': 1920, 'height': 1080},
+            # No user_agent override: the installed Chromium (currently v149) already
+            # reports its own authentic UA. A hand-maintained UA string drifts out of
+            # sync with the real binary (this one was still claiming Chrome/122) and a
+            # UA version that doesn't match the browser's actual JS engine / Sec-CH-UA
+            # client hints is a textbook bot-detection signal - letting Playwright pass
+            # through the real identity keeps every signal mutually consistent.
+            viewport={
+                "width": random.randint(1880, 1920),
+                "height": random.randint(1000, 1080),
+            },
             locale="pt-BR",
             timezone_id="America/Sao_Paulo",
             permissions=["geolocation"],
         )
-        
+
         # Inject standard webdriver evasion
         await context.add_init_script("""
             Object.defineProperty(navigator, 'webdriver', {

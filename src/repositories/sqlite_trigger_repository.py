@@ -68,6 +68,23 @@ class SQLiteTriggerRepository(TriggerRepository):
             request_id, TriggerStatus.FAILED, set_processed_at=True, error_message=error_message
         )
 
+    async def fail_stale_processing(self, error_message: str) -> int:
+        processed_at = datetime.now(timezone.utc).isoformat()
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                """
+                UPDATE trigger_requests
+                SET status = ?, processed_at = ?, error_message = ?
+                WHERE status = ?
+                """,
+                (TriggerStatus.FAILED.value, processed_at, error_message, TriggerStatus.PROCESSING.value),
+            )
+            await db.commit()
+            count = cursor.rowcount
+        if count:
+            logger.warning("Marked %d orphaned 'processing' trigger request(s) as failed on startup.", count)
+        return count
+
     async def _query_by_status(self, statuses: List[TriggerStatus]) -> List[TriggerRequest]:
         placeholders = ",".join("?" for _ in statuses)
         async with aiosqlite.connect(self.db_path) as db:

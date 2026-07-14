@@ -99,6 +99,11 @@ async def main():
 
     trigger_repository = SQLiteTriggerRepository(db_path=DB_PATH)
     await trigger_repository.initialize_schema()
+    # Any request still 'processing' belonged to a previous orchestrator process
+    # that no longer exists (crash, redeploy, `docker compose up` recreate) - left
+    # alone it would silently block its store's (or all stores', for
+    # store_name=None) trigger button forever, since nothing else ever revisits it.
+    await trigger_repository.fail_stale_processing("Orphaned: orchestrator restarted while processing")
 
     # 2. Initialize Dependency Factories (one per transport_type a scraper may declare)
     client_factories = {
@@ -136,15 +141,21 @@ async def main():
     engine.start()
 
     logger.info("Orchestrator cron schedule started.")
-    
+
+    # Start polling for "run now" requests concurrently with the startup scrape
+    # below, not after it - startup_routine can take minutes (every store's
+    # SKUs, sequentially, with jitter between each), and awaiting it first would
+    # silently ignore any dashboard trigger created during that whole window.
+    trigger_task = asyncio.create_task(trigger_processor.run_forever())
+
     # 7. Run initial discovery and scrape
     await startup_routine(discovery, engine, configs)
 
     logger.info("Orchestrator running. Press Ctrl+C to exit.")
 
-    # Keeps the event loop alive AND polls for "run now" requests from the
-    # dashboard (which has no browser of its own - see TriggerProcessor).
-    await trigger_processor.run_forever()
+    # trigger_task never returns on its own - this keeps the event loop alive
+    # for the rest of the process lifetime, same as before.
+    await trigger_task
 
 
 if __name__ == "__main__":

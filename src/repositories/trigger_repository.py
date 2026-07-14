@@ -36,3 +36,15 @@ class TriggerRepository(ABC):
 
     @abstractmethod
     async def mark_failed(self, request_id: UUID, error_message: str) -> None: ...
+
+    @abstractmethod
+    async def fail_stale_processing(self, error_message: str) -> int:
+        """
+        Marks any request still 'processing' as failed. Meant to be called once
+        at startup: a 'processing' row can only be legitimate if the orchestrator
+        process that set it is still alive, so after a restart every such row is
+        provably orphaned - left alone, it would block its store's (or all
+        stores', for store_name=None) trigger button forever. Returns the count
+        of rows reset.
+        """
+
