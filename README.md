@@ -24,7 +24,7 @@ Algumas lojas possuem defesas antibot (ex: Kabum). Para essas, nosso ecossistema
 
 Entretanto, o Mercado Livre possui firewalls de última geração (Datadome/Cloudflare) em suas Lojas Oficiais. Para o **Mercado Livre**, contornamos o bloqueio de raspagem de DOM adotando uma arquitetura 100% nativa utilizando a **API Oficial Pública do Mercado Livre** via tokens OAuth 2.0.
 
-Para que o scraper do Mercado Livre funcione, você precisa preencher o `.env` com suas credenciais de parceiro desenvolvedor. Para o passo-a-passo detalhado, leia a [Documentação Oficial do Mercado Livre Scraper](file:///c:/Users/Eduardo/Documents/Github/pricing-alert/docs/scrapers/mercadolivre.md).
+Para que o scraper do Mercado Livre funcione, você precisa preencher o `.env` com suas credenciais de parceiro desenvolvedor. Para o passo-a-passo detalhado, leia a [Documentação Oficial do Mercado Livre Scraper](docs/scrappers/mercadolivre.md).
 
 ## Configuração do config.toml
 - **Gitflow Configuration**: All app settings are defined in `config.toml` (using native `tomllib`), providing distinct `[develop]`, `[staging]`, and `[production]` environments.
