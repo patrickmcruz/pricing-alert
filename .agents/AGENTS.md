@@ -39,7 +39,9 @@ You are a Senior Full-Stack Software Architect and Data Engineer. Your objective
 │   │   └── utils.py                  # Shared helper functions (jitter, anti-bot simulation)
 │   ├── /scrapers                    # Scraper Engine (parses specific Product Pages); self-registers via @register_scraper
 │   ├── /engine                       # Orchestration (scheduler.py, discovery.py)
-│   ├── /repositories                 # Price persistence layer (SQLite implementation)
+│   ├── /db
+│   │   └── schema.py                 # Single source of truth for the SQLite schema + connect() (PRAGMA foreign_keys=ON)
+│   ├── /repositories                 # Persistence layer (SQLite implementation, Repository Pattern per entity)
 │   ├── /alerts                       # Alerting domain: rules, evaluation, notification delivery
 │   │   ├── contracts.py              # AlertRule, AlertEvent (Pydantic v2)
 │   │   ├── evaluator.py              # Pure AlertEvaluator (no I/O, fixture-testable)
@@ -70,7 +72,7 @@ All extracted data must be normalized into the `PriceContract` model before leav
 
 ## 5. Scraper Architecture & Pluggable Registry
 
-Discovery of new SKUs is handled by `DiscoveryEngine` (`src/engine/discovery.py`) reading a static manifest (`data/target_urls.json`) and persisting `ProductSKU` records into the `target_urls` table. **The earlier "two-tier spider/scraper" design (live search-grid crawling via `src/spiders/`) was deprecated and removed**: it never reached a working state (`DiscoveryEngine` never invoked it, and its network-fetch half was an unimplemented stub), so it added coupling and duplicated logic without delivering functionality. Live search-grid discovery may be reintroduced later as its own scoped initiative — it is a materially different problem (higher anti-bot risk, grid parsing) from single-product-page scraping and should not be rebuilt as a parallel class hierarchy without a clear need.
+Discovery of new SKUs is handled by `DiscoveryEngine` (`src/engine/discovery.py`) reading a static manifest (`data/target_urls.json`) and persisting `ProductSKU` records into the `store_listings` table. **The earlier "two-tier spider/scraper" design (live search-grid crawling via `src/spiders/`) was deprecated and removed**: it never reached a working state (`DiscoveryEngine` never invoked it, and its network-fetch half was an unimplemented stub), so it added coupling and duplicated logic without delivering functionality. Live search-grid discovery may be reintroduced later as its own scoped initiative — it is a materially different problem (higher anti-bot risk, grid parsing) from single-product-page scraping and should not be rebuilt as a parallel class hierarchy without a clear need.
 
 **Scraper Engine (Scrapers):** Concrete scrapers inherit from `BaseScraper` and visit the exact product URLs discovered by the Discovery Engine.
 
@@ -87,8 +89,9 @@ Scrapers MUST NOT hardcode CSS classes, IDs, or XPath expressions under any circ
 ## 6. Orchestration & Persistence
 
 * **Scheduler (`PriceEngine`):** Responsible for loading `ProductSKU` records from the repository and coordinating execution of the Scrapers. Catches `SelectorOutdatedException` gracefully to prevent batch crashes. Also selects the correct `ClientFactory` per scraper via `BaseScraper.transport_type` (`"browser"` for Playwright HTML scrapers, `"http"` for JSON/REST scrapers like Mercado Livre) - `PriceEngine` is constructed with a `client_factories: dict[str, ClientFactory]`, never a single factory.
-* **Repository Pattern:** Database operations are isolated behind `PriceRepository`. Scrapers never talk to SQLite.
-* **Alerting (`src/alerts/`):** A separate domain, decoupled from orchestration. `PriceEngine` accepts an optional `on_price_saved: Callable[[PriceContract], Awaitable[None]]` hook, called right after each price is persisted; `main.py` wires this to `AlertDispatcher.handle_price`. `PriceEngine` depends only on that `Callable` type - it never imports `src/alerts` - so orchestration stays decoupled from notification internals. `AlertEvaluator` is pure (no I/O) and takes the previous known price as an explicit argument rather than fetching history itself, keeping it fixture-testable like scraper `parse()` methods.
+* **Repository Pattern:** Database operations are isolated behind one interface per entity (`PriceRepository`, `CatalogRepository`, `StoreRepository`, `ExecutionRepository`, `TriggerRepository`, `AlertRepository`). Scrapers never talk to SQLite.
+* **Schema (`src/db/schema.py`):** Single source of truth for every `CREATE TABLE`/index, plus a `connect(db_path)` helper that enables `PRAGMA foreign_keys = ON` on every connection - repositories no longer each own their own `initialize_schema()`. Call `initialize_schema(db_path)` once at boot (or from a script/Streamlit page) instead of per-repository. Core tables: `stores`, `brands`, `chipsets`, `gpu_models`, `store_listings` (tracked SKUs, soft-deleted via `is_active` rather than hard-deleted), `scraper_runs`/`listing_runs` (execution tracking), `price_observations` (the price history, FK'd to its listing and run), `trigger_requests`, `alert_rules`/`alert_events`. Every table uses a surrogate `TEXT` UUID primary key and real, enforced foreign keys - don't reintroduce free-text columns (e.g. a raw `store_name` string) where a FK to `stores`/`gpu_models` already exists.
+* **Alerting (`src/alerts/`):** A separate domain, decoupled from orchestration. `PriceEngine` accepts an optional `on_price_saved: Callable[[PriceContract, str], Awaitable[None]]` hook (the second argument is the newly-saved `price_observations.id`), called right after each price is persisted; `main.py` wires this to `AlertDispatcher.handle_price`. `PriceEngine` depends only on that `Callable` type - it never imports `src/alerts` - so orchestration stays decoupled from notification internals. `AlertEvaluator` is pure (no I/O) and takes the previous known price as an explicit argument rather than fetching history itself, keeping it fixture-testable like scraper `parse()` methods. `AlertRule` matches on `gpu_model_id`/`store_id` (resolved ids), not free-text brand/model strings.
 
 ## 7. QA Strategy & Testing Gates
 
@@ -134,7 +137,15 @@ python -c "
 import sqlite3
 conn = sqlite3.connect('data/prices.db')
 conn.row_factory = sqlite3.Row
-rows = conn.execute('SELECT * FROM prices LIMIT 5;').fetchall()
+rows = conn.execute('''
+    SELECT po.*, s.slug AS store_name, sl.product_url, sl.search_keyword, gm.model_name
+    FROM price_observations po
+    JOIN store_listings sl ON sl.id = po.store_listing_id
+    JOIN stores s ON s.id = sl.store_id
+    JOIN gpu_models gm ON gm.id = sl.gpu_model_id
+    LIMIT 5;
+''').fetchall()
 for row in rows: print(dict(row))
 "
 ```
+Store/brand/model are no longer inline columns on `price_observations` (see the schema note in §6) - they only exist behind a JOIN through `store_listings`/`gpu_models`/`stores`.

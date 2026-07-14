@@ -39,17 +39,42 @@ Para que o scraper do Mercado Livre funcione, você precisa preencher o `.env` c
 │   ├── /core           # Shared abstractions (BaseScraper, BrowserFactory, config, contracts, registry)
 │   ├── /scrapers      # Product page scraping logic (Kabum, Terabyte, etc.); self-register via @register_scraper
 │   ├── /engine         # APScheduler orchestration and execution
-│   ├── /repositories   # SQLite persistence layer (Repository Pattern)
+│   ├── /db
+│   │   └── schema.py   # Single source of truth for the SQLite schema (see "Database Schema" below)
+│   ├── /repositories   # Persistence layer (SQLite implementation, Repository Pattern per entity)
 │   ├── /alerts         # Alerting domain: rules, evaluation, notification delivery
 │   └── /ui             # Streamlit Dashboard
 ├── /data
 │   ├── /selectors      # Externalized CSS classes in TOML
-│   └── /locales        # i18n localization JSON dictionaries
+│   ├── /locales        # i18n localization JSON dictionaries
+│   └── /backups        # Timestamped SQLite snapshots (scripts/backup_db.py)
 ├── /scripts
-│   └── seed_db.py      # Seeds target URLs into the DB for testing
+│   ├── seed_db.py               # Seeds target URLs into the DB for testing
+│   ├── migrate_legacy_schema.py # One-shot migration to the normalized schema (idempotent, backs up first)
+│   └── trim_dev_listings.py     # Caps tracked listings per (store, chipset) in dev for fast test scrapes
 ├── config.toml         # App environment configurations
 └── pyproject.toml      # Project dependencies and tool configurations
 ```
+
+---
+
+## 🗄️ Database Schema
+
+All persistence is SQLite, with a single shared schema module (`src/db/schema.py`) instead of each repository owning its own tables. Every table uses a surrogate `TEXT` UUID primary key, and foreign keys are enforced (`PRAGMA foreign_keys = ON` on every connection) rather than merely declared.
+
+| Table | Purpose |
+|---|---|
+| `stores` | Retailers this app tracks (kabum, mercado-livre, terabyte, ...) |
+| `brands`, `chipsets`, `gpu_models` | Normalized GPU catalog: board partner, chip reference, and the specific brand+chipset+variant combination |
+| `store_listings` | A tracked product URL at a store, FK'd to its `gpu_model`; soft-deleted (`is_active = 0`) instead of hard-deleted so price history is never orphaned |
+| `scraper_runs`, `listing_runs` | Execution tracking: one row per store run, one row per SKU attempt within it |
+| `price_observations` | The actual price history - FK'd to its `store_listings` row and originating `scraper_runs` row, no duplicated store/brand/model text |
+| `trigger_requests` | "Run now" requests queued by the dashboard, consumed by the orchestrator |
+| `alert_rules`, `alert_events` | User-defined price-drop rules (matched by `gpu_model_id`/`store_id`, not free-text) and the events they fired, each FK'd to the `price_observations` row that triggered it |
+
+To (re)initialize the schema against any `db_path`, call `src.db.schema.initialize_schema(db_path)` - it's idempotent (`CREATE TABLE IF NOT EXISTS`), so it's safe to call from `main.py`, a Streamlit page, or a script.
+
+If you're carrying data forward from a pre-normalization database, `scripts/migrate_legacy_schema.py` migrates an existing file in place: it backs up first, never auto-drops the old tables (it prints `DROP TABLE` statements for you to run once you've verified the result), and is safe to run against an already-migrated or fresh database (no-op).
 
 ---
 
@@ -84,6 +109,12 @@ python scripts/seed_db.py
 python main.py
 ```
 The orchestrator uses `APScheduler` to trigger the scrapers based on cron configurations (currently stubbed to test every minute).
+
+**Fast local test scrapes:** if `data/prices_dev.db` has accumulated many listings per GPU (e.g. from real discovery runs), a full dev scrape can be slow. `scripts/trim_dev_listings.py` caps how many listings stay active per (store, chipset) pair, soft-deleting the rest so their price history isn't lost:
+```bash
+APP_ENV=develop python scripts/trim_dev_listings.py 2   # keep at most 2 per (store, chipset)
+```
+It refuses to run against `APP_ENV=production` - production is meant to keep every listing it has ever discovered.
 
 ### 4. Viewing the Dashboard
 To see the scraped prices:

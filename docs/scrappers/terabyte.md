@@ -8,7 +8,7 @@ A classe herda de `BaseScraper` e se registra automaticamente no orquestrador at
 
 ## Descoberta de SKUs
 
-A antiga camada de "spider" (`TerabyteSpider`, que faria a varredura de páginas de busca) foi **descontinuada**: ela nunca chegou a ser efetivamente acionada pelo `DiscoveryEngine` e sua metade de rede (`fetch_search_page`) nunca foi implementada. Hoje a descoberta de SKUs é feita via manifesto estático (`data/target_urls.json`), carregado pelo `DiscoveryEngine` (`src/engine/discovery.py`) diretamente para a tabela `target_urls`. Ver `.agents/AGENTS.md` §5 para o racional dessa decisão.
+A antiga camada de "spider" (`TerabyteSpider`, que faria a varredura de páginas de busca) foi **descontinuada**: ela nunca chegou a ser efetivamente acionada pelo `DiscoveryEngine` e sua metade de rede (`fetch_search_page`) nunca foi implementada. Hoje a descoberta de SKUs é feita via manifesto estático (`data/target_urls.json`), carregado pelo `DiscoveryEngine` (`src/engine/discovery.py`) diretamente para a tabela `store_listings` (ver `src/db/schema.py`). Ver `.agents/AGENTS.md` §5 para o racional dessa decisão.
 
 ## Transporte: Playwright (Browser)
 
