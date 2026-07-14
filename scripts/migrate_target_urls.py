@@ -21,9 +21,14 @@ from src.core.config import settings
 from src.engine.discovery import DiscoveryEngine
 from src.repositories.sqlite_catalog_repository import SQLiteCatalogRepository
 from src.repositories.sqlite_repository import SQLitePriceRepository
+from scripts.backup_db import backup_database
 
 
 async def migrate():
+    backup_path = backup_database(settings.db_path)
+    if backup_path:
+        print(f"Backed up {settings.db_path} to {backup_path} before migrating.")
+
     print(f"Migrating data/target_urls.json into {settings.db_path} ...")
     repo = SQLitePriceRepository(db_path=settings.db_path)
     await repo.initialize_schema()

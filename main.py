@@ -21,6 +21,8 @@ from src.alerts.sqlite_alert_repository import SQLiteAlertRepository
 from src.alerts.dispatcher import AlertDispatcher
 from src.alerts.channels.base import NotificationChannel
 from src.alerts.channels.telegram import TelegramChannel
+from apscheduler.triggers.cron import CronTrigger
+from scripts.backup_db import backup_database
 
 level_str = getattr(settings, 'log_level', 'INFO').upper()
 logging_level = getattr(logging, level_str, logging.INFO)
@@ -85,6 +87,13 @@ async def startup_routine(engine: PriceEngine):
 async def main():
     logger.info("Initializing GPU Price Tracker Orchestrator...")
 
+    # 0. Snapshot the DB before touching it - cheap insurance against any
+    # mistake in this boot sequence or a subsequent manual script/migration.
+    # Uses SQLite's online backup API, so it's safe even against a live db.
+    backup_path = backup_database(DB_PATH)
+    if backup_path:
+        logger.info("Pre-boot DB backup created: %s", backup_path)
+
     # 1. Initialize Persistence Layer
     repository = SQLitePriceRepository(db_path=DB_PATH)
     await repository.initialize_schema()
@@ -133,6 +142,15 @@ async def main():
     # 5. Build Schedule
     configs = load_stores_config()
     engine.build_schedule(configs)
+
+    # Daily DB backup, independent of the boot-time one above - covers
+    # long-running deployments that don't restart often.
+    scheduler.add_job(
+        lambda: backup_database(DB_PATH),
+        trigger=CronTrigger(hour=3, minute=0),
+        id="daily_db_backup",
+        replace_existing=True,
+    )
 
     # 6. Start Orchestration
     engine.start()
