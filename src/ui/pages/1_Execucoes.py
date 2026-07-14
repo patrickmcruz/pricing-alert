@@ -1,6 +1,8 @@
 import asyncio
 import os
 import sys
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 # Ensure src module is in path (this file lives two levels deeper than dashboard.py)
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -34,6 +36,15 @@ STATUS_LABEL_KEYS = {
     RunStatus.SUCCESS: "execution_status_success",
     RunStatus.FAILED: "execution_status_failed",
 }
+
+SAO_PAULO_TZ = ZoneInfo("America/Sao_Paulo")
+
+
+def _fmt_local(dt: datetime) -> str:
+    """Converts a UTC (or naive-assumed-UTC) timestamp to America/Sao_Paulo for display."""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(SAO_PAULO_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
 
 async def _fetch_latest_runs() -> list[ScraperRunRecord]:
@@ -117,9 +128,9 @@ def render_live_status() -> None:
                 label=run.store_name,
                 value=t(STATUS_LABEL_KEYS[run.status], lang=lang),
             )
-            st.caption(f"{t('execution_started_at', lang=lang)}: {run.started_at:%Y-%m-%d %H:%M:%S}")
+            st.caption(f"{t('execution_started_at', lang=lang)}: {_fmt_local(run.started_at)}")
             if run.finished_at:
-                st.caption(f"{t('execution_finished_at', lang=lang)}: {run.finished_at:%Y-%m-%d %H:%M:%S}")
+                st.caption(f"{t('execution_finished_at', lang=lang)}: {_fmt_local(run.finished_at)}")
             if run.status != RunStatus.RUNNING:
                 st.caption(
                     f"{t('execution_skus_succeeded', lang=lang)}: {run.skus_succeeded} · "
@@ -154,9 +165,9 @@ else:
             {
                 t("col_store", lang=lang): r.store_name,
                 t("execution_status_col", lang=lang): t(STATUS_LABEL_KEYS[r.status], lang=lang),
-                t("execution_started_at", lang=lang): r.started_at.strftime("%Y-%m-%d %H:%M:%S"),
+                t("execution_started_at", lang=lang): _fmt_local(r.started_at),
                 t("execution_finished_at", lang=lang): (
-                    r.finished_at.strftime("%Y-%m-%d %H:%M:%S") if r.finished_at else "—"
+                    _fmt_local(r.finished_at) if r.finished_at else "—"
                 ),
                 t("execution_skus_succeeded", lang=lang): r.skus_succeeded,
                 t("execution_skus_failed", lang=lang): r.skus_failed,
