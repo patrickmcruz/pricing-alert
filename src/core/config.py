@@ -97,6 +97,41 @@ class AppSettings:
         self.telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", self.config_data.get("TELEGRAM_BOT_TOKEN"))
         self.telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID", self.config_data.get("TELEGRAM_CHAT_ID"))
 
+        # Amazon Selling Partner API (SP-API) credentials (loaded from ENV natively, or
+        # config.toml as fallback). Unlike Mercado Livre's client_credentials grant, SP-API
+        # exchanges a long-lived, per-seller refresh_token (obtained once via self-authorization
+        # in Seller Central) for short-lived access tokens - see src/scrapers/amazon.py.
+        self.amazon_lwa_client_id = os.getenv(
+            "AMAZON_LWA_APP_CLIENT_ID", self.config_data.get("AMAZON_LWA_APP_CLIENT_ID")
+        )
+        self.amazon_lwa_client_secret = os.getenv(
+            "AMAZON_LWA_APP_CLIENT_SECRET_KEY", self.config_data.get("AMAZON_LWA_APP_CLIENT_SECRET_KEY")
+        )
+        self.amazon_sp_api_refresh_token = os.getenv(
+            "AMAZON_SP_API_REFRESH_TOKEN", self.config_data.get("AMAZON_SP_API_REFRESH_TOKEN")
+        )
+
+        # Sandbox mode: the SP-API sandbox lives on its own host and only accepts a refresh
+        # token minted from Seller Central's "Teste de sandbox" page (production refresh tokens
+        # don't work there, and vice versa). It returns static mock data, not real Amazon.com.br
+        # prices - useful only to verify the auth/request wiring before production access exists.
+        self.amazon_spapi_sandbox = os.getenv(
+            "AMAZON_SPAPI_SANDBOX", str(self.config_data.get("amazon_spapi_sandbox", False))
+        ).strip().lower() in ("1", "true", "yes")
+        self.amazon_sp_api_sandbox_refresh_token = os.getenv(
+            "AMAZON_SP_API_SANDBOX_REFRESH_TOKEN", self.config_data.get("AMAZON_SP_API_SANDBOX_REFRESH_TOKEN")
+        )
+
+        # NA region endpoint covers amazon.com.br; A2Q3Y263D00KWC is the fixed
+        # marketplaceId Amazon assigns to the Brazil marketplace.
+        self.amazon_spapi_base_url = self.config_data.get(
+            "amazon_spapi_base_url", "https://sellingpartnerapi-na.amazon.com"
+        )
+        self.amazon_spapi_sandbox_base_url = self.config_data.get(
+            "amazon_spapi_sandbox_base_url", "https://sandbox.sellingpartnerapi-na.amazon.com"
+        )
+        self.amazon_marketplace_id = self.config_data.get("amazon_marketplace_id", "A2Q3Y263D00KWC")
+
     def _load_config(self) -> Dict[str, Any]:
         if not os.path.exists(self.config_path):
             logging.warning("config.toml not found. Falling back to defaults.")

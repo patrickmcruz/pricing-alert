@@ -17,11 +17,16 @@
   "amazon": {
     "store_name": "amazon",
     "base_url": "https://www.amazon.com.br",
-    "enabled": false
+    "enabled": true
   },
   "pichau": {
     "store_name": "pichau",
     "base_url": "https://www.pichau.com.br",
+    "enabled": false
+  },
+  "patoloco": {
+    "store_name": "patoloco",
+    "base_url": "https://www.patoloco.com.br",
     "enabled": false
   },
   "microgem": {
@@ -32,11 +37,6 @@
   "magalu": {
     "store_name": "magalu",
     "base_url": "https://www.magazineluiza.com.br",
-    "enabled": false
-  },
-  "patoloco": {
-    "store_name": "patoloco",
-    "base_url": "https://www.patoloco.com.br",
     "enabled": false
   },
   "infostore": {

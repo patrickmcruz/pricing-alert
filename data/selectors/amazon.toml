@@ -1,0 +1,5 @@
+[v1]
+title = "#productTitle"
+price_cash = "#corePriceDisplay_desktop_feature_div > div > div.a-section.a-spacing-none.aok-align-center.aok-relative > span.a-price.aok-align-center.reinventPricePriceToPayMargin.priceToPay.apex-pricetopay-value > span:nth-child(2) > span.a-price-whole"
+price_installments = "#best-offer-string-cc"
+out_of_stock = "indisponível"
