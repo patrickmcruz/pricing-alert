@@ -92,6 +92,7 @@ def test_parse_returns_none_for_zero_price(scraper, sku):
       <div id="corePriceDisplay_desktop_feature_div">
         <div><div class="a-section a-spacing-none aok-align-center aok-relative">
           <span class="a-price aok-align-center reinventPricePriceToPayMargin priceToPay apex-pricetopay-value">
+            <span class="a-offscreen">R$0,00</span>
             <span aria-hidden="true"><span class="a-price-whole">0</span></span>
           </span>
         </div></div>
