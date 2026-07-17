@@ -6,33 +6,33 @@ from contextlib import asynccontextmanager
 import asyncpg
 
 _DDL = [
-    """CREATE TABLE IF NOT EXISTS categoria (
+    """CREATE TABLE IF NOT EXISTS categories (
         id          UUID PRIMARY KEY,
-        nome        TEXT NOT NULL,
+        name        TEXT NOT NULL,
         slug        TEXT NOT NULL UNIQUE,
-        parent_id   UUID REFERENCES categoria(id),
-        criado_em   TIMESTAMPTZ NOT NULL
+        parent_id   UUID REFERENCES categories(id),
+        created_at  TIMESTAMPTZ NOT NULL
     )""",
-    """CREATE TABLE IF NOT EXISTS marca (
+    """CREATE TABLE IF NOT EXISTS brands (
         id          UUID PRIMARY KEY,
-        nome        TEXT NOT NULL UNIQUE,
-        criado_em   TIMESTAMPTZ NOT NULL
+        name        TEXT NOT NULL UNIQUE,
+        created_at  TIMESTAMPTZ NOT NULL
     )""",
-    """CREATE TABLE IF NOT EXISTS produto (
+    """CREATE TABLE IF NOT EXISTS products (
         id            UUID PRIMARY KEY,
-        marca_id      UUID NOT NULL REFERENCES marca(id),
-        categoria_id  UUID NOT NULL REFERENCES categoria(id),
-        nome          TEXT NOT NULL,
+        brand_id      UUID NOT NULL REFERENCES brands(id),
+        category_id   UUID NOT NULL REFERENCES categories(id),
+        name          TEXT NOT NULL,
         gtin          TEXT UNIQUE,
         specs         JSONB NOT NULL DEFAULT '{}'::jsonb,
-        criado_em     TIMESTAMPTZ NOT NULL
+        created_at    TIMESTAMPTZ NOT NULL
     )""",
     # Expression index instead of a plain UNIQUE constraint, since the
     # identity key includes a JSONB field (specs->>'chipset') - lets two
     # products differ only by chipset (e.g. same brand/name, different chip).
-    """CREATE UNIQUE INDEX IF NOT EXISTS idx_produto_identity
-        ON produto (marca_id, categoria_id, LOWER(nome), (specs->>'chipset'))""",
-    """CREATE TABLE IF NOT EXISTS loja (
+    """CREATE UNIQUE INDEX IF NOT EXISTS idx_products_identity
+        ON products (brand_id, category_id, LOWER(name), (specs->>'chipset'))""",
+    """CREATE TABLE IF NOT EXISTS stores (
         id            UUID PRIMARY KEY,
         slug          TEXT NOT NULL UNIQUE,
         display_name  TEXT NOT NULL,
@@ -40,10 +40,10 @@ _DDL = [
         is_active     BOOLEAN NOT NULL DEFAULT true,
         created_at    TIMESTAMPTZ NOT NULL
     )""",
-    """CREATE TABLE IF NOT EXISTS anuncio (
+    """CREATE TABLE IF NOT EXISTS listings (
         id             UUID PRIMARY KEY,
-        loja_id        UUID NOT NULL REFERENCES loja(id),
-        produto_id     UUID NOT NULL REFERENCES produto(id),
+        store_id       UUID NOT NULL REFERENCES stores(id),
+        product_id     UUID NOT NULL REFERENCES products(id),
         product_url    TEXT NOT NULL UNIQUE,
         product_title  TEXT NOT NULL,
         search_keyword TEXT NOT NULL,
@@ -53,7 +53,7 @@ _DDL = [
     )""",
     """CREATE TABLE IF NOT EXISTS scraper_runs (
         id                  UUID PRIMARY KEY,
-        loja_id             UUID NOT NULL REFERENCES loja(id),
+        store_id            UUID NOT NULL REFERENCES stores(id),
         status              TEXT NOT NULL,
         started_at          TIMESTAMPTZ NOT NULL,
         finished_at         TIMESTAMPTZ,
@@ -65,7 +65,7 @@ _DDL = [
     """CREATE TABLE IF NOT EXISTS listing_runs (
         id              UUID PRIMARY KEY,
         scraper_run_id  UUID NOT NULL REFERENCES scraper_runs(id),
-        anuncio_id      UUID REFERENCES anuncio(id),
+        listing_id      UUID REFERENCES listings(id),
         product_url     TEXT NOT NULL,
         product_title   TEXT NOT NULL,
         status          TEXT NOT NULL,
@@ -73,9 +73,9 @@ _DDL = [
         finished_at     TIMESTAMPTZ,
         error_message   TEXT
     )""",
-    """CREATE TABLE IF NOT EXISTS coleta_preco (
+    """CREATE TABLE IF NOT EXISTS price_observations (
         id                     UUID PRIMARY KEY,
-        anuncio_id             UUID NOT NULL REFERENCES anuncio(id),
+        listing_id             UUID NOT NULL REFERENCES listings(id),
         scraper_run_id         UUID REFERENCES scraper_runs(id),
         price_cash             NUMERIC(12,2) NOT NULL,
         price_installments     NUMERIC(12,2),
@@ -88,7 +88,7 @@ _DDL = [
     )""",
     """CREATE TABLE IF NOT EXISTS trigger_requests (
         id            UUID PRIMARY KEY,
-        loja_id       UUID REFERENCES loja(id),
+        store_id      UUID REFERENCES stores(id),
         status        TEXT NOT NULL,
         requested_at  TIMESTAMPTZ NOT NULL,
         processed_at  TIMESTAMPTZ,
@@ -96,8 +96,8 @@ _DDL = [
     )""",
     """CREATE TABLE IF NOT EXISTS alert_rules (
         id              UUID PRIMARY KEY,
-        loja_id         UUID REFERENCES loja(id),
-        produto_id      UUID REFERENCES produto(id),
+        store_id        UUID REFERENCES stores(id),
+        product_id      UUID REFERENCES products(id),
         search_keyword  TEXT,
         threshold_type  TEXT NOT NULL,
         threshold_value NUMERIC(12,2),
@@ -105,26 +105,26 @@ _DDL = [
         created_at      TIMESTAMPTZ NOT NULL
     )""",
     """CREATE TABLE IF NOT EXISTS alert_events (
-        id                BIGSERIAL PRIMARY KEY,
-        alert_rule_id     UUID NOT NULL REFERENCES alert_rules(id),
-        coleta_preco_id   UUID NOT NULL REFERENCES coleta_preco(id),
-        reason            TEXT NOT NULL,
-        triggered_at      TIMESTAMPTZ NOT NULL
+        id                      BIGSERIAL PRIMARY KEY,
+        alert_rule_id           UUID NOT NULL REFERENCES alert_rules(id),
+        price_observation_id    UUID NOT NULL REFERENCES price_observations(id),
+        reason                  TEXT NOT NULL,
+        triggered_at            TIMESTAMPTZ NOT NULL
     )""",
 ]
 
 _INDEXES = [
-    "CREATE INDEX IF NOT EXISTS idx_scraper_runs_loja ON scraper_runs(loja_id)",
+    "CREATE INDEX IF NOT EXISTS idx_scraper_runs_store ON scraper_runs(store_id)",
     "CREATE INDEX IF NOT EXISTS idx_scraper_runs_started_at ON scraper_runs(started_at)",
     "CREATE INDEX IF NOT EXISTS idx_listing_runs_scraper_run ON listing_runs(scraper_run_id)",
-    "CREATE INDEX IF NOT EXISTS idx_listing_runs_anuncio ON listing_runs(anuncio_id)",
-    "CREATE INDEX IF NOT EXISTS idx_coleta_preco_anuncio ON coleta_preco(anuncio_id, scraped_at DESC)",
-    "CREATE INDEX IF NOT EXISTS idx_coleta_preco_run ON coleta_preco(scraper_run_id)",
+    "CREATE INDEX IF NOT EXISTS idx_listing_runs_listing ON listing_runs(listing_id)",
+    "CREATE INDEX IF NOT EXISTS idx_price_observations_listing ON price_observations(listing_id, scraped_at DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_price_observations_run ON price_observations(scraper_run_id)",
     "CREATE INDEX IF NOT EXISTS idx_trigger_requests_status ON trigger_requests(status)",
     "CREATE INDEX IF NOT EXISTS idx_alert_rules_active ON alert_rules(is_active)",
     "CREATE INDEX IF NOT EXISTS idx_alert_events_rule ON alert_events(alert_rule_id)",
-    "CREATE INDEX IF NOT EXISTS idx_anuncio_loja ON anuncio(loja_id)",
-    "CREATE INDEX IF NOT EXISTS idx_produto_categoria ON produto(categoria_id)",
+    "CREATE INDEX IF NOT EXISTS idx_listings_store ON listings(store_id)",
+    "CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id)",
 ]
 
 
@@ -139,7 +139,7 @@ def affected_rows(status: str) -> int:
 async def connect(dsn: str):
     """Every repository should use this instead of raw asyncpg.connect - single
     place to add pooling later without touching every call site. Registers a
-    jsonb codec so produto.specs round-trips as a plain Python dict instead of
+    jsonb codec so products.specs round-trips as a plain Python dict instead of
     a str every caller would have to json.loads() themselves."""
     conn = await asyncpg.connect(dsn)
     try:

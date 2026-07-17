@@ -7,11 +7,10 @@ This document outlines the testing strategy, architecture, and instructions for 
 All tests are executed within an **isolated test environment** to ensure that production and development data are never accidentally modified or polluted.
 
 ### Environment Setup (`conftest.py`)
-At the start of every `pytest` run, `tests/conftest.py` forces the `APP_ENV` environment variable to `"test"`. 
+At the start of every `pytest` run, `tests/conftest.py` forces the `APP_ENV` environment variable to `"test"`.
 
 ### The `[test]` Profile (`config.toml`)
-The application relies on `config.toml` to load its settings. Under the `[test]` block, the database path is strictly set to `:memory:`. 
-For repository-specific unit tests, we utilize `pytest`'s built-in `tmp_path` fixture to spin up dedicated file-based SQLite databases that live only for the duration of a single test.
+The application relies on `config.toml` to load its settings. Under the `[test]` block, `db_name` points at `pricing_test` - a dedicated PostgreSQL database on the same server as `pricing_dev`/`pricing` (see `docker compose up -d db`; `scripts/init_test_db.sql` creates it automatically on first boot). Repository-level tests don't get their own isolated database each - instead, the `db_dsn` fixture (`tests/conftest.py`) truncates every table before each test runs, so tests are isolated from each other without the overhead of a fresh database per test.
 
 ---
 
@@ -22,13 +21,13 @@ The project implements a testing pyramid containing Unit, Integration, and End-t
 ### A. Unit Tests (`tests/unit/`)
 Unit tests cover isolated components without relying on network I/O or live databases. They run instantly and are highly deterministic.
 - **Parsers (`test_parsers.py`)**: Tests the extraction logic (BeautifulSoup + CSS Selectors). Real HTML payloads are cached locally as static files in `tests/fixtures/`. The tests assert that exact metrics (`price_cash`, `price_installments`, `installment_count`, etc.) are reliably extracted.
-- **Repositories (`test_repository.py`)**: Uses temporary local SQLite files (`tmp_path`) to ensure table creation, schema migrations, and SQL queries execute correctly.
+- **Repositories (`test_repository.py`, `test_postgres_*.py`)**: Runs against the real `pricing_test` PostgreSQL database (truncated before each test, see above) to ensure table creation and SQL queries execute correctly against actual Postgres semantics, not a mocked connection.
 - **Config (`test_config.py`)**: Verifies the core configuration loader switches environments properly.
 - **Spiders & Orchestrators**: Verify internal routing and data-shuffling algorithms.
 
 ### B. Integration Tests (`tests/integration/`)
 Integration tests ensure that the various standalone components interface correctly. 
-- **Pipeline Test (`test_pipeline.py`)**: Tests the entire data pipeline. It orchestrates the `PriceEngine`, utilizes a mocked Playwright HTTP client to simulate network responses, fires a concrete Scraper instance, and verifies that the extracted data is properly persisted to the SQLite repository.
+- **Pipeline Test (`test_pipeline.py`)**: Tests the entire data pipeline. It orchestrates the `PriceEngine`, utilizes a mocked Playwright HTTP client to simulate network responses, fires a concrete Scraper instance, and verifies that the extracted data is properly persisted to the PostgreSQL repository.
 
 ### C. End-to-End (E2E) / Smoke Tests (`tests/e2e/`)
 E2E tests interact with the actual external ecosystem.
@@ -38,7 +37,7 @@ E2E tests interact with the actual external ecosystem.
 
 ## 3. Running the Test Suite
 
-The test runner is configured using `pyproject.toml`.
+The test runner is configured using `pyproject.toml`. Unlike the old SQLite-based setup, tests now need a reachable Postgres instance - start it once with `docker compose up -d db` before running `pytest` (the `pricing_test` database is created automatically on the container's first boot).
 
 ### Run Core Tests (Excluding E2E)
 To run all unit and integration tests (fast and fully isolated from the network):

@@ -125,7 +125,7 @@ async def test_repository_save_prices(repo):
     # Query directly to verify
     async with connect(repo.dsn) as db:
         row = await db.fetchrow(
-            "SELECT price_cash, price_installments, installment_count FROM coleta_preco"
+            "SELECT price_cash, price_installments, installment_count FROM price_observations"
         )
         assert row is not None
         assert row["price_cash"] == Decimal("5000.00")

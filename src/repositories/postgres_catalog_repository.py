@@ -21,13 +21,13 @@ class PostgresCatalogRepository(CatalogRepository):
     ) -> Categoria:
         slug = slug.strip().lower()
         async with connect(self.dsn) as db:
-            row = await db.fetchrow("SELECT id, nome, slug, parent_id FROM categoria WHERE slug = $1", slug)
+            row = await db.fetchrow("SELECT id, name, slug, parent_id FROM categories WHERE slug = $1", slug)
             if row:
                 return self._row_to_categoria(row)
 
             categoria = Categoria(id=str(uuid4()), nome=nome.strip(), slug=slug, parent_id=parent_id)
             await db.execute(
-                "INSERT INTO categoria (id, nome, slug, parent_id, criado_em) VALUES ($1, $2, $3, $4, $5)",
+                "INSERT INTO categories (id, name, slug, parent_id, created_at) VALUES ($1, $2, $3, $4, $5)",
                 categoria.id, categoria.nome, categoria.slug, categoria.parent_id,
                 datetime.now(timezone.utc),
             )
@@ -37,13 +37,13 @@ class PostgresCatalogRepository(CatalogRepository):
     async def get_or_create_marca(self, nome: str) -> Marca:
         nome = nome.strip()
         async with connect(self.dsn) as db:
-            row = await db.fetchrow("SELECT id, nome FROM marca WHERE LOWER(nome) = LOWER($1)", nome)
+            row = await db.fetchrow("SELECT id, name FROM brands WHERE LOWER(name) = LOWER($1)", nome)
             if row:
-                return Marca(id=str(row["id"]), nome=row["nome"])
+                return Marca(id=str(row["id"]), nome=row["name"])
 
             marca = Marca(id=str(uuid4()), nome=nome)
             await db.execute(
-                "INSERT INTO marca (id, nome, criado_em) VALUES ($1, $2, $3)",
+                "INSERT INTO brands (id, name, created_at) VALUES ($1, $2, $3)",
                 marca.id, marca.nome, datetime.now(timezone.utc),
             )
             logger.info("Created marca %s (%s)", marca.nome, marca.id)
@@ -62,8 +62,8 @@ class PostgresCatalogRepository(CatalogRepository):
         async with connect(self.dsn) as db:
             row = await db.fetchrow(
                 """
-                SELECT id, marca_id, categoria_id, nome, gtin, specs FROM produto
-                WHERE marca_id = $1 AND categoria_id = $2 AND LOWER(nome) = LOWER($3)
+                SELECT id, brand_id, category_id, name, gtin, specs FROM products
+                WHERE brand_id = $1 AND category_id = $2 AND LOWER(name) = LOWER($3)
                   AND (specs->>'chipset') IS NOT DISTINCT FROM $4
                 """,
                 marca_id, categoria_id, nome, chipset,
@@ -75,7 +75,7 @@ class PostgresCatalogRepository(CatalogRepository):
                 id=str(uuid4()), marca_id=marca_id, categoria_id=categoria_id, nome=nome, specs=specs
             )
             await db.execute(
-                "INSERT INTO produto (id, marca_id, categoria_id, nome, gtin, specs, criado_em) "
+                "INSERT INTO products (id, brand_id, category_id, name, gtin, specs, created_at) "
                 "VALUES ($1, $2, $3, $4, $5, $6, $7)",
                 produto.id, produto.marca_id, produto.categoria_id, produto.nome, produto.gtin,
                 produto.specs, datetime.now(timezone.utc),
@@ -86,27 +86,27 @@ class PostgresCatalogRepository(CatalogRepository):
     async def get_produto(self, produto_id: str) -> Optional[Produto]:
         async with connect(self.dsn) as db:
             row = await db.fetchrow(
-                "SELECT id, marca_id, categoria_id, nome, gtin, specs FROM produto WHERE id = $1",
+                "SELECT id, brand_id, category_id, name, gtin, specs FROM products WHERE id = $1",
                 produto_id,
             )
             return self._row_to_produto(row) if row else None
 
     async def list_marcas(self) -> List[Marca]:
         async with connect(self.dsn) as db:
-            rows = await db.fetch("SELECT id, nome FROM marca ORDER BY nome")
-            return [Marca(id=str(row["id"]), nome=row["nome"]) for row in rows]
+            rows = await db.fetch("SELECT id, name FROM brands ORDER BY name")
+            return [Marca(id=str(row["id"]), nome=row["name"]) for row in rows]
 
     async def list_categorias(self) -> List[Categoria]:
         async with connect(self.dsn) as db:
-            rows = await db.fetch("SELECT id, nome, slug, parent_id FROM categoria ORDER BY nome")
+            rows = await db.fetch("SELECT id, name, slug, parent_id FROM categories ORDER BY name")
             return [self._row_to_categoria(row) for row in rows]
 
     async def list_produtos_resolved(self, categoria_slug: Optional[str] = None) -> List[ResolvedProduto]:
         query = """
-            SELECT p.id, ma.nome AS marca_nome, c.nome AS categoria_nome, p.nome, p.specs
-            FROM produto p
-            JOIN marca ma ON ma.id = p.marca_id
-            JOIN categoria c ON c.id = p.categoria_id
+            SELECT p.id, b.name AS marca_nome, c.name AS categoria_nome, p.name, p.specs
+            FROM products p
+            JOIN brands b ON b.id = p.brand_id
+            JOIN categories c ON c.id = p.category_id
         """
         async with connect(self.dsn) as db:
             if categoria_slug:
@@ -118,7 +118,7 @@ class PostgresCatalogRepository(CatalogRepository):
                     id=str(row["id"]),
                     marca_nome=row["marca_nome"],
                     categoria_nome=row["categoria_nome"],
-                    nome=row["nome"],
+                    nome=row["name"],
                     specs=row["specs"],
                 )
                 for row in rows
@@ -127,13 +127,13 @@ class PostgresCatalogRepository(CatalogRepository):
     @staticmethod
     def _row_to_categoria(row) -> Categoria:
         return Categoria(
-            id=str(row["id"]), nome=row["nome"], slug=row["slug"],
+            id=str(row["id"]), nome=row["name"], slug=row["slug"],
             parent_id=str(row["parent_id"]) if row["parent_id"] else None,
         )
 
     @staticmethod
     def _row_to_produto(row) -> Produto:
         return Produto(
-            id=str(row["id"]), marca_id=str(row["marca_id"]), categoria_id=str(row["categoria_id"]),
-            nome=row["nome"], gtin=row["gtin"], specs=row["specs"],
+            id=str(row["id"]), marca_id=str(row["brand_id"]), categoria_id=str(row["category_id"]),
+            nome=row["name"], gtin=row["gtin"], specs=row["specs"],
         )

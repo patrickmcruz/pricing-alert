@@ -40,18 +40,19 @@ Para que o scraper do Mercado Livre funcione, você precisa preencher o `.env` c
 │   ├── /scrapers      # Product page scraping logic (Kabum, Terabyte, etc.); self-register via @register_scraper
 │   ├── /engine         # APScheduler orchestration and execution
 │   ├── /db
-│   │   └── schema.py   # Single source of truth for the SQLite schema (see "Database Schema" below)
-│   ├── /repositories   # Persistence layer (SQLite implementation, Repository Pattern per entity)
+│   │   └── schema.py   # Single source of truth for the PostgreSQL schema (see "Database Schema" below)
+│   ├── /repositories   # Persistence layer (PostgreSQL/asyncpg implementation, Repository Pattern per entity)
 │   ├── /alerts         # Alerting domain: rules, evaluation, notification delivery
 │   └── /ui             # Streamlit Dashboard
 ├── /data
 │   ├── /selectors      # Externalized CSS classes in TOML
 │   ├── /locales        # i18n localization JSON dictionaries
-│   └── /backups        # Timestamped SQLite snapshots (scripts/backup_db.py)
+│   └── /backups        # Timestamped pg_dump snapshots (scripts/backup_db.py) - gitignored
 ├── /scripts
-│   ├── seed_db.py               # Seeds target URLs into the DB for testing
-│   ├── migrate_legacy_schema.py # One-shot migration to the normalized schema (idempotent, backs up first)
-│   └── trim_dev_listings.py     # Caps tracked listings per (store, chipset) in dev for fast test scrapes
+│   ├── migrate_target_urls.py       # One-time: imports data/target_urls.json into the DB catalog
+│   ├── migrate_git_history_prices.py # Recovers price history from every historical git revision of the old SQLite .db files
+│   ├── seed_db.py                    # Seeds a handful of mock target URLs into the DB for testing
+│   └── trim_dev_listings.py          # Caps tracked listings per (store, chipset) in dev for fast test scrapes
 ├── config.toml         # App environment configurations
 └── pyproject.toml      # Project dependencies and tool configurations
 ```
@@ -60,21 +61,30 @@ Para que o scraper do Mercado Livre funcione, você precisa preencher o `.env` c
 
 ## 🗄️ Database Schema
 
-All persistence is SQLite, with a single shared schema module (`src/db/schema.py`) instead of each repository owning its own tables. Every table uses a surrogate `TEXT` UUID primary key, and foreign keys are enforced (`PRAGMA foreign_keys = ON` on every connection) rather than merely declared.
+All persistence is PostgreSQL (via `asyncpg`), with a single shared schema module (`src/db/schema.py`) instead of each repository owning its own tables. Every table uses a `UUID` primary key, and foreign keys are enforced natively by Postgres. Every identifier - table and column - is English; any Portuguese only shows up in `pt-BR` UI copy via `src/core/i18n.py`, never in the schema.
 
 | Table | Purpose |
 |---|---|
 | `stores` | Retailers this app tracks (kabum, mercado-livre, terabyte, ...) |
-| `brands`, `chipsets`, `gpu_models` | Normalized GPU catalog: board partner, chip reference, and the specific brand+chipset+variant combination |
-| `store_listings` | A tracked product URL at a store, FK'd to its `gpu_model`; soft-deleted (`is_active = 0`) instead of hard-deleted so price history is never orphaned |
+| `categories`, `brands`, `products` | Normalized product catalog: category (e.g. "GPU"), board partner/brand, and the specific brand+category+variant combination, with category-specific attributes (chipset, VRAM...) in `products.specs` (JSONB) |
+| `listings` | A tracked product URL at a store, FK'd to its `product`; soft-deleted (`is_active = false`) instead of hard-deleted so price history is never orphaned |
 | `scraper_runs`, `listing_runs` | Execution tracking: one row per store run, one row per SKU attempt within it |
-| `price_observations` | The actual price history - FK'd to its `store_listings` row and originating `scraper_runs` row, no duplicated store/brand/model text |
+| `price_observations` | The actual price history - FK'd to its `listings` row and originating `scraper_runs` row, no duplicated store/brand/model text |
 | `trigger_requests` | "Run now" requests queued by the dashboard, consumed by the orchestrator |
-| `alert_rules`, `alert_events` | User-defined price-drop rules (matched by `gpu_model_id`/`store_id`, not free-text) and the events they fired, each FK'd to the `price_observations` row that triggered it |
+| `alert_rules`, `alert_events` | User-defined price-drop rules (matched by `product_id`/`store_id`, not free-text) and the events they fired, each FK'd to the `price_observations` row that triggered it |
 
-To (re)initialize the schema against any `db_path`, call `src.db.schema.initialize_schema(db_path)` - it's idempotent (`CREATE TABLE IF NOT EXISTS`), so it's safe to call from `main.py`, a Streamlit page, or a script.
+To (re)initialize the schema against any DSN, call `src.db.schema.initialize_schema(dsn)` - it's idempotent (`CREATE TABLE IF NOT EXISTS`), so it's safe to call from `main.py`, a Streamlit page, or a script. `main.py` also re-asserts the full `data/target_urls.json` catalog as active on every orchestrator boot (idempotent upsert), so production's SKU set self-heals even if something got deactivated - see "Dev vs. Production Data" below.
 
-If you're carrying data forward from a pre-normalization database, `scripts/migrate_legacy_schema.py` migrates an existing file in place: it backs up first, never auto-drops the old tables (it prints `DROP TABLE` statements for you to run once you've verified the result), and is safe to run against an already-migrated or fresh database (no-op).
+### Dev vs. Production Data
+
+`config.toml`'s `[develop]`/`[staging]`/`[production]`/`[test]` blocks each point at their **own** Postgres database on the same server (`pricing_dev`, `pricing_staging`, `pricing`, `pricing_test`) - trimming or resetting your local dev data can never touch production. `scripts/init_test_db.sql` creates `pricing_test`/`pricing_dev` automatically the first time the `db` container's volume is created.
+
+- **Production** (`docker compose up`, `APP_ENV=production`): always ends up with the full catalog from `data/target_urls.json` - the orchestrator's boot-time discovery step keeps it that way on every restart.
+- **Local dev/testing** (`APP_ENV=develop`): seed once with `scripts/migrate_target_urls.py`, then trim it down for fast iteration:
+  ```bash
+  APP_ENV=develop python scripts/trim_dev_listings.py 1   # keep at most 1 per (store, chipset)
+  ```
+  `trim_dev_listings.py` refuses to run against `APP_ENV=production` - production is meant to keep every listing it has ever discovered.
 
 ---
 
@@ -96,25 +106,27 @@ playwright install chromium
 ```
 
 ### 2. Environment Setup
-The application uses the `APP_ENV` environment variable to determine which block in `config.toml` to load. By default, it loads `develop` (which uses `data/prices_dev.db`).
+The application uses the `APP_ENV` environment variable to determine which block in `config.toml` to load (`develop`, `staging`, `production`, or `test`), which in turn selects which Postgres database to connect to (`db_host`/`db_port`/`db_name`/`db_user`; the password always comes from the `POSTGRES_PASSWORD` env var, never committed). Defaults to `develop` → the `pricing_dev` database. You need a running Postgres instance reachable at that DSN - the simplest way is `docker compose up -d db` (see "Running with Docker" below), which also creates `pricing_dev`/`pricing_test` automatically alongside `pricing`.
 
 ### 3. Running the Orchestrator
-Before the scrapers can run, they need target URLs. 
+Before the scrapers can run, they need target URLs.
 
 ```bash
-# 1. (Optional) Seed the database manually, or let the Spiders discover URLs
+# 1. Seed the full catalog from data/target_urls.json ...
+python scripts/migrate_target_urls.py
+# ... or seed a small hardcoded mock set instead
 python scripts/seed_db.py
 
 # 2. Start the Orchestrator
 python main.py
 ```
-The orchestrator uses `APScheduler` to trigger the scrapers based on cron configurations (currently stubbed to test every minute).
+The orchestrator uses `APScheduler` to trigger the scrapers based on cron configurations, and re-seeds the full catalog on every boot when `APP_ENV=production` (see "Dev vs. Production Data" above).
 
-**Fast local test scrapes:** if `data/prices_dev.db` has accumulated many listings per GPU (e.g. from real discovery runs), a full dev scrape can be slow. `scripts/trim_dev_listings.py` caps how many listings stay active per (store, chipset) pair, soft-deleting the rest so their price history isn't lost:
+**Fast local test scrapes:** a full dev scrape across every discovered listing can be slow. `scripts/trim_dev_listings.py` caps how many listings stay active per (store, chipset) pair, soft-deleting the rest so their price history isn't lost:
 ```bash
 APP_ENV=develop python scripts/trim_dev_listings.py 2   # keep at most 2 per (store, chipset)
 ```
-It refuses to run against `APP_ENV=production` - production is meant to keep every listing it has ever discovered.
+It refuses to run against `APP_ENV=production` - production is meant to keep every listing it has ever discovered. For a single one-shot run against everything currently active (no scheduler, exits when done), use `python scripts/run_all_scrapers.py`.
 
 ### 4. Viewing the Dashboard
 To see the scraped prices:
@@ -131,45 +143,44 @@ The dashboard features:
 
 ## 🐳 Running with Docker
 
-The application is fully containerized using Docker and Docker Compose. The architecture is split into two independent services that share data via Docker Volumes:
+The application is fully containerized using Docker Compose, with three services:
 
-1. **`orchestrator`**: Runs the background scraping engine (`main.py`) with Playwright Chromium bundled.
-2. **`dashboard`**: Runs the Streamlit user interface (`Dashboard.py`) and exposes it on port `8501`.
+1. **`db`**: PostgreSQL 16, with its own named volume. Creates the `pricing`, `pricing_dev`, and `pricing_test` databases on first boot (`scripts/init_test_db.sql`).
+2. **`orchestrator`**: Runs the background scraping engine (`main.py`) with Playwright Chromium bundled, `APP_ENV=production` (→ the `pricing` database). Waits for `db` to report healthy before starting.
+3. **`dashboard`**: Runs the Streamlit user interface (`Dashboard.py`) and exposes it on port `8501`. Waits for both `db` and `orchestrator`.
 
-Both containers share the `./data` directory (which holds the SQLite database, CSS selectors, and i18n locales) and the `./config.toml` file, meaning you can edit configurations locally and have them instantly reflected in the containers.
+`orchestrator`/`dashboard` share the `./data` directory (CSS selectors, i18n locales, backups) and the `./config.toml` file as volumes - editing those locally takes effect immediately without a rebuild.
 
 To start the application:
 ```bash
 # 1. Build the images (this downloads Chromium for the orchestrator)
-docker-compose build
+docker compose build
 
-# 2. Start the services in the background
-docker-compose up -d
+# 2. Start every service in the background
+docker compose up -d
 ```
-The Dashboard container natively checks for the Orchestrator to start first and runs its own `curl` healthchecks.
-Once running, simply navigate to `http://localhost:8501` to view your dashboard!
+Once running, navigate to `http://localhost:8501` to view your dashboard!
 
 ### Troubleshooting Docker Workflows
 
 **1. Code Changes Not Appearing in Docker?**
-The `docker-compose.yml` mounts `./data` and `./config.toml` as volumes. This means changes to these files/folders take effect immediately. However, the `./src` directory is *copied* during the Docker image build process. 
-If you modify any Python files (`.py`), you must **rebuild** the image for the changes to apply:
+The `./src` directory is *copied* into the image during build, not mounted. If you modify any Python file, you must **rebuild** the image for the change to apply:
 ```bash
-docker compose up -d --build
+docker compose up -d --build orchestrator dashboard
 ```
-*(Running `docker compose up -d --force-recreate` will only recreate the container from the old image, it will not pull in your new code).*
+*(`docker compose up -d --force-recreate` alone only recreates the container from the existing image - it does not pick up new code.)*
 
-**2. Seed Script Not Showing in Dashboard?**
-When running `python scripts/seed_db.py` locally without specifying an environment, it defaults to the `develop` environment (saving to `data/prices_dev.db`). However, the Docker containers run with `APP_ENV=production` and read from `data/prices.db`.
-To properly seed the production database that Docker uses, run:
+**2. Orchestrator Crash-Looping After `docker restart`?**
+If you use `docker restart pricing_orchestrator` (rather than a full recreate), the container's `/tmp` survives, including any stale Xvfb lock/socket from the previous run. `entrypoint.orchestrator.sh` clears these before starting Xvfb, so this shouldn't happen anymore - but if you ever see `Missing X server or $DISPLAY` in the logs after a restart, that stale-lock cleanup is the first place to check.
+
+**3. Production Missing SKUs?**
+It shouldn't be - `main.py` re-seeds the full `data/target_urls.json` catalog as active on every orchestrator boot when `APP_ENV=production` (idempotent upsert, see "Dev vs. Production Data" above). If you still see fewer SKUs than expected, check `docker logs pricing_orchestrator` for the "Discovery Engine run" boot log line and any errors around it.
+
+**4. Querying the Database Directly**
 ```bash
-# Windows PowerShell
-$env:APP_ENV="production"; python .\scripts\seed_db.py
-
-# Linux / Mac
-APP_ENV=production python scripts/seed_db.py
+docker exec pricing_db psql -U pricing -d pricing -c "SELECT count(*) FROM listings WHERE is_active = true;"
 ```
-After seeding, restart the orchestrator (`docker compose restart orchestrator`) so it immediately fetches the new URLs.
+Swap `-d pricing` for `-d pricing_dev`/`-d pricing_test` to check the other environments.
 
 ---
 

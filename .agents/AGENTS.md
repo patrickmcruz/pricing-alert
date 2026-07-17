@@ -13,7 +13,7 @@ You are a Senior Full-Stack Software Architect and Data Engineer. Your objective
 * **Language:** Python 3.11+
 * **Dependencies & Tooling:** All dependencies, test configurations (`pytest`), and static typing rules (`mypy`) MUST be centrally managed in `pyproject.toml`. Do not create `requirements.txt` or `pytest.ini`.
 * **Orchestrator:** APScheduler (`AsyncIOScheduler`)
-* **Database:** SQLite3 (via Repository Pattern)
+* **Database:** PostgreSQL (via `asyncpg`, Repository Pattern) - see `config.toml`'s per-`APP_ENV` `db_host`/`db_name` blocks and "Database Schema" in `README.md`
 * **Extraction:** HTTPX (HTTP/2 enabled) and Playwright (async) + `playwright-stealth`.
 * **Data Validation:** Pydantic v2.
 * **Interface:** Streamlit.
@@ -40,12 +40,12 @@ You are a Senior Full-Stack Software Architect and Data Engineer. Your objective
 │   ├── /scrapers                    # Scraper Engine (parses specific Product Pages); self-registers via @register_scraper
 │   ├── /engine                       # Orchestration (scheduler.py, discovery.py)
 │   ├── /db
-│   │   └── schema.py                 # Single source of truth for the SQLite schema + connect() (PRAGMA foreign_keys=ON)
-│   ├── /repositories                 # Persistence layer (SQLite implementation, Repository Pattern per entity)
+│   │   └── schema.py                 # Single source of truth for the PostgreSQL schema + connect() (asyncpg, FKs enforced natively)
+│   ├── /repositories                 # Persistence layer (PostgreSQL/asyncpg implementation, Repository Pattern per entity)
 │   ├── /alerts                       # Alerting domain: rules, evaluation, notification delivery
 │   │   ├── contracts.py              # AlertRule, AlertEvent (Pydantic v2)
 │   │   ├── evaluator.py              # Pure AlertEvaluator (no I/O, fixture-testable)
-│   │   ├── repository.py             # AlertRepository ABC + sqlite_alert_repository.py
+│   │   ├── repository.py             # AlertRepository ABC + postgres_alert_repository.py
 │   │   ├── dispatcher.py             # AlertDispatcher - wired into PriceEngine via on_price_saved
 │   │   └── channels/                 # Pluggable NotificationChannel implementations (e.g. telegram.py)
 │   ├── /ui                           # Streamlit application
@@ -72,7 +72,7 @@ All extracted data must be normalized into the `PriceContract` model before leav
 
 ## 5. Scraper Architecture & Pluggable Registry
 
-Discovery of new SKUs is handled by `DiscoveryEngine` (`src/engine/discovery.py`) reading a static manifest (`data/target_urls.json`) and persisting `ProductSKU` records into the `store_listings` table. **The earlier "two-tier spider/scraper" design (live search-grid crawling via `src/spiders/`) was deprecated and removed**: it never reached a working state (`DiscoveryEngine` never invoked it, and its network-fetch half was an unimplemented stub), so it added coupling and duplicated logic without delivering functionality. Live search-grid discovery may be reintroduced later as its own scoped initiative — it is a materially different problem (higher anti-bot risk, grid parsing) from single-product-page scraping and should not be rebuilt as a parallel class hierarchy without a clear need.
+Discovery of new SKUs is handled by `DiscoveryEngine` (`src/engine/discovery.py`) reading a static manifest (`data/target_urls.json`) and persisting `ProductSKU` records into the `listings` table. `main.py` also calls this on every orchestrator boot (`APP_ENV=production` only) so production's SKU set self-heals via the idempotent upsert in `save_skus()`, independent of whatever a local `pricing_dev` session has trimmed. **The earlier "two-tier spider/scraper" design (live search-grid crawling via `src/spiders/`) was deprecated and removed**: it never reached a working state (`DiscoveryEngine` never invoked it, and its network-fetch half was an unimplemented stub), so it added coupling and duplicated logic without delivering functionality. Live search-grid discovery may be reintroduced later as its own scoped initiative — it is a materially different problem (higher anti-bot risk, grid parsing) from single-product-page scraping and should not be rebuilt as a parallel class hierarchy without a clear need.
 
 **Scraper Engine (Scrapers):** Concrete scrapers inherit from `BaseScraper` and visit the exact product URLs discovered by the Discovery Engine.
 
@@ -89,8 +89,8 @@ Scrapers MUST NOT hardcode CSS classes, IDs, or XPath expressions under any circ
 ## 6. Orchestration & Persistence
 
 * **Scheduler (`PriceEngine`):** Responsible for loading `ProductSKU` records from the repository and coordinating execution of the Scrapers. Catches `SelectorOutdatedException` gracefully to prevent batch crashes. Also selects the correct `ClientFactory` per scraper via `BaseScraper.transport_type` (`"browser"` for Playwright HTML scrapers, `"http"` for JSON/REST scrapers like Mercado Livre) - `PriceEngine` is constructed with a `client_factories: dict[str, ClientFactory]`, never a single factory.
-* **Repository Pattern:** Database operations are isolated behind one interface per entity (`PriceRepository`, `CatalogRepository`, `StoreRepository`, `ExecutionRepository`, `TriggerRepository`, `AlertRepository`). Scrapers never talk to SQLite.
-* **Schema (`src/db/schema.py`):** Single source of truth for every `CREATE TABLE`/index, plus a `connect(db_path)` helper that enables `PRAGMA foreign_keys = ON` on every connection - repositories no longer each own their own `initialize_schema()`. Call `initialize_schema(db_path)` once at boot (or from a script/Streamlit page) instead of per-repository. Core tables: `stores`, `brands`, `chipsets`, `gpu_models`, `store_listings` (tracked SKUs, soft-deleted via `is_active` rather than hard-deleted), `scraper_runs`/`listing_runs` (execution tracking), `price_observations` (the price history, FK'd to its listing and run), `trigger_requests`, `alert_rules`/`alert_events`. Every table uses a surrogate `TEXT` UUID primary key and real, enforced foreign keys - don't reintroduce free-text columns (e.g. a raw `store_name` string) where a FK to `stores`/`gpu_models` already exists.
+* **Repository Pattern:** Database operations are isolated behind one interface per entity (`PriceRepository`, `CatalogRepository`, `StoreRepository`, `ExecutionRepository`, `TriggerRepository`, `AlertRepository`). Scrapers never talk to Postgres directly.
+* **Schema (`src/db/schema.py`):** Single source of truth for every `CREATE TABLE`/index, plus a `connect(dsn)` helper (asyncpg, jsonb codec registered) - repositories no longer each own their own `initialize_schema()`. Call `initialize_schema(dsn)` once at boot (or from a script/Streamlit page) instead of per-repository. Core tables: `stores`, `categories`/`brands`/`products` (normalized catalog - category-specific attributes like `chipset` live in `products.specs` JSONB rather than dedicated columns), `listings` (tracked SKUs, soft-deleted via `is_active` rather than hard-deleted), `scraper_runs`/`listing_runs` (execution tracking), `price_observations` (the price history, FK'd to its listing and run), `trigger_requests`, `alert_rules`/`alert_events`. Every table uses a `UUID` primary key and real, enforced foreign keys - don't reintroduce free-text columns (e.g. a raw `store_name` string) where a FK to `stores`/`products` already exists. Every table/column name is English - see README.md's "Database Schema" section; `pt-BR` only lives in UI copy (`src/core/i18n.py`), never the schema.
 * **Alerting (`src/alerts/`):** A separate domain, decoupled from orchestration. `PriceEngine` accepts an optional `on_price_saved: Callable[[PriceContract, str], Awaitable[None]]` hook (the second argument is the newly-saved `price_observations.id`), called right after each price is persisted; `main.py` wires this to `AlertDispatcher.handle_price`. `PriceEngine` depends only on that `Callable` type - it never imports `src/alerts` - so orchestration stays decoupled from notification internals. `AlertEvaluator` is pure (no I/O) and takes the previous known price as an explicit argument rather than fetching history itself, keeping it fixture-testable like scraper `parse()` methods. `AlertRule` matches on `gpu_model_id`/`store_id` (resolved ids), not free-text brand/model strings.
 
 ## 7. QA Strategy & Testing Gates
@@ -98,7 +98,7 @@ Scrapers MUST NOT hardcode CSS classes, IDs, or XPath expressions under any circ
 The project adheres to a strict Testing Pyramid:
 
 * **Unit Tests (>= 95% Coverage):** Must test contracts and parsers. Provide static HTML fixtures in `/tests/fixtures/` to test `parse()` methods without I/O.
-* **Integration Tests:** Use mocked HTTP responses (`respx`), mocked browser contexts, and temporary in-memory SQLite databases to test the Engine and Repositories.
+* **Integration Tests:** Use mocked HTTP responses (`respx`), mocked browser contexts, and the shared `pricing_test` PostgreSQL database (truncated per-test, see `TESTING.md`) to test the Engine and Repositories.
 * **Quality Gates:** Code must pass `mypy`, `black`, and `ruff` before acceptance. Smoke tests (hitting real URLs) must be isolated and never run automatically in CI/CD.
 * **Agent Mandate:** Before delivering any task or marking it as successfully complete, the agent MUST run the full test suite (`pytest`) and verify that all tests pass. If tests fail, the agent must fix the broken code or tests before concluding its turn.
 
@@ -107,45 +107,35 @@ The project adheres to a strict Testing Pyramid:
 To prevent repeated trial-and-error when interacting with the Docker environment and Windows host, agents MUST strictly adhere to the following validated command patterns:
 
 ### 8.1 Testing Code Inside the Orchestrator Container
-The orchestrator relies on Playwright, which requires an X11 server to run headed browsers. If you run `python` directly via `docker exec`, it will crash with a `TargetClosedError` due to a missing `$DISPLAY`.
-**Always use `xvfb-run`:**
+The orchestrator's entrypoint (`entrypoint.orchestrator.sh`) already starts Xvfb on `:99` and waits for it to be ready before launching `main.py` as PID 1 - so headed Playwright works fine for anything the entrypoint itself runs. The catch: `docker exec` does **not** inherit PID 1's environment, so a bare `docker exec pricing_orchestrator python <script.py>` will fail with `Missing X server or $DISPLAY` even though Xvfb is running. Pass `DISPLAY` explicitly instead:
 ```bash
-docker exec pricing_orchestrator xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" python <script.py>
+docker exec -e DISPLAY=:99 pricing_orchestrator python <script.py>
 ```
+Don't reach for `xvfb-run` here - it would spin up a second, redundant X server rather than reusing the one the container's already running.
+
+If you ever see `Fatal server error: Server is already active for display 99` in `docker logs` right after a `docker restart` (as opposed to a full recreate), that's `/tmp`'s stale Xvfb lock/socket surviving the restart - `entrypoint.orchestrator.sh` clears both before starting Xvfb specifically to prevent this; if it recurs, check that cleanup step first.
 
 ### 8.2 Rebuilding the Orchestrator
 Source files (`/src`) are **copied** into the orchestrator image during build, not mounted via volumes (only `/data` and `config.toml` are mounted). If you modify any `.py` file, you MUST rebuild the container for the changes to take effect:
 ```bash
-docker-compose up -d --build orchestrator
+docker compose build orchestrator && docker compose up -d --force-recreate orchestrator
 ```
 
-### 8.3 Reading Docker Logs on Windows
-In PowerShell, standard Unix commands like `tail` or `grep` might fail. The orchestrator's stdout is swallowed by `xvfb-run`, meaning `docker logs pricing_orchestrator` will be empty.
-**To read logs, parse the file directly via PowerShell:**
-```powershell
-# Tail logs:
-Get-Content data/orchestrator.log -Tail 100
+### 8.3 Reading Docker Logs
+`docker logs pricing_orchestrator` works normally and shows full stdout/stderr - it is not swallowed. `data/orchestrator.log` (volume-mounted, so readable from the host too) has the same content via `src/core/logging_setup.py`'s file handler. Either works; `docker logs --since 1m` is usually the fastest way to isolate a specific boot's output when the container has restarted multiple times.
 
-# Grep logs:
-Select-String -Path data/orchestrator.log -Pattern "keyword"
-```
-
-### 8.4 Querying SQLite Directly
-The `sqlite3` CLI is not installed inside the `python:3.11-slim` container by default. Instead of trying to install it or running `docker exec sqlite3`, query the database locally from the host using Python (since `data/` is volume-mapped):
-```powershell
-python -c "
-import sqlite3
-conn = sqlite3.connect('data/prices.db')
-conn.row_factory = sqlite3.Row
-rows = conn.execute('''
-    SELECT po.*, s.slug AS store_name, sl.product_url, sl.search_keyword, gm.model_name
+### 8.4 Querying PostgreSQL Directly
+`psql` is available inside the `db` container (not the orchestrator):
+```bash
+docker exec pricing_db psql -U pricing -d pricing -c "
+    SELECT po.*, s.slug AS store_name, l.product_url, l.search_keyword, p.name AS model
     FROM price_observations po
-    JOIN store_listings sl ON sl.id = po.store_listing_id
-    JOIN stores s ON s.id = sl.store_id
-    JOIN gpu_models gm ON gm.id = sl.gpu_model_id
+    JOIN listings l ON l.id = po.listing_id
+    JOIN stores s ON s.id = l.store_id
+    JOIN products p ON p.id = l.product_id
     LIMIT 5;
-''').fetchall()
-for row in rows: print(dict(row))
 "
 ```
-Store/brand/model are no longer inline columns on `price_observations` (see the schema note in §6) - they only exist behind a JOIN through `store_listings`/`gpu_models`/`stores`.
+Swap `-d pricing` for `-d pricing_dev`/`-d pricing_test` to check the other environments (see README.md's "Dev vs. Production Data"). Store/brand/model are not inline columns on `price_observations` (see the schema note in §6) - they only exist behind a JOIN through `listings`/`products`/`brands`/`stores`.
+
+On Windows with Git Bash, `docker exec ... -f /tmp/...`-style paths get mangled by MSYS path conversion; prefix the command with `MSYS_NO_PATHCONV=1` when passing a literal container-side path (e.g. for `pg_dump -f /tmp/backup.dump`).

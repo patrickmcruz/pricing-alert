@@ -42,38 +42,38 @@ def trim_dev_listings(dsn: str, keep: int = 2) -> None:
             # anything to trim).
             cur.execute(
                 """
-                SELECT a.loja_id, l.slug, p.specs->>'chipset'
-                FROM anuncio a
-                JOIN loja l ON l.id = a.loja_id
-                JOIN produto p ON p.id = a.produto_id
+                SELECT a.store_id, l.slug, p.specs->>'chipset'
+                FROM listings a
+                JOIN stores l ON l.id = a.store_id
+                JOIN products p ON p.id = a.product_id
                 WHERE a.is_active = true
-                GROUP BY a.loja_id, l.slug, p.specs->>'chipset'
+                GROUP BY a.store_id, l.slug, p.specs->>'chipset'
                 """
             )
             groups = cur.fetchall()
 
             total_deactivated = 0
-            for loja_id, loja_slug, chipset_name in groups:
+            for store_id, store_slug, chipset_name in groups:
                 cur.execute(
                     """
-                    SELECT a.id FROM anuncio a
-                    JOIN produto p ON p.id = a.produto_id
-                    WHERE a.loja_id = %s AND a.is_active = true AND p.specs->>'chipset' = %s
+                    SELECT a.id FROM listings a
+                    JOIN products p ON p.id = a.product_id
+                    WHERE a.store_id = %s AND a.is_active = true AND p.specs->>'chipset' = %s
                     ORDER BY a.created_at
                     """,
-                    (loja_id, chipset_name),
+                    (store_id, chipset_name),
                 )
                 listing_ids = [row[0] for row in cur.fetchall()]
                 to_deactivate = listing_ids[keep:]
                 if not to_deactivate:
                     continue
                 cur.executemany(
-                    "UPDATE anuncio SET is_active = false, updated_at = now() WHERE id = %s",
+                    "UPDATE listings SET is_active = false, updated_at = now() WHERE id = %s",
                     [(lid,) for lid in to_deactivate],
                 )
                 total_deactivated += len(to_deactivate)
                 print(
-                    f"{loja_slug} / {chipset_name}: kept {min(len(listing_ids), keep)}, "
+                    f"{store_slug} / {chipset_name}: kept {min(len(listing_ids), keep)}, "
                     f"deactivated {len(to_deactivate)}"
                 )
 

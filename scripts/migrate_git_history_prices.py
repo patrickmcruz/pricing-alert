@@ -141,14 +141,14 @@ async def _migrate(rows: list[dict], apply: bool, dsn: str) -> None:
     async with connect(dsn) as db:
         for row in rows:
             listing = await db.fetchrow(
-                "SELECT id FROM anuncio WHERE product_url = $1", row["product_url"]
+                "SELECT id FROM listings WHERE product_url = $1", row["product_url"]
             )
             if not listing:
                 skipped_no_listing += 1
                 continue
 
             exists = await db.fetchval(
-                "SELECT 1 FROM coleta_preco WHERE id = $1", row["execution_id"]
+                "SELECT 1 FROM price_observations WHERE id = $1", row["execution_id"]
             )
             if exists:
                 already_present += 1
@@ -160,8 +160,8 @@ async def _migrate(rows: list[dict], apply: bool, dsn: str) -> None:
 
             await db.execute(
                 """
-                INSERT INTO coleta_preco (
-                    id, anuncio_id, scraper_run_id, price_cash, price_installments,
+                INSERT INTO price_observations (
+                    id, listing_id, scraper_run_id, price_cash, price_installments,
                     installment_count, currency, discount, is_available, parser_version,
                     scraped_at
                 ) VALUES ($1, $2, NULL, $3, $4, $5, $6, $7, $8, $9, $10)

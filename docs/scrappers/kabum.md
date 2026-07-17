@@ -8,7 +8,7 @@ A classe herda de `BaseScraper` e se registra automaticamente no orquestrador vi
 
 ## Descoberta de SKUs
 
-Assim como as demais lojas baseadas em HTML, a Kabum não usa mais a antiga camada de "spider" (descontinuada — ver `docs/scrapers/terabyte.md` para o histórico). SKUs vêm do manifesto estático `data/target_urls.json`, carregado pelo `DiscoveryEngine` (`src/engine/discovery.py`) diretamente para a tabela `store_listings` (ver `src/db/schema.py`).
+Assim como as demais lojas baseadas em HTML, a Kabum não usa mais a antiga camada de "spider" (descontinuada — ver `docs/scrapers/terabyte.md` para o histórico). SKUs vêm do manifesto estático `data/target_urls.json`, carregado pelo `DiscoveryEngine` (`src/engine/discovery.py`) diretamente para a tabela `listings` (ver `src/db/schema.py`).
 
 ## Transporte: Playwright (Browser)
 

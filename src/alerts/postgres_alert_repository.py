@@ -24,12 +24,12 @@ class PostgresAlertRepository(AlertRepository):
                 await db.execute(
                     """
                     INSERT INTO alert_rules (
-                        id, loja_id, produto_id, search_keyword,
+                        id, store_id, product_id, search_keyword,
                         threshold_type, threshold_value, is_active, created_at
                     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                     ON CONFLICT (id) DO UPDATE SET
-                        loja_id = EXCLUDED.loja_id,
-                        produto_id = EXCLUDED.produto_id,
+                        store_id = EXCLUDED.store_id,
+                        product_id = EXCLUDED.product_id,
                         search_keyword = EXCLUDED.search_keyword,
                         threshold_type = EXCLUDED.threshold_type,
                         threshold_value = EXCLUDED.threshold_value,
@@ -52,7 +52,7 @@ class PostgresAlertRepository(AlertRepository):
                 """
                 SELECT ar.*, l.slug AS store_slug
                 FROM alert_rules ar
-                LEFT JOIN loja l ON l.id = ar.loja_id
+                LEFT JOIN stores l ON l.id = ar.store_id
                 WHERE ar.is_active = true
                 """
             )
@@ -60,9 +60,9 @@ class PostgresAlertRepository(AlertRepository):
         return [
             AlertRule(
                 rule_id=row["id"],
-                store_id=str(row["loja_id"]) if row["loja_id"] else None,
+                store_id=str(row["store_id"]) if row["store_id"] else None,
                 store_name=row["store_slug"],
-                produto_id=str(row["produto_id"]) if row["produto_id"] else None,
+                produto_id=str(row["product_id"]) if row["product_id"] else None,
                 search_keyword=row["search_keyword"],
                 threshold_type=row["threshold_type"],
                 threshold_value=row["threshold_value"],
@@ -77,7 +77,7 @@ class PostgresAlertRepository(AlertRepository):
             await db.execute(
                 """
                 INSERT INTO alert_events (
-                    alert_rule_id, coleta_preco_id, reason, triggered_at
+                    alert_rule_id, price_observation_id, reason, triggered_at
                 ) VALUES ($1, $2, $3, $4)
                 """,
                 str(event.rule_id),

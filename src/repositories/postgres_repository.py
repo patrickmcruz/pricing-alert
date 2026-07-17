@@ -22,7 +22,7 @@ class PostgresPriceRepository(PriceRepository):
     ) -> List[str]:
         """
         Persists a list of PriceContract objects to Postgres, all within a
-        single transaction. Returns the generated coleta_preco.id values, in
+        single transaction. Returns the generated price_observations.id values, in
         the same order as the input list.
         """
         if not prices:
@@ -34,26 +34,26 @@ class PostgresPriceRepository(PriceRepository):
                 async with db.transaction():
                     for p in prices:
                         row = await db.fetchrow(
-                            "SELECT id FROM anuncio WHERE product_url = $1", str(p.product_url)
+                            "SELECT id FROM listings WHERE product_url = $1", str(p.product_url)
                         )
                         if not row:
                             raise ValueError(
-                                f"No anuncio row found for product_url {p.product_url!r} - "
+                                f"No listings row found for product_url {p.product_url!r} - "
                                 "cannot save a price for an untracked listing."
                             )
-                        anuncio_id = row["id"]
+                        listing_id = row["id"]
                         observation_id = str(uuid4())
                         observation_ids.append(observation_id)
                         await db.execute(
                             """
-                            INSERT INTO coleta_preco (
-                                id, anuncio_id, scraper_run_id, price_cash, price_installments,
+                            INSERT INTO price_observations (
+                                id, listing_id, scraper_run_id, price_cash, price_installments,
                                 installment_count, currency, discount, is_available, parser_version,
                                 scraped_at
                             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
                             """,
                             observation_id,
-                            anuncio_id,
+                            listing_id,
                             str(scraper_run_id) if scraper_run_id else None,
                             p.price_cash,
                             p.price_installments,
@@ -80,13 +80,13 @@ class PostgresPriceRepository(PriceRepository):
                 SELECT cp.id AS observation_id, l.slug AS store_name, a.search_keyword,
                        a.product_title, a.product_url, cp.price_cash, cp.price_installments,
                        cp.installment_count, cp.currency, cp.parser_version, cp.is_available,
-                       ma.nome AS brand, p.nome AS model, cp.discount, cp.scraped_at,
-                       a.produto_id
-                FROM coleta_preco cp
-                JOIN anuncio a ON a.id = cp.anuncio_id
-                JOIN loja l ON l.id = a.loja_id
-                JOIN produto p ON p.id = a.produto_id
-                JOIN marca ma ON ma.id = p.marca_id
+                       ma.name AS brand, p.name AS model, cp.discount, cp.scraped_at,
+                       a.product_id
+                FROM price_observations cp
+                JOIN listings a ON a.id = cp.listing_id
+                JOIN stores l ON l.id = a.store_id
+                JOIN products p ON p.id = a.product_id
+                JOIN brands ma ON ma.id = p.brand_id
                 WHERE a.search_keyword = $1
                 ORDER BY cp.scraped_at DESC
                 """,
@@ -110,7 +110,7 @@ class PostgresPriceRepository(PriceRepository):
                 model=row["model"],
                 discount=row["discount"],
                 scraped_at=row["scraped_at"],
-                produto_id=str(row["produto_id"]),
+                produto_id=str(row["product_id"]),
             )
             for row in rows
         ]
@@ -120,7 +120,7 @@ class PostgresPriceRepository(PriceRepository):
         Persists discovered SKUs to the database (upsert by product_url).
         Uses an ON CONFLICT upsert rather than delete-then-reinsert, since the
         latter would create the row under a new id, which fails under FK
-        enforcement once any coleta_preco/listing_runs reference it.
+        enforcement once any price_observations/listing_runs reference it.
         """
         if not skus:
             return
@@ -134,13 +134,13 @@ class PostgresPriceRepository(PriceRepository):
                     listing_id = str(uuid4())
                     await db.execute(
                         """
-                        INSERT INTO anuncio (
-                            id, loja_id, produto_id, product_url, product_title,
+                        INSERT INTO listings (
+                            id, store_id, product_id, product_url, product_title,
                             search_keyword, is_active, created_at, updated_at
                         ) VALUES ($1, $2, $3, $4, $5, $6, true, $7, $8)
                         ON CONFLICT (product_url) DO UPDATE SET
-                            loja_id = EXCLUDED.loja_id,
-                            produto_id = EXCLUDED.produto_id,
+                            store_id = EXCLUDED.store_id,
+                            product_id = EXCLUDED.product_id,
                             product_title = EXCLUDED.product_title,
                             search_keyword = EXCLUDED.search_keyword,
                             is_active = true,
@@ -158,12 +158,12 @@ class PostgresPriceRepository(PriceRepository):
             logger.info("Saved %d SKUs to the database.", len(skus))
 
     _TARGET_SKU_JOIN_SELECT = """
-        SELECT a.product_url, l.slug, a.search_keyword, a.produto_id, a.product_title,
-               ma.nome, p.nome
-        FROM anuncio a
-        JOIN loja l ON l.id = a.loja_id
-        JOIN produto p ON p.id = a.produto_id
-        JOIN marca ma ON ma.id = p.marca_id
+        SELECT a.product_url, l.slug, a.search_keyword, a.product_id, a.product_title,
+               ma.name, p.name
+        FROM listings a
+        JOIN stores l ON l.id = a.store_id
+        JOIN products p ON p.id = a.product_id
+        JOIN brands ma ON ma.id = p.brand_id
         WHERE a.is_active = true
     """
 
@@ -202,20 +202,20 @@ class PostgresPriceRepository(PriceRepository):
     async def delete_sku(self, product_url: str) -> None:
         """
         Soft-deletes a tracked SKU by its product URL (is_active = false), so
-        its coleta_preco/listing_runs history isn't orphaned by FK
+        its price_observations/listing_runs history isn't orphaned by FK
         enforcement. No-op if it doesn't exist.
         """
         async with connect(self.dsn) as db:
             await db.execute(
-                "UPDATE anuncio SET is_active = false, updated_at = $1 WHERE product_url = $2",
+                "UPDATE listings SET is_active = false, updated_at = $1 WHERE product_url = $2",
                 datetime.now(timezone.utc), product_url,
             )
             logger.info("Soft-deleted SKU %s from the database.", product_url)
 
     async def list_target_urls_missing_produto(self) -> List[LegacyTargetUrlRow]:
         """
-        Returns anuncio rows whose produto_id hasn't been resolved yet. In
-        practice this is unlikely with the NOT NULL produto_id column, but
+        Returns listings rows whose product_id hasn't been resolved yet. In
+        practice this is unlikely with the NOT NULL product_id column, but
         kept for backward compatibility with DiscoveryEngine's one-time
         backfill against rows written before the catalog existed.
         """
@@ -223,9 +223,9 @@ class PostgresPriceRepository(PriceRepository):
             rows = await db.fetch(
                 """
                 SELECT a.product_url, l.slug AS store_name, a.search_keyword, a.product_title
-                FROM anuncio a
-                JOIN loja l ON l.id = a.loja_id
-                WHERE a.produto_id IS NULL
+                FROM listings a
+                JOIN stores l ON l.id = a.store_id
+                WHERE a.product_id IS NULL
                 """
             )
             return [
@@ -241,9 +241,9 @@ class PostgresPriceRepository(PriceRepository):
             ]
 
     async def set_sku_produto_id(self, product_url: str, produto_id: str) -> None:
-        """Backfills produto_id for a single anuncio row, by product_url."""
+        """Backfills product_id for a single listings row, by product_url."""
         async with connect(self.dsn) as db:
             await db.execute(
-                "UPDATE anuncio SET produto_id = $1 WHERE product_url = $2",
+                "UPDATE listings SET product_id = $1 WHERE product_url = $2",
                 produto_id, product_url,
             )

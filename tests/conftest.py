@@ -12,9 +12,9 @@ def setup_test_env():
 
 # Tables in FK-safe truncation order (children before/with parents via CASCADE).
 _ALL_TABLES = [
-    "alert_events", "alert_rules", "trigger_requests", "coleta_preco",
-    "listing_runs", "scraper_runs", "anuncio", "produto", "marca",
-    "categoria", "loja",
+    "alert_events", "alert_rules", "trigger_requests", "price_observations",
+    "listing_runs", "scraper_runs", "listings", "products", "brands",
+    "categories", "stores",
 ]
 
 

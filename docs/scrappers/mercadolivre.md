@@ -39,7 +39,7 @@ A integração respeita o contrato da `BaseScraper`, mantendo estritamente separ
 3. **Parse Determinístico (`parse()`)**:
    - O método `parse()` não varre DOM ou HTML. Ele recebe os JSONs unificados e os valida construindo o `PriceContract` em memória.
    - É resistente a catálogos esgotados, capturando graciosamente a flag `is_available = False`.
-   - No banco de dados (SQLite), o log dessa ferramenta fica gravado com a assinatura rastreável de `parser_version = "mercado-livre_api_v1"`.
+   - No banco de dados (PostgreSQL), o log dessa ferramenta fica gravado com a assinatura rastreável de `parser_version = "mercado-livre_api_v1"`.
 
 ## Configuração do Ambiente (Requisitos)
 

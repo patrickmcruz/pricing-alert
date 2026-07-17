@@ -64,7 +64,7 @@ async def test_engine_scraper_pipeline(repo):
     # 4. Verify
     async with connect(repo.dsn) as db:
         prices = await db.fetch(
-            "SELECT price_cash, price_installments, installment_count FROM coleta_preco"
+            "SELECT price_cash, price_installments, installment_count FROM price_observations"
         )
 
     assert len(prices) == 1

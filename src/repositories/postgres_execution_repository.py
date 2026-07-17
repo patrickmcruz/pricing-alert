@@ -24,7 +24,7 @@ class PostgresExecutionRepository(ExecutionRepository):
             async with db.transaction():
                 store_id = await get_or_create_store_id(db, store_name)
                 await db.execute(
-                    "INSERT INTO scraper_runs (id, loja_id, status, started_at) VALUES ($1, $2, $3, $4)",
+                    "INSERT INTO scraper_runs (id, store_id, status, started_at) VALUES ($1, $2, $3, $4)",
                     str(run_id), store_id, RunStatus.RUNNING.value, started_at,
                 )
         return run_id
@@ -56,13 +56,13 @@ class PostgresExecutionRepository(ExecutionRepository):
             rows = await db.fetch(
                 """
                 SELECT r.*, l.slug AS store_slug FROM scraper_runs r
-                JOIN loja l ON l.id = r.loja_id
+                JOIN stores l ON l.id = r.store_id
                 INNER JOIN (
-                    SELECT loja_id, MAX(started_at) AS max_started
+                    SELECT store_id, MAX(started_at) AS max_started
                     FROM scraper_runs
-                    GROUP BY loja_id
+                    GROUP BY store_id
                 ) latest
-                ON r.loja_id = latest.loja_id AND r.started_at = latest.max_started
+                ON r.store_id = latest.store_id AND r.started_at = latest.max_started
                 ORDER BY l.slug
                 """
             )
@@ -73,7 +73,7 @@ class PostgresExecutionRepository(ExecutionRepository):
             rows = await db.fetch(
                 """
                 SELECT r.*, l.slug AS store_slug FROM scraper_runs r
-                JOIN loja l ON l.id = r.loja_id
+                JOIN stores l ON l.id = r.store_id
                 ORDER BY r.started_at DESC LIMIT $1
                 """,
                 limit,
@@ -102,15 +102,15 @@ class PostgresExecutionRepository(ExecutionRepository):
         sku_run_id = uuid4()
         started_at = datetime.now(timezone.utc)
         async with connect(self.dsn) as db:
-            row = await db.fetchrow("SELECT id FROM anuncio WHERE product_url = $1", product_url)
-            anuncio_id = row["id"] if row else None
+            row = await db.fetchrow("SELECT id FROM listings WHERE product_url = $1", product_url)
+            listing_id = row["id"] if row else None
             await db.execute(
                 """
                 INSERT INTO listing_runs
-                    (id, scraper_run_id, anuncio_id, product_url, product_title, status, started_at)
+                    (id, scraper_run_id, listing_id, product_url, product_title, status, started_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
                 """,
-                str(sku_run_id), str(run_id), anuncio_id, product_url, product_title,
+                str(sku_run_id), str(run_id), listing_id, product_url, product_title,
                 SkuRunStatus.RUNNING.value, started_at,
             )
         return sku_run_id
@@ -132,7 +132,7 @@ class PostgresExecutionRepository(ExecutionRepository):
                 SELECT lr.*, l.slug AS store_slug
                 FROM listing_runs lr
                 JOIN scraper_runs sr ON sr.id = lr.scraper_run_id
-                JOIN loja l ON l.id = sr.loja_id
+                JOIN stores l ON l.id = sr.store_id
                 WHERE lr.scraper_run_id = $1 AND lr.status = $2
                 ORDER BY lr.started_at DESC LIMIT 1
                 """,

@@ -118,7 +118,7 @@ async def test_save_event_persists_without_error(repo, db_dsn):
             """
             SELECT ae.id, ae.reason, cp.price_cash
             FROM alert_events ae
-            JOIN coleta_preco cp ON cp.id = ae.coleta_preco_id
+            JOIN price_observations cp ON cp.id = ae.price_observation_id
             """
         )
 

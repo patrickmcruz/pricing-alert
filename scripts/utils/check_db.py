@@ -15,9 +15,9 @@ async def main():
         print("Prices for Mercado Livre:")
         rows = await db.fetch(
             """
-            SELECT cp.* FROM coleta_preco cp
-            JOIN anuncio a ON a.id = cp.anuncio_id
-            JOIN loja l ON l.id = a.loja_id
+            SELECT cp.* FROM price_observations cp
+            JOIN listings a ON a.id = cp.listing_id
+            JOIN stores l ON l.id = a.store_id
             WHERE l.slug = 'mercado-livre'
             """
         )
@@ -26,8 +26,8 @@ async def main():
         print("\nTarget URLs for Mercado Livre:")
         rows = await db.fetch(
             """
-            SELECT a.* FROM anuncio a
-            JOIN loja l ON l.id = a.loja_id
+            SELECT a.* FROM listings a
+            JOIN stores l ON l.id = a.store_id
             WHERE l.slug = 'mercado-livre'
             """
         )

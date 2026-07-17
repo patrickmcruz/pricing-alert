@@ -23,12 +23,12 @@ async def get_or_create_store_id(
     store if it doesn't exist yet. Shared by every other Postgres repository
     that used to persist a free-text store_name directly (execution, trigger, price).
     """
-    row = await db.fetchrow("SELECT id FROM loja WHERE slug = $1", slug)
+    row = await db.fetchrow("SELECT id FROM stores WHERE slug = $1", slug)
     if row:
         return str(row["id"])
     store_id = str(uuid4())
     await db.execute(
-        "INSERT INTO loja (id, slug, display_name, base_url, is_active, created_at) "
+        "INSERT INTO stores (id, slug, display_name, base_url, is_active, created_at) "
         "VALUES ($1, $2, $3, $4, true, $5)",
         store_id, slug, display_name or slug, base_url, datetime.now(timezone.utc),
     )
@@ -46,17 +46,17 @@ class PostgresStoreRepository(StoreRepository):
     ) -> Store:
         async with connect(self.dsn) as db:
             store_id = await get_or_create_store_id(db, slug, display_name, base_url)
-            row = await db.fetchrow("SELECT * FROM loja WHERE id = $1", store_id)
+            row = await db.fetchrow("SELECT * FROM stores WHERE id = $1", store_id)
         return self._row_to_store(row)
 
     async def get_store_by_slug(self, slug: str) -> Optional[Store]:
         async with connect(self.dsn) as db:
-            row = await db.fetchrow("SELECT * FROM loja WHERE slug = $1", slug)
+            row = await db.fetchrow("SELECT * FROM stores WHERE slug = $1", slug)
         return self._row_to_store(row) if row else None
 
     async def list_stores(self) -> list[Store]:
         async with connect(self.dsn) as db:
-            rows = await db.fetch("SELECT * FROM loja ORDER BY slug")
+            rows = await db.fetch("SELECT * FROM stores ORDER BY slug")
         return [self._row_to_store(row) for row in rows]
 
     @staticmethod

@@ -24,7 +24,7 @@ class PostgresTriggerRepository(TriggerRepository):
             async with db.transaction():
                 store_id = await get_or_create_store_id(db, store_name) if store_name else None
                 await db.execute(
-                    "INSERT INTO trigger_requests (id, loja_id, status, requested_at) VALUES ($1, $2, $3, $4)",
+                    "INSERT INTO trigger_requests (id, store_id, status, requested_at) VALUES ($1, $2, $3, $4)",
                     str(request_id), store_id, TriggerStatus.PENDING.value, requested_at,
                 )
         return request_id
@@ -68,7 +68,7 @@ class PostgresTriggerRepository(TriggerRepository):
             rows = await db.fetch(
                 f"""
                 SELECT tr.*, l.slug AS store_slug FROM trigger_requests tr
-                LEFT JOIN loja l ON l.id = tr.loja_id
+                LEFT JOIN stores l ON l.id = tr.store_id
                 WHERE tr.status IN ({placeholders})
                 ORDER BY tr.requested_at ASC
                 """,

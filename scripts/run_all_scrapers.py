@@ -88,9 +88,9 @@ async def _print_summary(dsn: str, started_at: datetime) -> None:
         rows = await db.fetch(
             """
             SELECT l.slug, COUNT(*), SUM(cp.is_available::int)
-            FROM coleta_preco cp
-            JOIN anuncio a ON a.id = cp.anuncio_id
-            JOIN loja l ON l.id = a.loja_id
+            FROM price_observations cp
+            JOIN listings a ON a.id = cp.listing_id
+            JOIN stores l ON l.id = a.store_id
             WHERE cp.scraped_at >= $1
             GROUP BY l.slug
             """,
