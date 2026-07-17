@@ -37,7 +37,7 @@ def build_price_contract(
         brand=sku.brand,
         model=sku.model,
         discount=discount,
-        gpu_model_id=sku.gpu_model_id,
+        produto_id=sku.produto_id,
     )
 
 

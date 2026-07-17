@@ -9,11 +9,13 @@ Requires-Dist: apscheduler
 Requires-Dist: httpx[http2]
 Requires-Dist: playwright
 Requires-Dist: playwright-stealth
-Requires-Dist: aiosqlite
+Requires-Dist: asyncpg
+Requires-Dist: psycopg[binary]
 Requires-Dist: beautifulsoup4
 Requires-Dist: lxml
 Requires-Dist: pandas
 Requires-Dist: plotly
+Requires-Dist: python-dotenv
 Provides-Extra: dev
 Requires-Dist: pytest; extra == "dev"
 Requires-Dist: pytest-asyncio; extra == "dev"

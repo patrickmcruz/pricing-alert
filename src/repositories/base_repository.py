@@ -16,7 +16,7 @@ class PriceRepository(ABC):
     ) -> List[str]:
         """
         Persists a list of PriceContract objects to the underlying database.
-        Returns the generated price_observations.id values, in the same order
+        Returns the generated coleta_preco.id values, in the same order
         as the input list.
         """
         pass
@@ -52,22 +52,22 @@ class PriceRepository(ABC):
     @abstractmethod
     async def delete_sku(self, product_url: str) -> None:
         """
-        Soft-deletes a tracked SKU by its product URL (is_active = 0), so its
-        price_observations/listing_runs history isn't orphaned. No-op if it
+        Soft-deletes a tracked SKU by its product URL (is_active = false), so its
+        coleta_preco/listing_runs history isn't orphaned. No-op if it
         doesn't exist.
         """
         pass
 
     @abstractmethod
-    async def list_target_urls_missing_gpu_model(self) -> List[LegacyTargetUrlRow]:
+    async def list_target_urls_missing_produto(self) -> List[LegacyTargetUrlRow]:
         """
-        Returns target_urls rows whose gpu_model_id hasn't been resolved yet
+        Returns anuncio rows whose produto_id hasn't been resolved yet
         (written before the catalog existed). Used only by
         DiscoveryEngine's one-time backfill.
         """
         pass
 
     @abstractmethod
-    async def set_sku_gpu_model_id(self, product_url: str, gpu_model_id: str) -> None:
-        """Backfills gpu_model_id for a single target_urls row, by product_url."""
+    async def set_sku_produto_id(self, product_url: str, produto_id: str) -> None:
+        """Backfills produto_id for a single anuncio row, by product_url."""
         pass

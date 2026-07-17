@@ -2,7 +2,7 @@ import json
 import logging
 import os
 
-from src.core.catalog import Brand, GpuChipset, GpuModel, infer_chip_maker
+from src.core.catalog import GPU_CATEGORY_SLUG, Categoria, Marca, Produto, infer_chip_maker
 from src.core.config import settings
 from src.core.contract import ProductSKU, StoreConfig
 from src.repositories.base_repository import PriceRepository
@@ -14,7 +14,7 @@ DEFAULT_TARGET_URLS_PATH = settings.target_urls_path
 
 # search_keyword -> canonical chipset name. Keeps spelling/noise variations
 # ("rx 9070 oc" is search noise, not part of the chipset) from becoming
-# different GpuChipset rows.
+# different produto.specs["chipset"] values.
 _CHIPSET_ALIASES = {
     "rx 9070 oc": "rx 9070",
 }
@@ -49,37 +49,42 @@ class DiscoveryEngine:
         brand: str | None,
         model: str | None,
         product_title: str | None,
-    ) -> tuple[GpuChipset, Brand, GpuModel]:
-        """Resolves (creating if needed) the Brand/GpuChipset/GpuModel for a free-text entry."""
+    ) -> tuple[Categoria, Marca, Produto]:
+        """Resolves (creating if needed) the Categoria/Marca/Produto for a free-text entry.
+
+        Every discovered SKU today is a GPU (static target_urls.json manifest);
+        the chipset becomes a spec on the produto rather than its own table, so
+        future categories (notebooks, geladeiras...) can reuse this same path
+        with a different categoria/specs shape.
+        """
         chipset_name = _resolve_chipset_name(search_keyword)
-        chipset = await self.catalog_repository.get_or_create_chipset(
-            chipset_name, chip_maker=infer_chip_maker(chipset_name)
-        )
-        brand_entity = await self.catalog_repository.get_or_create_brand(brand or "Unknown")
+        categoria = await self.catalog_repository.get_or_create_categoria("GPU", GPU_CATEGORY_SLUG)
+        marca = await self.catalog_repository.get_or_create_marca(brand or "Unknown")
         model_name = model or product_title or "Unknown"
-        gpu_model = await self.catalog_repository.get_or_create_gpu_model(
-            brand_entity.id, chipset.id, model_name
+        specs = {"chipset": chipset_name, "chip_maker": infer_chip_maker(chipset_name).value}
+        produto = await self.catalog_repository.get_or_create_produto(
+            marca.id, categoria.id, model_name, specs=specs
         )
-        return chipset, brand_entity, gpu_model
+        return categoria, marca, produto
 
     async def _backfill_existing_rows(self) -> None:
         """
-        Resolves gpu_model_id for any target_urls row written before the
-        catalog existed, using its legacy free-text brand/model/search_keyword.
+        Resolves produto_id for any anuncio row written before the catalog
+        existed, using its legacy free-text brand/model/search_keyword.
         """
-        legacy_rows = await self.repository.list_target_urls_missing_gpu_model()
+        legacy_rows = await self.repository.list_target_urls_missing_produto()
         for row in legacy_rows:
-            _, _, gpu_model = await self._resolve_catalog(
+            _, _, produto = await self._resolve_catalog(
                 row.search_keyword, row.brand, row.model, row.product_title
             )
-            await self.repository.set_sku_gpu_model_id(row.product_url, gpu_model.id)
+            await self.repository.set_sku_produto_id(row.product_url, produto.id)
         if legacy_rows:
-            logger.info("Backfilled gpu_model_id for %d legacy target_urls row(s).", len(legacy_rows))
+            logger.info("Backfilled produto_id for %d legacy anuncio row(s).", len(legacy_rows))
 
     async def run_discovery(self, configs: list[StoreConfig]) -> None:
         """
-        Runs the discovery process: backfills any legacy target_urls row missing
-        a gpu_model_id, then loads static URLs from the target manifest.
+        Runs the discovery process: backfills any legacy anuncio row missing
+        a produto_id, then loads static URLs from the target manifest.
         """
         logger.info("Starting Discovery Engine run (Static Mode)...")
 
@@ -95,17 +100,17 @@ class DiscoveryEngine:
 
             skus = []
             for item in data:
-                chipset, brand_entity, gpu_model = await self._resolve_catalog(
+                _, marca, produto = await self._resolve_catalog(
                     item["search_keyword"], item.get("brand"), item.get("model"), item.get("product_title")
                 )
                 skus.append(
                     ProductSKU(
                         store_name=item["store_name"],
-                        search_keyword=chipset.name,
+                        search_keyword=produto.specs.get("chipset", item["search_keyword"]),
                         product_url=item["product_url"],
-                        gpu_model_id=gpu_model.id,
-                        brand=brand_entity.name,
-                        model=gpu_model.model_name,
+                        produto_id=produto.id,
+                        brand=marca.nome,
+                        model=produto.nome,
                         product_title=item.get("product_title", "Unknown"),
                     )
                 )

@@ -6,8 +6,8 @@ from src.core.store import Store
 
 class StoreRepository(ABC):
     """
-    Abstract interface for the normalized stores table - every other table
-    that used to carry a free-text store_name now references stores.id instead.
+    Abstract interface for the normalized loja table - every other table
+    that used to carry a free-text store_name now references loja.id instead.
     """
 
     @abstractmethod

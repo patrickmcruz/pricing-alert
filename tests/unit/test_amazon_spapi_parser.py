@@ -18,7 +18,7 @@ def sku():
         product_url="https://www.amazon.com.br/dp/B0DXXXXXXX",
         store_name="amazon",
         search_keyword="rtx 5070",
-        gpu_model_id="test-gpu-model-id",
+        produto_id="test-gpu-model-id",
         product_title="Placa de vídeo",
     )
 

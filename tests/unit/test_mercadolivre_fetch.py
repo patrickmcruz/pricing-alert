@@ -20,7 +20,7 @@ def catalog_sku():
         product_url="https://produto.mercadolivre.com.br/p/MLB53508354",
         store_name="mercado-livre",
         search_keyword="rtx 5070",
-        gpu_model_id="test-gpu-model-id",
+        produto_id="test-gpu-model-id",
         product_title="Placa de vídeo",
     )
 
@@ -31,7 +31,7 @@ def item_sku():
         product_url="https://produto.mercadolivre.com.br/MLB-53508354-placa",
         store_name="mercado-livre",
         search_keyword="rtx 5070",
-        gpu_model_id="test-gpu-model-id",
+        produto_id="test-gpu-model-id",
         product_title="Placa de vídeo",
     )
 

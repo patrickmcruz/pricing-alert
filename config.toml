@@ -1,5 +1,11 @@
 [develop]
-db_path = "data/prices_dev.db"
+# A dedicated database, separate from [production]'s "pricing" - so local
+# dev/test runs (few SKUs, trimmed via scripts/trim_dev_listings.py) never
+# read or write the real production listings.
+db_host = "localhost"
+db_port = 5432
+db_name = "pricing_dev"
+db_user = "pricing"
 log_level = "DEBUG"
 headless = false
 default_manufacturer = "NVIDIA"
@@ -21,7 +27,10 @@ backup_cron_minute = 0
 trigger_poll_interval_seconds = 5.0
 
 [staging]
-db_path = "data/prices_staging.db"
+db_host = "localhost"
+db_port = 5432
+db_name = "pricing_staging"
+db_user = "pricing"
 log_level = "INFO"
 headless = false
 default_manufacturer = "NVIDIA"
@@ -43,7 +52,12 @@ backup_cron_minute = 0
 trigger_poll_interval_seconds = 5.0
 
 [production]
-db_path = "data/prices.db"
+# "db" is the docker-compose service name - only resolvable from inside the
+# orchestrator/dashboard containers, which is where APP_ENV=production runs.
+db_host = "db"
+db_port = 5432
+db_name = "pricing"
+db_user = "pricing"
 log_level = "DEBUG"
 headless = false
 default_manufacturer = "NVIDIA"
@@ -65,7 +79,10 @@ backup_cron_minute = 0
 trigger_poll_interval_seconds = 5.0
 
 [test]
-db_path = ":memory:"
+db_host = "localhost"
+db_port = 5432
+db_name = "pricing_test"
+db_user = "pricing"
 log_level = "DEBUG"
 default_manufacturer = "NVIDIA"
 default_gpus = ["rtx 5070", "rtx 5070 ti"]

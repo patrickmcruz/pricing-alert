@@ -1,16 +1,12 @@
 import pytest
 
 from src.core.execution import RunStatus, SkuRunStatus
-from src.db.schema import initialize_schema as initialize_db_schema
-from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
+from src.repositories.postgres_execution_repository import PostgresExecutionRepository
 
 
 @pytest.fixture
-async def repo(tmp_path):
-    db_path = str(tmp_path / "execution_test.db")
-    await initialize_db_schema(db_path)
-    repository = SQLiteExecutionRepository(db_path)
-    yield repository
+async def repo(db_dsn):
+    return PostgresExecutionRepository(db_dsn)
 
 
 @pytest.mark.asyncio

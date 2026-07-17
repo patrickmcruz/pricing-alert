@@ -3,7 +3,7 @@ import json
 import pytest
 from unittest.mock import AsyncMock
 
-from src.core.catalog import Brand, ChipMaker, GpuChipset, GpuModel
+from src.core.catalog import Categoria, Marca, Produto
 from src.engine.discovery import DiscoveryEngine
 from src.repositories.base_repository import PriceRepository
 from src.repositories.catalog_repository import CatalogRepository
@@ -12,19 +12,18 @@ from src.repositories.catalog_repository import CatalogRepository
 @pytest.fixture
 def mock_repository():
     repo = AsyncMock(spec=PriceRepository)
-    repo.list_target_urls_missing_gpu_model.return_value = []
+    repo.list_target_urls_missing_produto.return_value = []
     return repo
 
 
 @pytest.fixture
 def mock_catalog_repository():
     catalog = AsyncMock(spec=CatalogRepository)
-    catalog.get_or_create_chipset.return_value = GpuChipset(
-        id="chipset-1", name="rtx 5070", chip_maker=ChipMaker.NVIDIA
-    )
-    catalog.get_or_create_brand.return_value = Brand(id="brand-1", name="MockBrand")
-    catalog.get_or_create_gpu_model.return_value = GpuModel(
-        id="gpu-model-1", brand_id="brand-1", chipset_id="chipset-1", model_name="MockModel"
+    catalog.get_or_create_categoria.return_value = Categoria(id="categoria-1", nome="GPU", slug="gpu")
+    catalog.get_or_create_marca.return_value = Marca(id="marca-1", nome="MockBrand")
+    catalog.get_or_create_produto.return_value = Produto(
+        id="produto-1", marca_id="marca-1", categoria_id="categoria-1", nome="MockModel",
+        specs={"chipset": "rtx 5070", "chip_maker": "NVIDIA"},
     )
     return catalog
 
@@ -59,7 +58,7 @@ async def test_discovery_engine_run_saves_skus_from_static_manifest(
     assert len(saved_skus) == 1
     assert saved_skus[0].store_name == "kabum"
     assert saved_skus[0].search_keyword == "rtx 5070"
-    assert saved_skus[0].gpu_model_id == "gpu-model-1"
+    assert saved_skus[0].produto_id == "produto-1"
 
 
 @pytest.mark.asyncio
@@ -76,13 +75,13 @@ async def test_discovery_engine_run_skips_when_manifest_missing(
 
 
 @pytest.mark.asyncio
-async def test_discovery_engine_backfills_legacy_rows_missing_gpu_model(
+async def test_discovery_engine_backfills_legacy_rows_missing_produto(
     mock_repository, mock_catalog_repository, tmp_path
 ):
     from src.core.contract import LegacyTargetUrlRow
 
     missing_path = tmp_path / "does_not_exist.json"
-    mock_repository.list_target_urls_missing_gpu_model.return_value = [
+    mock_repository.list_target_urls_missing_produto.return_value = [
         LegacyTargetUrlRow(
             product_url="https://example.com/legacy",
             store_name="kabum",
@@ -97,6 +96,6 @@ async def test_discovery_engine_backfills_legacy_rows_missing_gpu_model(
 
     await engine.run_discovery(configs=[])
 
-    mock_repository.set_sku_gpu_model_id.assert_called_once_with(
-        "https://example.com/legacy", "gpu-model-1"
+    mock_repository.set_sku_produto_id.assert_called_once_with(
+        "https://example.com/legacy", "produto-1"
     )

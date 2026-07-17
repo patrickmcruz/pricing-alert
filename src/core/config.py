@@ -22,10 +22,19 @@ class AppSettings:
         self.config_path = os.path.join(PROJECT_ROOT, "config.toml")
         self.config_data = self._load_config()
         
-        # Ensure DB paths are resolved relative to project root
-        raw_db_path = self.config_data.get("db_path", "data/prices_dev.db")
-        self.db_path = os.path.join(PROJECT_ROOT, raw_db_path)
-        
+        # PostgreSQL connection. Host/port/name/user are non-secret and live in
+        # config.toml per-environment; the password is always an env var
+        # (never committed), same pattern as the scraper/alert credentials below.
+        self.db_host = self.config_data.get("db_host", "localhost")
+        self.db_port = self.config_data.get("db_port", 5432)
+        self.db_name = self.config_data.get("db_name", "pricing")
+        self.db_user = self.config_data.get("db_user", "pricing")
+        self.db_password = os.getenv("POSTGRES_PASSWORD", "pricing")
+        self.db_dsn = (
+            f"postgresql://{self.db_user}:{self.db_password}"
+            f"@{self.db_host}:{self.db_port}/{self.db_name}"
+        )
+
         self.log_level = self.config_data.get("log_level", "INFO")
         self.default_manufacturer = self.config_data.get("default_manufacturer", "NVIDIA")
         self.default_gpus = self.config_data.get("default_gpus", [])

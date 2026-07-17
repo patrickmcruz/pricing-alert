@@ -1,31 +1,26 @@
 import pytest
-import aiosqlite
 from decimal import Decimal
 from datetime import datetime, timezone
 import uuid
 
 from src.core.contract import PriceContract, ProductSKU
-from src.db.schema import initialize_schema as initialize_db_schema
-from src.repositories.sqlite_repository import SQLitePriceRepository
+from src.db.schema import connect
+from src.repositories.postgres_repository import PostgresPriceRepository
 
-from tests.conftest import make_gpu_model_id
+from tests.conftest import make_produto_id
 
 @pytest.fixture
-async def repo(tmp_path):
-    # Use a file-based temporary database so we can open new connections to verify data
-    db_path = str(tmp_path / "test.db")
-    await initialize_db_schema(db_path)
-    repository = SQLitePriceRepository(db_path)
-    yield repository
+async def repo(db_dsn):
+    return PostgresPriceRepository(db_dsn)
 
 @pytest.mark.asyncio
 async def test_repository_save_target_urls(repo):
-    gpu_model_id = await make_gpu_model_id(repo.db_path, brand="Nvidia", variant="Founders")
+    produto_id = await make_produto_id(repo.dsn, brand="Nvidia", variant="Founders")
     sku = ProductSKU(
         product_url="https://example.com/gpu",
         store_name="example",
         search_keyword="rtx 5070",
-        gpu_model_id=gpu_model_id,
+        produto_id=produto_id,
         brand="Nvidia",
         model="Founders",
         product_title="RTX 5070"
@@ -39,15 +34,15 @@ async def test_repository_save_target_urls(repo):
 
 @pytest.mark.asyncio
 async def test_repository_list_all_skus(repo):
-    kabum_gpu_model_id = await make_gpu_model_id(repo.db_path, brand="Nvidia", variant="Founders")
-    terabyte_gpu_model_id = await make_gpu_model_id(
-        repo.db_path, brand="MSI", chipset="rtx 5070 ti", variant="Gaming Trio"
+    kabum_produto_id = await make_produto_id(repo.dsn, brand="Nvidia", variant="Founders")
+    terabyte_produto_id = await make_produto_id(
+        repo.dsn, brand="MSI", chipset="rtx 5070 ti", variant="Gaming Trio"
     )
     kabum_sku = ProductSKU(
         product_url="https://example.com/kabum-gpu",
         store_name="kabum",
         search_keyword="rtx 5070",
-        gpu_model_id=kabum_gpu_model_id,
+        produto_id=kabum_produto_id,
         brand="Nvidia",
         model="Founders",
         product_title="RTX 5070 Kabum",
@@ -56,7 +51,7 @@ async def test_repository_list_all_skus(repo):
         product_url="https://example.com/terabyte-gpu",
         store_name="terabyte",
         search_keyword="rtx 5070 ti",
-        gpu_model_id=terabyte_gpu_model_id,
+        produto_id=terabyte_produto_id,
         brand="MSI",
         model="Gaming Trio",
         product_title="RTX 5070 Ti Terabyte",
@@ -71,12 +66,12 @@ async def test_repository_list_all_skus(repo):
 
 @pytest.mark.asyncio
 async def test_repository_delete_sku(repo):
-    gpu_model_id = await make_gpu_model_id(repo.db_path, brand="Nvidia", variant="Founders")
+    produto_id = await make_produto_id(repo.dsn, brand="Nvidia", variant="Founders")
     sku = ProductSKU(
         product_url="https://example.com/gpu-to-delete",
         store_name="example",
         search_keyword="rtx 5070",
-        gpu_model_id=gpu_model_id,
+        produto_id=produto_id,
         brand="Nvidia",
         model="Founders",
         product_title="RTX 5070",
@@ -97,12 +92,12 @@ async def test_repository_delete_sku_missing_url_is_noop(repo):
 
 @pytest.mark.asyncio
 async def test_repository_save_prices(repo):
-    gpu_model_id = await make_gpu_model_id(repo.db_path, brand="Nvidia", variant="Founders")
+    produto_id = await make_produto_id(repo.dsn, brand="Nvidia", variant="Founders")
     sku = ProductSKU(
         product_url="https://example.com/gpu",
         store_name="example",
         search_keyword="rtx 5070",
-        gpu_model_id=gpu_model_id,
+        produto_id=produto_id,
         brand="Nvidia",
         model="Founders",
         product_title="RTX 5070",
@@ -128,15 +123,14 @@ async def test_repository_save_prices(repo):
     assert len(observation_ids) == 1
 
     # Query directly to verify
-    async with aiosqlite.connect(repo.db_path) as db:
-        async with db.execute(
-            "SELECT price_cash, price_installments, installment_count FROM price_observations"
-        ) as cursor:
-            row = await cursor.fetchone()
-            assert row is not None
-            assert row[0] == 5000.00
-            assert row[1] == 5500.00
-            assert row[2] == 10
+    async with connect(repo.dsn) as db:
+        row = await db.fetchrow(
+            "SELECT price_cash, price_installments, installment_count FROM coleta_preco"
+        )
+        assert row is not None
+        assert row["price_cash"] == Decimal("5000.00")
+        assert row["price_installments"] == Decimal("5500.00")
+        assert row["installment_count"] == 10
 
 
 @pytest.mark.asyncio
@@ -158,9 +152,9 @@ async def test_repository_save_prices_raises_for_untracked_listing(repo):
 
 @pytest.mark.asyncio
 async def test_repository_get_prices_by_keyword(repo):
-    gpu_model_id = await make_gpu_model_id(repo.db_path, brand="Nvidia", variant="Founders")
-    other_gpu_model_id = await make_gpu_model_id(
-        repo.db_path, brand="Nvidia", chipset="rtx 5080", variant="Founders"
+    produto_id = await make_produto_id(repo.dsn, brand="Nvidia", variant="Founders")
+    other_produto_id = await make_produto_id(
+        repo.dsn, brand="Nvidia", chipset="rtx 5080", variant="Founders"
     )
     await repo.save_skus(
         [
@@ -168,7 +162,7 @@ async def test_repository_get_prices_by_keyword(repo):
                 product_url="https://example.com/gpu",
                 store_name="example",
                 search_keyword="rtx 5070",
-                gpu_model_id=gpu_model_id,
+                produto_id=produto_id,
                 brand="Nvidia",
                 model="Founders",
                 product_title="RTX 5070",
@@ -177,7 +171,7 @@ async def test_repository_get_prices_by_keyword(repo):
                 product_url="https://example.com/other",
                 store_name="example",
                 search_keyword="rtx 5080",
-                gpu_model_id=other_gpu_model_id,
+                produto_id=other_produto_id,
                 brand="Nvidia",
                 model="Founders",
                 product_title="RTX 5080",

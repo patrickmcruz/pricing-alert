@@ -21,6 +21,10 @@ coverage.xml
 *.db
 *.sqlite3
 *.db-journal
+*.dump
+
+# Generated DB backups (scripts/backup_db.py, pre-migration snapshots)
+data/backups/
 
 # IDEs
 .vscode/

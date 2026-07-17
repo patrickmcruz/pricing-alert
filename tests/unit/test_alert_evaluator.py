@@ -4,7 +4,7 @@ from src.alerts.contracts import AlertRule, ThresholdType
 from src.alerts.evaluator import AlertEvaluator
 from src.core.contract import PriceContract
 
-OBS_ID = "test-obs-id"
+COLETA_PRECO_ID = "test-obs-id"
 
 
 def make_price(**overrides) -> PriceContract:
@@ -19,7 +19,7 @@ def make_price(**overrides) -> PriceContract:
         is_available=True,
         brand="MSI",
         model="rtx 5070",
-        gpu_model_id="gpu-model-1",
+        produto_id="gpu-model-1",
     )
     defaults.update(overrides)
     return PriceContract(**defaults)  # type: ignore[arg-type]
@@ -29,11 +29,11 @@ def test_absolute_price_rule_triggers_when_price_at_or_below_threshold():
     rule = AlertRule(threshold_type=ThresholdType.ABSOLUTE_PRICE, threshold_value=Decimal("5000.00"))
     price = make_price(price_cash=Decimal("4500.00"))
 
-    events = AlertEvaluator.evaluate(price, [rule], price_observation_id=OBS_ID)
+    events = AlertEvaluator.evaluate(price, [rule], coleta_preco_id=COLETA_PRECO_ID)
 
     assert len(events) == 1
     assert events[0].rule_id == rule.rule_id
-    assert events[0].price_observation_id == OBS_ID
+    assert events[0].coleta_preco_id == COLETA_PRECO_ID
     assert "4500.00" in events[0].reason
 
 
@@ -41,16 +41,16 @@ def test_absolute_price_rule_does_not_trigger_above_threshold():
     rule = AlertRule(threshold_type=ThresholdType.ABSOLUTE_PRICE, threshold_value=Decimal("4000.00"))
     price = make_price(price_cash=Decimal("4500.00"))
 
-    assert AlertEvaluator.evaluate(price, [rule], price_observation_id=OBS_ID) == []
+    assert AlertEvaluator.evaluate(price, [rule], coleta_preco_id=COLETA_PRECO_ID) == []
 
 
 def test_any_drop_rule_requires_previous_price_lower_than_current():
     rule = AlertRule(threshold_type=ThresholdType.ANY_DROP)
     price = make_price(price_cash=Decimal("4500.00"))
 
-    assert AlertEvaluator.evaluate(price, [rule], previous_price=None, price_observation_id=OBS_ID) == []
-    assert AlertEvaluator.evaluate(price, [rule], previous_price=Decimal("4500.00"), price_observation_id=OBS_ID) == []
-    assert AlertEvaluator.evaluate(price, [rule], previous_price=Decimal("4600.00"), price_observation_id=OBS_ID) != []
+    assert AlertEvaluator.evaluate(price, [rule], previous_price=None, coleta_preco_id=COLETA_PRECO_ID) == []
+    assert AlertEvaluator.evaluate(price, [rule], previous_price=Decimal("4500.00"), coleta_preco_id=COLETA_PRECO_ID) == []
+    assert AlertEvaluator.evaluate(price, [rule], previous_price=Decimal("4600.00"), coleta_preco_id=COLETA_PRECO_ID) != []
 
 
 def test_percent_drop_rule_triggers_only_past_threshold():
@@ -58,10 +58,10 @@ def test_percent_drop_rule_triggers_only_past_threshold():
     price = make_price(price_cash=Decimal("4500.00"))
 
     # 4500 vs 4600 is a ~2.2% drop - below the 10% threshold.
-    assert AlertEvaluator.evaluate(price, [rule], previous_price=Decimal("4600.00"), price_observation_id=OBS_ID) == []
+    assert AlertEvaluator.evaluate(price, [rule], previous_price=Decimal("4600.00"), coleta_preco_id=COLETA_PRECO_ID) == []
 
     # 4500 vs 5200 is a ~13.5% drop - past the 10% threshold.
-    events = AlertEvaluator.evaluate(price, [rule], previous_price=Decimal("5200.00"), price_observation_id=OBS_ID)
+    events = AlertEvaluator.evaluate(price, [rule], previous_price=Decimal("5200.00"), coleta_preco_id=COLETA_PRECO_ID)
     assert len(events) == 1
 
 
@@ -69,7 +69,7 @@ def test_inactive_rule_never_triggers():
     rule = AlertRule(threshold_type=ThresholdType.ABSOLUTE_PRICE, threshold_value=Decimal("9999"), is_active=False)
     price = make_price(price_cash=Decimal("100.00"))
 
-    assert AlertEvaluator.evaluate(price, [rule], price_observation_id=OBS_ID) == []
+    assert AlertEvaluator.evaluate(price, [rule], coleta_preco_id=COLETA_PRECO_ID) == []
 
 
 def test_rule_filters_by_store_and_keyword():
@@ -81,29 +81,29 @@ def test_rule_filters_by_store_and_keyword():
     )
     price = make_price(store_name="kabum")  # different store
 
-    assert AlertEvaluator.evaluate(price, [rule], price_observation_id=OBS_ID) == []
+    assert AlertEvaluator.evaluate(price, [rule], coleta_preco_id=COLETA_PRECO_ID) == []
 
 
-def test_rule_filters_by_gpu_model_id():
+def test_rule_filters_by_produto_id():
     rule = AlertRule(
-        gpu_model_id="gpu-model-2",
+        produto_id="gpu-model-2",
         threshold_type=ThresholdType.ABSOLUTE_PRICE,
         threshold_value=Decimal("9999"),
     )
-    price = make_price(gpu_model_id="gpu-model-1")  # different model
+    price = make_price(produto_id="gpu-model-1")  # different model
 
-    assert AlertEvaluator.evaluate(price, [rule], price_observation_id=OBS_ID) == []
+    assert AlertEvaluator.evaluate(price, [rule], coleta_preco_id=COLETA_PRECO_ID) == []
 
     matching_rule = AlertRule(
-        gpu_model_id="gpu-model-1",
+        produto_id="gpu-model-1",
         threshold_type=ThresholdType.ABSOLUTE_PRICE,
         threshold_value=Decimal("9999"),
     )
-    assert len(AlertEvaluator.evaluate(price, [matching_rule], price_observation_id=OBS_ID)) == 1
+    assert len(AlertEvaluator.evaluate(price, [matching_rule], coleta_preco_id=COLETA_PRECO_ID)) == 1
 
 
 def test_unavailable_price_never_triggers():
     rule = AlertRule(threshold_type=ThresholdType.ABSOLUTE_PRICE, threshold_value=Decimal("9999"))
     price = make_price(price_cash=Decimal("0"), is_available=False)
 
-    assert AlertEvaluator.evaluate(price, [rule], price_observation_id=OBS_ID) == []
+    assert AlertEvaluator.evaluate(price, [rule], coleta_preco_id=COLETA_PRECO_ID) == []

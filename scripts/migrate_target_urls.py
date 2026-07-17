@@ -20,30 +20,30 @@ sys.path.insert(0, PROJECT_ROOT)
 from src.core.config import settings
 from src.db.schema import initialize_schema as initialize_db_schema
 from src.engine.discovery import DiscoveryEngine
-from src.repositories.sqlite_catalog_repository import SQLiteCatalogRepository
-from src.repositories.sqlite_repository import SQLitePriceRepository
+from src.repositories.postgres_catalog_repository import PostgresCatalogRepository
+from src.repositories.postgres_repository import PostgresPriceRepository
 from scripts.backup_db import backup_database
 
 
 async def migrate():
-    backup_path = backup_database(settings.db_path, keep=settings.backup_retention_count)
+    backup_path = backup_database(settings.db_dsn, keep=settings.backup_retention_count)
     if backup_path:
-        print(f"Backed up {settings.db_path} to {backup_path} before migrating.")
+        print(f"Backed up the database to {backup_path} before migrating.")
 
-    print(f"Migrating data/target_urls.json into {settings.db_path} ...")
-    await initialize_db_schema(settings.db_path)
-    repo = SQLitePriceRepository(db_path=settings.db_path)
-    catalog_repo = SQLiteCatalogRepository(db_path=settings.db_path)
+    print("Migrating data/target_urls.json into the database ...")
+    await initialize_db_schema(settings.db_dsn)
+    repo = PostgresPriceRepository(dsn=settings.db_dsn)
+    catalog_repo = PostgresCatalogRepository(dsn=settings.db_dsn)
 
     engine = DiscoveryEngine(repository=repo, catalog_repository=catalog_repo)  # defaults to data/target_urls.json
     await engine.run_discovery(configs=[])
 
     skus = await repo.list_all_skus()
-    brands = await catalog_repo.list_brands()
-    chipsets = await catalog_repo.list_chipsets()
+    marcas = await catalog_repo.list_marcas()
+    categorias = await catalog_repo.list_categorias()
     print(
         f"Done. {len(skus)} SKU(s) now tracked in the database "
-        f"({len(brands)} brand(s), {len(chipsets)} chipset(s) in the catalog)."
+        f"({len(marcas)} marca(s), {len(categorias)} categoria(s) in the catalog)."
     )
 
 

@@ -17,7 +17,7 @@ async def test():
     sku = ProductSKU(
         store_name="kabum",
         search_keyword="rtx 5070",
-        gpu_model_id="manual-test-gpu-model-id",
+        produto_id="manual-test-produto-id",
         brand="MSI",
         model="Shadow 2X OC",
         product_title="Placa De Video Msi Rtx 5070 12gb Gddr7",

@@ -1,6 +1,7 @@
+alerts
 core
+db
 engine
 repositories
 scrapers
-spiders
 ui

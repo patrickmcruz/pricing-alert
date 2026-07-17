@@ -20,7 +20,7 @@ class ThresholdType(str, Enum):
 class AlertRule(BaseModel):
     """
     A user-defined condition that, when matched by an incoming PriceContract,
-    should produce an AlertEvent. Filters (store_name/search_keyword/gpu_model_id)
+    should produce an AlertEvent. Filters (store_name/search_keyword/produto_id)
     are optional - None means "match any".
     """
 
@@ -28,8 +28,8 @@ class AlertRule(BaseModel):
 
     rule_id: UUID = Field(default_factory=uuid4)
     store_id: Optional[str] = None
-    store_name: Optional[str] = None  # resolved/joined from stores.slug at read time for matching+display, like ProductSKU.brand/model - never hand-set without a matching store_id
-    gpu_model_id: Optional[str] = None
+    store_name: Optional[str] = None  # resolved/joined from loja.slug at read time for matching+display, like ProductSKU.brand/model - never hand-set without a matching store_id
+    produto_id: Optional[str] = None
     search_keyword: Optional[str] = None
     threshold_type: ThresholdType
     threshold_value: Optional[Decimal] = Field(
@@ -45,7 +45,7 @@ class AlertRule(BaseModel):
             return False
         if self.search_keyword and price.search_keyword != self.search_keyword:
             return False
-        if self.gpu_model_id and price.gpu_model_id != self.gpu_model_id:
+        if self.produto_id and price.produto_id != self.produto_id:
             return False
         return True
 
@@ -57,7 +57,7 @@ class AlertEvent(BaseModel):
 
     event_id: UUID = Field(default_factory=uuid4)
     rule_id: UUID
-    price_observation_id: str
+    coleta_preco_id: str
     price: PriceContract
     reason: str
     triggered_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

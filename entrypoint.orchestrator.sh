@@ -14,6 +14,17 @@ set -e
 DISPLAY_NUM=99
 export DISPLAY=":${DISPLAY_NUM}"
 
+# On a `docker restart` (as opposed to a full recreate) the container's
+# writable /tmp survives, so a lock/socket left behind by the previous Xvfb
+# process is still there. Xvfb then refuses to bind ("Server is already
+# active for display 99") and dies immediately - but the readiness check
+# below only polls for the socket *file*, which already exists as a stale
+# leftover, so it reports ready right away even though nothing is actually
+# listening. Every Chromium launch after that silently fails with "Missing
+# X server or $DISPLAY" against the dead socket. Clearing both files first
+# guarantees this boot's Xvfb always starts clean.
+rm -f "/tmp/.X${DISPLAY_NUM}-lock" "/tmp/.X11-unix/X${DISPLAY_NUM}"
+
 Xvfb "${DISPLAY}" -screen 0 1920x1080x24 -nolisten tcp &
 XVFB_PID=$!
 

@@ -20,11 +20,11 @@ class AlertEvaluator:
         price: PriceContract,
         rules: List[AlertRule],
         previous_price: Optional[Decimal] = None,
-        price_observation_id: str = "",
+        coleta_preco_id: str = "",
     ) -> List[AlertEvent]:
         """
-        price_observation_id is threaded onto every AlertEvent produced, so it
-        can be persisted as the FK into price_observations (see
+        coleta_preco_id is threaded onto every AlertEvent produced, so it
+        can be persisted as the FK into coleta_preco (see
         src/alerts/repository.py). Defaults to "" to keep this call ergonomic
         for callers/tests that don't care about the FK; real callers
         (AlertDispatcher.handle_price) always pass the real id.
@@ -42,7 +42,7 @@ class AlertEvaluator:
                 events.append(
                     AlertEvent(
                         rule_id=rule.rule_id,
-                        price_observation_id=price_observation_id,
+                        coleta_preco_id=coleta_preco_id,
                         price=price,
                         reason=reason,
                     )

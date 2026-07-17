@@ -17,13 +17,13 @@ from src.core.execution import RunStatus, ScraperRunRecord, SkuRunRecord, SkuRun
 from src.core.i18n import i18n, t
 from src.core.trigger import TriggerRequest
 from src.db.schema import initialize_schema as initialize_db_schema
-from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
-from src.repositories.sqlite_trigger_repository import SQLiteTriggerRepository
+from src.repositories.postgres_execution_repository import PostgresExecutionRepository
+from src.repositories.postgres_trigger_repository import PostgresTriggerRepository
 
 # Force reload of translations so JSON updates are picked up without restarting Streamlit
 i18n.load_locales()
 
-DB_PATH = settings.db_path
+DB_DSN = settings.db_dsn
 
 st.set_page_config(page_title="Scraper Execution Monitor", page_icon="📡", layout="wide")
 
@@ -49,17 +49,17 @@ def _fmt_local(dt: datetime) -> str:
 
 
 async def _fetch_latest_runs() -> list[ScraperRunRecord]:
-    repo = SQLiteExecutionRepository(DB_PATH)
+    repo = PostgresExecutionRepository(DB_DSN)
     # This page only ever reads, but the orchestrator/script that writes runs
     # may not have started yet on a fresh DB - initialize_schema is a no-op
     # CREATE TABLE IF NOT EXISTS, so it's safe to call from here too.
-    await initialize_db_schema(DB_PATH)
+    await initialize_db_schema(DB_DSN)
     return await repo.get_latest_runs()
 
 
 async def _fetch_run_history(limit: int) -> list[ScraperRunRecord]:
-    repo = SQLiteExecutionRepository(DB_PATH)
-    await initialize_db_schema(DB_PATH)
+    repo = PostgresExecutionRepository(DB_DSN)
+    await initialize_db_schema(DB_DSN)
     return await repo.get_run_history(limit=limit)
 
 
@@ -72,8 +72,8 @@ def _load_run_history(limit: int = 50) -> list[ScraperRunRecord]:
 
 
 async def _fetch_sku_progress(run_id) -> tuple[SkuRunRecord | None, dict[SkuRunStatus, int]]:
-    repo = SQLiteExecutionRepository(DB_PATH)
-    await initialize_db_schema(DB_PATH)
+    repo = PostgresExecutionRepository(DB_DSN)
+    await initialize_db_schema(DB_DSN)
     current = await repo.get_current_sku_run(run_id)
     counts = await repo.get_sku_run_counts(run_id)
     return current, counts
@@ -84,8 +84,8 @@ def _load_sku_progress(run_id) -> tuple[SkuRunRecord | None, dict[SkuRunStatus, 
 
 
 async def _fetch_active_triggers() -> list[TriggerRequest]:
-    repo = SQLiteTriggerRepository(DB_PATH)
-    await initialize_db_schema(DB_PATH)
+    repo = PostgresTriggerRepository(DB_DSN)
+    await initialize_db_schema(DB_DSN)
     return await repo.get_active_requests()
 
 
@@ -94,8 +94,8 @@ def _load_active_triggers() -> list[TriggerRequest]:
 
 
 async def _submit_trigger(store_name: str | None) -> None:
-    repo = SQLiteTriggerRepository(DB_PATH)
-    await initialize_db_schema(DB_PATH)
+    repo = PostgresTriggerRepository(DB_DSN)
+    await initialize_db_schema(DB_DSN)
     await repo.create_request(store_name)
 
 
@@ -106,11 +106,11 @@ def _request_run(store_name: str | None = None) -> None:
 
 @st.fragment(run_every="3s")
 def render_live_status() -> None:
-    if not os.path.exists(DB_PATH):
+    try:
+        active_triggers = _load_active_triggers()
+    except OSError:
         st.info(t("execution_no_data", lang=lang))
         return
-
-    active_triggers = _load_active_triggers()
     run_all_pending = any(tr.store_name is None for tr in active_triggers)
 
     action_col, note_col = st.columns([1, 3])

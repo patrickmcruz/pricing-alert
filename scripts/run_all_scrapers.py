@@ -23,7 +23,6 @@ from datetime import datetime, timezone
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, PROJECT_ROOT)
 
-import aiosqlite
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from src.core.browser import BrowserFactory
@@ -32,10 +31,10 @@ from src.core.http_client import HTTPClientFactory
 from src.core.logging_setup import configure_logging
 from src.core.registry import get_registered_scrapers
 from src.core.transport import ClientFactory
-from src.db.schema import initialize_schema as initialize_db_schema
+from src.db.schema import connect, initialize_schema as initialize_db_schema
 from src.engine.scheduler import PriceEngine
-from src.repositories.sqlite_repository import SQLitePriceRepository
-from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
+from src.repositories.postgres_repository import PostgresPriceRepository
+from src.repositories.postgres_execution_repository import PostgresExecutionRepository
 import src.scrapers  # noqa: F401 - importing the package triggers @register_scraper
 
 configure_logging(getattr(settings, "log_level", "INFO"), log_file=settings.log_file_path)
@@ -43,9 +42,9 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    await initialize_db_schema(settings.db_path)
-    repository = SQLitePriceRepository(db_path=settings.db_path)
-    execution_repository = SQLiteExecutionRepository(db_path=settings.db_path)
+    await initialize_db_schema(settings.db_dsn)
+    repository = PostgresPriceRepository(dsn=settings.db_dsn)
+    execution_repository = PostgresExecutionRepository(dsn=settings.db_dsn)
 
     client_factories: dict[str, ClientFactory] = {
         "browser": BrowserFactory(),
@@ -81,23 +80,22 @@ async def main() -> None:
         if isinstance(result, Exception):
             print(f"[{store_name}] CRASHED: {result}")
 
-    await _print_summary(repository.db_path, started_at)
+    await _print_summary(repository.dsn, started_at)
 
 
-async def _print_summary(db_path: str, started_at: datetime) -> None:
-    async with aiosqlite.connect(db_path) as db:
-        cursor = await db.execute(
+async def _print_summary(dsn: str, started_at: datetime) -> None:
+    async with connect(dsn) as db:
+        rows = await db.fetch(
             """
-            SELECT s.slug, COUNT(*), SUM(po.is_available)
-            FROM price_observations po
-            JOIN store_listings sl ON sl.id = po.store_listing_id
-            JOIN stores s ON s.id = sl.store_id
-            WHERE po.scraped_at >= ?
-            GROUP BY s.slug
+            SELECT l.slug, COUNT(*), SUM(cp.is_available::int)
+            FROM coleta_preco cp
+            JOIN anuncio a ON a.id = cp.anuncio_id
+            JOIN loja l ON l.id = a.loja_id
+            WHERE cp.scraped_at >= $1
+            GROUP BY l.slug
             """,
-            (started_at.isoformat(),),
+            started_at,
         )
-        rows = await cursor.fetchall()
 
     print("\n--- Summary (prices saved this run) ---")
     if not rows:

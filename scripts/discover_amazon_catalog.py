@@ -28,12 +28,12 @@ sys.path.insert(0, PROJECT_ROOT)
 
 import httpx
 
-from src.core.catalog import infer_chip_maker
+from src.core.catalog import GPU_CATEGORY_SLUG, infer_chip_maker
 from src.core.config import settings
 from src.core.contract import ProductSKU
 from src.db.schema import initialize_schema as initialize_db_schema
-from src.repositories.sqlite_catalog_repository import SQLiteCatalogRepository
-from src.repositories.sqlite_repository import SQLitePriceRepository
+from src.repositories.postgres_catalog_repository import PostgresCatalogRepository
+from src.repositories.postgres_repository import PostgresPriceRepository
 from src.scrapers.amazon_spapi import AmazonSPAPIScraper
 
 SEARCH_URL_PATH = "/catalog/2022-04-01/items"
@@ -57,9 +57,9 @@ async def _search_asins(client: httpx.AsyncClient, token: str, keyword: str) -> 
 
 
 async def discover():
-    await initialize_db_schema(settings.db_path)
-    price_repo = SQLitePriceRepository(db_path=settings.db_path)
-    catalog_repo = SQLiteCatalogRepository(db_path=settings.db_path)
+    await initialize_db_schema(settings.db_dsn)
+    price_repo = PostgresPriceRepository(dsn=settings.db_dsn)
+    catalog_repo = PostgresCatalogRepository(dsn=settings.db_dsn)
 
     scraper = AmazonSPAPIScraper()
     keywords = settings.default_gpus
@@ -70,14 +70,15 @@ async def discover():
             print("Could not authenticate with SP-API - check AMAZON_* credentials in .env.")
             return
 
+        categoria = await catalog_repo.get_or_create_categoria("GPU", GPU_CATEGORY_SLUG)
+
         skus: list[ProductSKU] = []
         for keyword in keywords:
             print(f"Searching Amazon.com.br catalog for '{keyword}'...")
             items = await _search_asins(client, token, keyword)
 
-            chipset = await catalog_repo.get_or_create_chipset(
-                keyword.strip().lower(), chip_maker=infer_chip_maker(keyword)
-            )
+            chipset_name = keyword.strip().lower()
+            chip_maker = infer_chip_maker(keyword)
 
             for item in items:
                 asin = item.get("asin")
@@ -89,17 +90,20 @@ async def discover():
                 title = summary.get("itemName", asin)
                 brand_name = summary.get("brand", "Unknown")
 
-                brand_entity = await catalog_repo.get_or_create_brand(brand_name)
-                gpu_model = await catalog_repo.get_or_create_gpu_model(brand_entity.id, chipset.id, title)
+                marca = await catalog_repo.get_or_create_marca(brand_name)
+                produto = await catalog_repo.get_or_create_produto(
+                    marca.id, categoria.id, title,
+                    specs={"chipset": chipset_name, "chip_maker": chip_maker.value},
+                )
 
                 skus.append(
                     ProductSKU(
                         store_name="amazon",
-                        search_keyword=chipset.name,
+                        search_keyword=chipset_name,
                         product_url=f"https://www.amazon.com.br/dp/{asin}",
-                        gpu_model_id=gpu_model.id,
-                        brand=brand_entity.name,
-                        model=gpu_model.model_name,
+                        produto_id=produto.id,
+                        brand=marca.nome,
+                        model=produto.nome,
                         product_title=title,
                     )
                 )

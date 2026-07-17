@@ -1,11 +1,35 @@
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: pricing_db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-pricing}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-pricing}
+      - POSTGRES_DB=${POSTGRES_DB:-pricing}
+    volumes:
+      - pricing_db_data:/var/lib/postgresql/data
+      # Creates the pricing_test database alongside the main one on first boot,
+      # so `pytest` can run against a real Postgres without a second container.
+      - ./scripts/init_test_db.sql:/docker-entrypoint-initdb.d/init_test_db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pricing}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   orchestrator:
     build:
       context: .
       dockerfile: Dockerfile.orchestrator
     container_name: pricing_orchestrator
+    depends_on:
+      db:
+        condition: service_healthy
     volumes:
-      # Map the data directory so the database, stores list, selectors, and locales are shared
+      # Map the data directory so backups, stores list, selectors, and locales are shared
       - ./data:/app/data
       - ./config.toml:/app/config.toml
     env_file:
@@ -24,6 +48,8 @@ services:
     depends_on:
       orchestrator:
         condition: service_started
+      db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8501/_stcore/health"]
       interval: 30s
@@ -37,3 +63,6 @@ services:
     environment:
       - APP_ENV=production
     restart: unless-stopped
+
+volumes:
+  pricing_db_data:

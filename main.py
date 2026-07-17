@@ -13,13 +13,13 @@ from src.core.logging_setup import configure_logging
 from src.db.schema import initialize_schema as initialize_db_schema
 from src.engine.scheduler import PriceEngine
 from src.engine.trigger_processor import TriggerProcessor
-from src.repositories.sqlite_repository import SQLitePriceRepository
-from src.repositories.sqlite_execution_repository import SQLiteExecutionRepository
-from src.repositories.sqlite_store_repository import SQLiteStoreRepository
-from src.repositories.sqlite_trigger_repository import SQLiteTriggerRepository
+from src.repositories.postgres_repository import PostgresPriceRepository
+from src.repositories.postgres_execution_repository import PostgresExecutionRepository
+from src.repositories.postgres_store_repository import PostgresStoreRepository
+from src.repositories.postgres_trigger_repository import PostgresTriggerRepository
 from src.core.registry import get_registered_scrapers
 import src.scrapers  # noqa: F401 - importing the package triggers scraper self-registration
-from src.alerts.sqlite_alert_repository import SQLiteAlertRepository
+from src.alerts.postgres_alert_repository import PostgresAlertRepository
 from src.alerts.dispatcher import AlertDispatcher
 from src.alerts.channels.base import NotificationChannel
 from src.alerts.channels.telegram import TelegramChannel
@@ -30,7 +30,7 @@ configure_logging(getattr(settings, "log_level", "INFO"), log_file=settings.log_
 
 logger = logging.getLogger(__name__)
 
-DB_PATH = settings.db_path
+DB_DSN = settings.db_dsn
 
 
 def load_stores_config() -> list[StoreConfig]:
@@ -99,7 +99,7 @@ def _log_multi_store_summary(results: list) -> None:
         logger.info(summary)
 
 
-async def _seed_stores(store_repository: SQLiteStoreRepository) -> None:
+async def _seed_stores(store_repository: PostgresStoreRepository) -> None:
     """
     Seeds the stores table from data/target-stores-list.json - the same file
     load_stores_config() reads - so every store referenced elsewhere resolves.
@@ -145,23 +145,23 @@ async def main():
 
     # 0. Snapshot the DB before touching it - cheap insurance against any
     # mistake in this boot sequence or a subsequent manual script/migration.
-    # Uses SQLite's online backup API, so it's safe even against a live db.
-    backup_path = backup_database(DB_PATH, keep=settings.backup_retention_count)
+    # Shells out to pg_dump, so it's safe even against a live db.
+    backup_path = backup_database(DB_DSN, keep=settings.backup_retention_count)
     if backup_path:
         logger.info("Pre-boot DB backup created: %s", backup_path)
 
     # 1. Initialize Persistence Layer - single shared schema, applied once
     # before any repository touches the DB.
-    await initialize_db_schema(DB_PATH)
+    await initialize_db_schema(DB_DSN)
 
-    repository = SQLitePriceRepository(db_path=DB_PATH)
-    alert_repository = SQLiteAlertRepository(db_path=DB_PATH)
-    execution_repository = SQLiteExecutionRepository(db_path=DB_PATH)
-    trigger_repository = SQLiteTriggerRepository(db_path=DB_PATH)
-    store_repository = SQLiteStoreRepository(db_path=DB_PATH)
+    repository = PostgresPriceRepository(dsn=DB_DSN)
+    alert_repository = PostgresAlertRepository(dsn=DB_DSN)
+    execution_repository = PostgresExecutionRepository(dsn=DB_DSN)
+    trigger_repository = PostgresTriggerRepository(dsn=DB_DSN)
+    store_repository = PostgresStoreRepository(dsn=DB_DSN)
 
     # Seed the stores table from the same JSON manifest load_stores_config()
-    # already reads, so every store referenced by scraper_runs/store_listings/
+    # already reads, so every store referenced by scraper_runs/anuncio/
     # trigger_requests/alert_rules resolves to a real row.
     await _seed_stores(store_repository)
 
@@ -221,7 +221,7 @@ async def main():
     # tzlocal (the container's UTC system clock) unless told otherwise, it
     # does not inherit the scheduler's own timezone (see src/engine/scheduler.py).
     scheduler.add_job(
-        lambda: backup_database(DB_PATH, keep=settings.backup_retention_count),
+        lambda: backup_database(DB_DSN, keep=settings.backup_retention_count),
         trigger=CronTrigger(
             hour=settings.backup_cron_hour,
             minute=settings.backup_cron_minute,

@@ -24,7 +24,7 @@ def make_event() -> AlertEvent:
     rule = AlertRule(threshold_type=ThresholdType.ANY_DROP)
     return AlertEvent(
         rule_id=rule.rule_id,
-        price_observation_id="test-obs-id",
+        coleta_preco_id="test-obs-id",
         price=price,
         reason="Price dropped from R$ 4500.00 to R$ 4200.00",
     )

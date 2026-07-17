@@ -1,7 +1,9 @@
 """
-Normalized GPU catalog entities: Brand (board partner, e.g. MSI), GpuChipset
-(the NVIDIA/AMD reference, e.g. "rtx 5070 ti"), and GpuModel (a specific
-brand+chipset+variant combination, e.g. MSI "Shadow 2X OC" RTX 5070 Ti).
+Normalized product catalog entities: Categoria (product category, e.g. "GPU",
+"Notebook"), Marca (brand/board partner, e.g. MSI), and Produto (a specific
+brand+category+variant combination, e.g. MSI "Shadow 2X OC" RTX 5070 Ti).
+Category-specific attributes that don't warrant their own column (VRAM,
+chipset, RAM, litros...) live in Produto.specs instead of a wider table.
 
 These replace the free-text brand/model fields that used to live directly on
 ProductSKU - see src/repositories/catalog_repository.py for the persistence
@@ -11,9 +13,16 @@ layer that resolves/dedupes these.
 from __future__ import annotations
 
 from enum import Enum
+from typing import Any
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
+
+# The category slug every GPU scraper/discovery flow resolves into today.
+# Other categories (notebooks, geladeiras...) get their own slug the first
+# time DiscoveryEngine (or a future scraper) resolves a product into them -
+# see CatalogRepository.get_or_create_categoria.
+GPU_CATEGORY_SLUG = "gpu"
 
 
 class ChipMaker(str, Enum):
@@ -32,49 +41,51 @@ def infer_chip_maker(chipset_name: str) -> ChipMaker:
     return ChipMaker.UNKNOWN
 
 
-class Brand(BaseModel):
-    """A board partner / AIB, e.g. MSI, Gainward, XFX."""
+class Categoria(BaseModel):
+    """A product category, e.g. GPU, Notebook. Self-referencing for optional hierarchy."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     id: str = Field(default_factory=lambda: str(uuid4()))
-    name: str
+    nome: str
+    slug: str
+    parent_id: str | None = None
 
 
-class GpuChipset(BaseModel):
+class Marca(BaseModel):
+    """A brand / board partner, e.g. MSI, Gainward, XFX."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    nome: str
+
+
+class Produto(BaseModel):
     """
-    The NVIDIA/AMD chip reference, independent of board partner.
-
-    `name` is kept lowercase to match the existing `search_keyword` convention
-    (e.g. "rtx 5070 ti"), not a Title-Case display string - this is what lets
-    search_keyword keep working as a plain string everywhere without a casing
-    discontinuity against historical price records.
+    A canonical product: a Marca's item within a Categoria, e.g. MSI "Shadow
+    2X OC" RTX 5070 Ti. Category-specific attributes (chipset, VRAM, RAM,
+    litros...) live in `specs` rather than as dedicated columns, so adding a
+    new product category doesn't require a schema change.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     id: str = Field(default_factory=lambda: str(uuid4()))
-    name: str
-    chip_maker: ChipMaker = ChipMaker.UNKNOWN
+    marca_id: str
+    categoria_id: str
+    nome: str
+    gtin: str | None = None
+    specs: dict[str, Any] = Field(default_factory=dict)
 
 
-class GpuModel(BaseModel):
-    """A specific product: a Brand's model of a GpuChipset, e.g. MSI "Shadow 2X OC" RTX 5070 Ti."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    id: str = Field(default_factory=lambda: str(uuid4()))
-    brand_id: str
-    chipset_id: str
-    model_name: str
-
-
-class ResolvedGpuModel(BaseModel):
-    """Read-only DTO joining a GpuModel with its Brand/GpuChipset names, for display."""
+class ResolvedProduto(BaseModel):
+    """Read-only DTO joining a Produto with its Marca/Categoria names, for display."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     id: str
-    brand_name: str
-    chipset_name: str
-    model_name: str
+    marca_nome: str
+    categoria_nome: str
+    nome: str
+    specs: dict[str, Any] = Field(default_factory=dict)

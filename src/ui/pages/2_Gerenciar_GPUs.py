@@ -10,20 +10,20 @@ if PROJECT_ROOT not in sys.path:
 import streamlit as st
 from pydantic import ValidationError
 
-from src.core.catalog import Brand, GpuChipset, GpuModel, infer_chip_maker
+from src.core.catalog import GPU_CATEGORY_SLUG, Marca, Produto, ResolvedProduto, infer_chip_maker
 from src.core.config import settings
 from src.core.contract import ProductSKU
 from src.core.i18n import i18n, t
 from src.core.registry import get_registered_scrapers
 from src.db.schema import initialize_schema as initialize_db_schema
-from src.repositories.sqlite_catalog_repository import SQLiteCatalogRepository
-from src.repositories.sqlite_repository import SQLitePriceRepository
+from src.repositories.postgres_catalog_repository import PostgresCatalogRepository
+from src.repositories.postgres_repository import PostgresPriceRepository
 import src.scrapers  # noqa: F401 - importing the package triggers scraper self-registration
 
 # Force reload of translations so JSON updates are picked up without restarting Streamlit
 i18n.load_locales()
 
-DB_PATH = settings.db_path
+DB_DSN = settings.db_dsn
 
 st.set_page_config(page_title="Gerenciar GPUs", page_icon="🎮", layout="wide")
 
@@ -33,28 +33,28 @@ st.title(t("gpu_manage_title", lang=lang))
 st.markdown(t("gpu_manage_desc", lang=lang))
 
 
-async def _fetch_page_data() -> tuple[list[ProductSKU], list[Brand], list[GpuChipset]]:
-    await initialize_db_schema(DB_PATH)
-    price_repo = SQLitePriceRepository(DB_PATH)
-    catalog_repo = SQLiteCatalogRepository(DB_PATH)
+async def _fetch_page_data() -> tuple[list[ProductSKU], list[Marca], list[ResolvedProduto]]:
+    await initialize_db_schema(DB_DSN)
+    price_repo = PostgresPriceRepository(DB_DSN)
+    catalog_repo = PostgresCatalogRepository(DB_DSN)
     all_skus = await price_repo.list_all_skus()
-    brands = await catalog_repo.list_brands()
-    chipsets = await catalog_repo.list_chipsets()
-    return all_skus, brands, chipsets
+    marcas = await catalog_repo.list_marcas()
+    gpu_produtos = await catalog_repo.list_produtos_resolved(categoria_slug=GPU_CATEGORY_SLUG)
+    return all_skus, marcas, gpu_produtos
 
 
-def _load_page_data() -> tuple[list[ProductSKU], list[Brand], list[GpuChipset]]:
+def _load_page_data() -> tuple[list[ProductSKU], list[Marca], list[ResolvedProduto]]:
     return asyncio.run(_fetch_page_data())
 
 
-async def _fetch_gpu_model(gpu_model_id: str) -> GpuModel | None:
-    await initialize_db_schema(DB_PATH)
-    catalog_repo = SQLiteCatalogRepository(DB_PATH)
-    return await catalog_repo.get_gpu_model(gpu_model_id)
+async def _fetch_produto(produto_id: str) -> Produto | None:
+    await initialize_db_schema(DB_DSN)
+    catalog_repo = PostgresCatalogRepository(DB_DSN)
+    return await catalog_repo.get_produto(produto_id)
 
 
-def _load_gpu_model(gpu_model_id: str) -> GpuModel | None:
-    return asyncio.run(_fetch_gpu_model(gpu_model_id))
+def _load_produto(produto_id: str) -> Produto | None:
+    return asyncio.run(_fetch_produto(produto_id))
 
 
 async def _resolve_and_save_sku(
@@ -65,38 +65,38 @@ async def _resolve_and_save_sku(
     product_url: str,
     product_title: str,
 ) -> None:
-    await initialize_db_schema(DB_PATH)
-    catalog_repo = SQLiteCatalogRepository(DB_PATH)
-    chipset = await catalog_repo.get_or_create_chipset(
-        chipset_name, chip_maker=infer_chip_maker(chipset_name)
-    )
-    brand = await catalog_repo.get_or_create_brand(brand_name)
-    gpu_model = await catalog_repo.get_or_create_gpu_model(brand.id, chipset.id, variant_name)
+    await initialize_db_schema(DB_DSN)
+    catalog_repo = PostgresCatalogRepository(DB_DSN)
+    categoria = await catalog_repo.get_or_create_categoria("GPU", GPU_CATEGORY_SLUG)
+    marca = await catalog_repo.get_or_create_marca(brand_name)
+    specs = {"chipset": chipset_name, "chip_maker": infer_chip_maker(chipset_name).value}
+    produto = await catalog_repo.get_or_create_produto(marca.id, categoria.id, variant_name, specs=specs)
 
     sku = ProductSKU(
         store_name=store_name,
-        search_keyword=chipset.name,
+        search_keyword=chipset_name,
         product_url=product_url,
-        gpu_model_id=gpu_model.id,
-        brand=brand.name,
-        model=gpu_model.model_name,
+        produto_id=produto.id,
+        brand=marca.nome,
+        model=produto.nome,
         product_title=product_title,
     )
 
-    price_repo = SQLitePriceRepository(DB_PATH)
+    price_repo = PostgresPriceRepository(DB_DSN)
     await price_repo.save_skus([sku])
 
 
 async def _remove_sku(product_url: str) -> None:
-    repo = SQLitePriceRepository(DB_PATH)
-    await initialize_db_schema(DB_PATH)
+    repo = PostgresPriceRepository(DB_DSN)
+    await initialize_db_schema(DB_DSN)
     await repo.delete_sku(product_url)
 
 
-all_skus, brands, chipsets = _load_page_data()
+all_skus, marcas, gpu_produtos = _load_page_data()
+chipset_names = sorted({p.specs.get("chipset") for p in gpu_produtos if p.specs.get("chipset")})
 
 editing_sku: ProductSKU | None = st.session_state.get("gpu_editing_sku")
-editing_gpu_model: GpuModel | None = _load_gpu_model(editing_sku.gpu_model_id) if editing_sku else None
+editing_produto: Produto | None = _load_produto(editing_sku.produto_id) if editing_sku else None
 # Keying widgets by the identity of the SKU being edited (or "new") forces
 # Streamlit to reset their values whenever the user switches between add mode
 # and editing a different row, instead of reusing stale session_state values.
@@ -107,8 +107,7 @@ st.subheader(t("gpu_edit_title", lang=lang) if editing_sku else t("gpu_add_title
 OTHER_SENTINEL = t("gpu_field_keyword_other_option", lang=lang)
 
 # -- Chipset (keyword) picker: existing chipsets from the catalog, + "Outro/Other" to create one.
-chipset_names = sorted({c.name for c in chipsets} | ({editing_sku.search_keyword} if editing_sku else set()))
-chipset_options = chipset_names + [OTHER_SENTINEL]
+chipset_options = sorted(set(chipset_names) | ({editing_sku.search_keyword} if editing_sku else set())) + [OTHER_SENTINEL]
 default_chipset_index = (
     chipset_options.index(editing_sku.search_keyword)
     if editing_sku and editing_sku.search_keyword in chipset_options
@@ -127,7 +126,7 @@ if chipset_choice == OTHER_SENTINEL:
     )
 
 # -- Brand picker: existing brands from the catalog, + "Outro/Other" to create one.
-brand_names = sorted({b.name for b in brands} | ({editing_sku.brand} if editing_sku and editing_sku.brand else set()))
+brand_names = sorted({m.nome for m in marcas} | ({editing_sku.brand} if editing_sku and editing_sku.brand else set()))
 brand_options = brand_names + [OTHER_SENTINEL]
 default_brand_index = (
     brand_options.index(editing_sku.brand)
@@ -168,7 +167,7 @@ with st.form(key=f"gpu_form_{edit_suffix}", clear_on_submit=not bool(editing_sku
         st.caption(t("gpu_url_readonly_note", lang=lang))
     variant_name = st.text_input(
         t("gpu_field_model", lang=lang),
-        value=(editing_gpu_model.model_name if editing_gpu_model else "") if editing_sku else "",
+        value=(editing_produto.nome if editing_produto else "") if editing_sku else "",
         key=f"gpu_variant_{edit_suffix}",
     )
     product_title = st.text_input(

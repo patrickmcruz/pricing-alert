@@ -21,7 +21,7 @@ def test_kabum_product_parser():
         store_name="kabum",
         search_keyword="rtx 5070",
         product_url="https://www.kabum.com.br/produto/123", # type: ignore
-        gpu_model_id="test-gpu-model-id",
+        produto_id="test-gpu-model-id",
         brand="MockBrand",
         model="MockModel",
         product_title="MockTitle"
@@ -54,7 +54,7 @@ def test_terabyte_product_parser():
         store_name="terabyte",
         search_keyword="rtx 5070",
         product_url="https://www.terabyteshop.com.br/produto/123", # type: ignore
-        gpu_model_id="test-gpu-model-id",
+        produto_id="test-gpu-model-id",
         brand="MockBrandTB",
         model="MockModelTB",
         product_title="MockTitleTB"
@@ -87,7 +87,7 @@ def test_amazon_product_parser():
         store_name="amazon",
         search_keyword="rtx 5070",
         product_url="https://www.amazon.com.br/INNO3D-Geforce-192BITS-GDDR7-N50702-12D7X-195064N/dp/B0F1XZF531/ref=sr_1_3",  # type: ignore
-        gpu_model_id="test-gpu-model-id",
+        produto_id="test-gpu-model-id",
         brand="INNO3D",
         model="TWIN X2 OC",
         product_title="MockTitleAmazon",

@@ -6,7 +6,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-import sqlite3
+import psycopg
 import pandas as pd
 import streamlit as st
 import plotly.express as px
@@ -16,7 +16,7 @@ from src.core.i18n import t, i18n
 # Force reload of translations so JSON updates are picked up without restarting Streamlit
 i18n.load_locales()
 
-DB_PATH = settings.db_path
+DB_DSN = settings.db_dsn
 
 st.set_page_config(page_title="GPU Price Tracker", layout="wide")
 
@@ -27,21 +27,19 @@ st.markdown(t("app_desc", lang=lang))
 
 
 def load_data():
-    if not os.path.exists(DB_PATH):
-        return pd.DataFrame()
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = psycopg.connect(DB_DSN)
         df = pd.read_sql_query(
             """
-            SELECT po.id AS execution_id, s.slug AS store_name, sl.search_keyword, sl.product_title,
-                   sl.product_url, po.price_cash, po.price_installments, po.installment_count,
-                   po.currency, po.parser_version, po.is_available, b.name AS brand,
-                   gm.model_name AS model, po.discount, po.scraped_at
-            FROM price_observations po
-            JOIN store_listings sl ON sl.id = po.store_listing_id
-            JOIN stores s ON s.id = sl.store_id
-            JOIN gpu_models gm ON gm.id = sl.gpu_model_id
-            JOIN brands b ON b.id = gm.brand_id
+            SELECT cp.id AS execution_id, l.slug AS store_name, a.search_keyword, a.product_title,
+                   a.product_url, cp.price_cash, cp.price_installments, cp.installment_count,
+                   cp.currency, cp.parser_version, cp.is_available, ma.nome AS brand,
+                   p.nome AS model, cp.discount, cp.scraped_at
+            FROM coleta_preco cp
+            JOIN anuncio a ON a.id = cp.anuncio_id
+            JOIN loja l ON l.id = a.loja_id
+            JOIN produto p ON p.id = a.produto_id
+            JOIN marca ma ON ma.id = p.marca_id
             """,
             conn,
         )

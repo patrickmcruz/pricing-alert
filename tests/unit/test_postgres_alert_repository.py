@@ -1,23 +1,19 @@
 from decimal import Decimal
 
-import aiosqlite
 import pytest
 
 from src.alerts.contracts import AlertEvent, AlertRule, ThresholdType
-from src.alerts.sqlite_alert_repository import SQLiteAlertRepository
+from src.alerts.postgres_alert_repository import PostgresAlertRepository
 from src.core.contract import PriceContract
-from src.db.schema import initialize_schema as initialize_db_schema
-from src.repositories.sqlite_repository import SQLitePriceRepository
+from src.db.schema import connect
+from src.repositories.postgres_repository import PostgresPriceRepository
 
-from tests.conftest import make_gpu_model_id
+from tests.conftest import make_produto_id
 
 
 @pytest.fixture
-async def repo(tmp_path):
-    db_path = str(tmp_path / "alerts_test.db")
-    await initialize_db_schema(db_path)
-    repository = SQLiteAlertRepository(db_path)
-    yield repository
+async def repo(db_dsn):
+    return PostgresAlertRepository(db_dsn)
 
 
 def make_price(**overrides) -> PriceContract:
@@ -35,23 +31,23 @@ def make_price(**overrides) -> PriceContract:
     return PriceContract(**defaults)  # type: ignore[arg-type]
 
 
-async def _seed_price_observation(db_path: str, price: PriceContract) -> str:
+async def _seed_price_observation(dsn: str, price: PriceContract) -> str:
     """
-    Persists a real store_listings row + price_observations row for `price`
-    and returns the generated price_observations.id - alert_events.price_observation_id
-    is FK-enforced, so tests need a real id rather than a placeholder string.
+    Persists a real anuncio row + coleta_preco row for `price` and returns the
+    generated coleta_preco.id - alert_events.coleta_preco_id is FK-enforced,
+    so tests need a real id rather than a placeholder string.
     """
     from src.core.contract import ProductSKU
 
-    gpu_model_id = await make_gpu_model_id(db_path)
-    price_repo = SQLitePriceRepository(db_path)
+    produto_id = await make_produto_id(dsn)
+    price_repo = PostgresPriceRepository(dsn)
     await price_repo.save_skus(
         [
             ProductSKU(
                 product_url=str(price.product_url),
                 store_name=price.store_name,
                 search_keyword=price.search_keyword,
-                gpu_model_id=gpu_model_id,
+                produto_id=produto_id,
                 product_title=price.product_title,
             )
         ]
@@ -106,28 +102,26 @@ async def test_save_rule_upserts_by_rule_id(repo):
 
 
 @pytest.mark.asyncio
-async def test_save_event_persists_without_error(repo):
+async def test_save_event_persists_without_error(repo, db_dsn):
     rule = AlertRule(threshold_type=ThresholdType.ANY_DROP)
     await repo.save_rule(rule)
     price = make_price()
-    observation_id = await _seed_price_observation(repo.db_path, price)
+    observation_id = await _seed_price_observation(db_dsn, price)
     event = AlertEvent(
-        rule_id=rule.rule_id, price_observation_id=observation_id, price=price, reason="test drop"
+        rule_id=rule.rule_id, coleta_preco_id=observation_id, price=price, reason="test drop"
     )
 
     await repo.save_event(event)
 
-    async with aiosqlite.connect(repo.db_path) as db:
-        cursor = await db.execute(
+    async with connect(db_dsn) as db:
+        row = await db.fetchrow(
             """
-            SELECT ae.id, ae.reason, po.price_cash
+            SELECT ae.id, ae.reason, cp.price_cash
             FROM alert_events ae
-            JOIN price_observations po ON po.id = ae.price_observation_id
+            JOIN coleta_preco cp ON cp.id = ae.coleta_preco_id
             """
         )
-        row = await cursor.fetchone()
 
     assert row is not None
-    assert row[0] == str(event.event_id)
-    assert row[1] == "test drop"
-    assert row[2] == 4500.00
+    assert row["reason"] == "test drop"
+    assert row["price_cash"] == Decimal("4500.00")

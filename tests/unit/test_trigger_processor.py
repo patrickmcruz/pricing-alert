@@ -1,22 +1,20 @@
 from unittest.mock import AsyncMock, MagicMock
 
-import aiosqlite
 import pytest
 
-from src.db.schema import initialize_schema as initialize_db_schema
+from src.db.schema import connect
 from src.engine.trigger_processor import TriggerProcessor
-from src.repositories.sqlite_trigger_repository import SQLiteTriggerRepository
+from src.repositories.postgres_trigger_repository import PostgresTriggerRepository
 
 
-async def _fetch_status_and_error(db_path: str, request_id) -> tuple[str, str | None]:
-    async with aiosqlite.connect(db_path) as db:
-        cursor = await db.execute(
-            "SELECT status, error_message FROM trigger_requests WHERE id = ?",
-            (str(request_id),),
+async def _fetch_status_and_error(dsn: str, request_id) -> tuple[str, str | None]:
+    async with connect(dsn) as db:
+        row = await db.fetchrow(
+            "SELECT status, error_message FROM trigger_requests WHERE id = $1",
+            str(request_id),
         )
-        row = await cursor.fetchone()
     assert row is not None
-    return row[0], row[1]
+    return row["status"], row["error_message"]
 
 
 def make_scraper(store_name: str) -> MagicMock:
@@ -26,11 +24,8 @@ def make_scraper(store_name: str) -> MagicMock:
 
 
 @pytest.fixture
-async def repo(tmp_path):
-    db_path = str(tmp_path / "trigger_processor_test.db")
-    await initialize_db_schema(db_path)
-    repository = SQLiteTriggerRepository(db_path)
-    yield repository
+async def repo(db_dsn):
+    return PostgresTriggerRepository(db_dsn)
 
 
 @pytest.fixture
@@ -74,7 +69,7 @@ async def test_process_pending_marks_completed_on_success(repo, engine):
     processor = TriggerProcessor(repo, engine)
     await processor.process_pending()
 
-    status, error_message = await _fetch_status_and_error(repo.db_path, request_id)
+    status, error_message = await _fetch_status_and_error(repo.dsn, request_id)
     assert status == "completed"
     assert error_message is None
 
@@ -87,7 +82,7 @@ async def test_process_pending_marks_failed_for_unknown_store(repo, engine):
     await processor.process_pending()
 
     engine.run_scraper.assert_not_called()
-    status, error_message = await _fetch_status_and_error(repo.db_path, request_id)
+    status, error_message = await _fetch_status_and_error(repo.dsn, request_id)
     assert status == "failed"
     assert error_message is not None and "does-not-exist" in error_message
 

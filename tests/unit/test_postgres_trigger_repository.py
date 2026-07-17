@@ -1,16 +1,12 @@
 import pytest
 
 from src.core.trigger import TriggerStatus
-from src.db.schema import initialize_schema as initialize_db_schema
-from src.repositories.sqlite_trigger_repository import SQLiteTriggerRepository
+from src.repositories.postgres_trigger_repository import PostgresTriggerRepository
 
 
 @pytest.fixture
-async def repo(tmp_path):
-    db_path = str(tmp_path / "trigger_test.db")
-    await initialize_db_schema(db_path)
-    repository = SQLiteTriggerRepository(db_path)
-    yield repository
+async def repo(db_dsn):
+    return PostgresTriggerRepository(db_dsn)
 
 
 @pytest.mark.asyncio

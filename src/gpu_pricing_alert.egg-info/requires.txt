@@ -4,11 +4,13 @@ apscheduler
 httpx[http2]
 playwright
 playwright-stealth
-aiosqlite
+asyncpg
+psycopg[binary]
 beautifulsoup4
 lxml
 pandas
 plotly
+python-dotenv
 
 [dev]
 pytest
