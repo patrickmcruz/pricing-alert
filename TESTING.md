@@ -20,10 +20,13 @@ The project implements a testing pyramid containing Unit, Integration, and End-t
 
 ### A. Unit Tests (`tests/unit/`)
 Unit tests cover isolated components without relying on network I/O or live databases. They run instantly and are highly deterministic.
-- **Parsers (`test_parsers.py`)**: Tests the extraction logic (BeautifulSoup + CSS Selectors). Real HTML payloads are cached locally as static files in `tests/fixtures/`. The tests assert that exact metrics (`price_cash`, `price_installments`, `installment_count`, etc.) are reliably extracted.
+- **Parsers (`test_parsers.py`, `test_amazon_parser.py`, `test_amazon_spapi_parser.py`, `test_mercadolivre_parser.py`)**: Tests the extraction logic (BeautifulSoup + CSS Selectors, and the Amazon SP-API JSON contract). Real HTML/JSON payloads are cached locally as static fixtures in `tests/fixtures/`. The tests assert that exact metrics (`price_cash`, `price_installments`, `installment_count`, etc.) are reliably extracted.
+- **Fetchers (`test_amazon_spapi_fetch.py`, `test_mercadolivre_fetch.py`)**: Verify request construction, auth/token handling, and response-to-contract mapping for each store's fetch layer, with the HTTP layer mocked.
+- **Core infra (`test_browser.py`, `test_http_client.py`, `test_utils.py`, `test_config.py`, `test_i18n.py`, `test_logging_setup.py`)**: Cover `src/core` building blocks - `BrowserFactory` (Playwright launch/context/close semantics), `HTTPClientFactory` (header/timeout/HTTP2 config), the anti-bot `simulate_human_interaction` helpers, environment-driven config loading, i18n string resolution, and logging setup - all via mocked `Page`/`httpx.AsyncClient` objects, no real browser or network needed.
 - **Repositories (`test_repository.py`, `test_postgres_*.py`)**: Runs against the real `pricing_test` PostgreSQL database (truncated before each test, see above) to ensure table creation and SQL queries execute correctly against actual Postgres semantics, not a mocked connection.
-- **Config (`test_config.py`)**: Verifies the core configuration loader switches environments properly.
-- **Spiders & Orchestrators**: Verify internal routing and data-shuffling algorithms.
+- **Alerts (`test_alert_dispatcher.py`, `test_alert_evaluator.py`, `test_telegram_channel.py`)**: Verify trigger-evaluation logic and notification dispatch, including the Telegram channel, with outbound calls mocked.
+- **Engine (`test_discovery.py`, `test_trigger_processor.py`)**: Verify scraper discovery/registration and trigger-processing orchestration logic.
+- **Ops (`test_backup_db.py`)**: Verifies database backup scheduling/execution logic.
 
 ### B. Integration Tests (`tests/integration/`)
 Integration tests ensure that the various standalone components interface correctly. 

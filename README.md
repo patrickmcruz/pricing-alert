@@ -195,6 +195,47 @@ When writing tests for parsers, use the static HTML files provided in `tests/fix
 
 ---
 
+## 🌳 Git Flow & Branching Strategy
+
+The project uses a three-tier Git Flow:
+
+| Branch | Purpose |
+|---|---|
+| `main` | Production. Only receives merges from `staging` (releases) or `hotfix/*` branches - never commit directly. |
+| `staging` | Homologation/QA. Receives merges from `develop` when a batch of work is ready for pre-production validation. |
+| `develop` | Integration branch for active development. All working branches are created from and merged back into `develop`. |
+
+### Branch Naming
+Create working branches from `develop` using `<category>/<short-kebab-case-description>`, e.g. `feat/amazon-spapi-scraper`, `fix/postgres-connection-leak`, `chore/bump-playwright-version`.
+
+| Category | Use for |
+|---|---|
+| `feat` | New features or capabilities (e.g. a new scraper, a new alert channel) |
+| `fix` | Bug fixes in `develop`/`staging` that are not production-critical |
+| `hotfix` | Urgent production bug fixes - branched from `main` instead of `develop` |
+| `chore` | Maintenance: dependency bumps, config changes, tooling, refactors with no behavior change |
+| `docs` | Documentation-only changes (README, TESTING.md, AGENTS.md, etc.) |
+| `test` | Adding or improving tests without changing production behavior |
+| `refactor` | Internal restructuring with no functional change (larger than a `chore`) |
+| `perf` | Performance improvements |
+| `ci` | CI/CD pipeline or GitHub Actions changes |
+
+### Promotion Flow
+```
+feat/*, fix/*, chore/*, docs/*, test/*, refactor/*, perf/*, ci/*
+        │  (PR + review)
+        ▼
+     develop  ──────────────►  staging  ──────────────►  main
+        ▲   (PR, when ready        (PR, after homologation
+        │    for homologation)      passes)
+        │
+   hotfix/*  ── (direct PR to main, then back-merged into develop)
+```
+
+Hotfixes are the one exception to "branch from `develop`": for urgent production-breaking bugs, branch `hotfix/<description>` directly from `main`, then merge into **both** `main` (immediate release) and `develop` (so the fix isn't lost on the next promotion). Never merge a working branch directly into `staging` or `main` otherwise - it must land on `develop` first. Commit messages follow Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `perf:`, `ci:`) matching the branch category.
+
+---
+
 ## 💡 Adding a New Store Scraper
 
 1. Create `src/scrapers/newstore.py` inheriting from `BaseScraper`, and decorate the class with `@register_scraper` (`src/core/registry.py`).

@@ -139,3 +139,45 @@ docker exec pricing_db psql -U pricing -d pricing -c "
 Swap `-d pricing` for `-d pricing_dev`/`-d pricing_test` to check the other environments (see README.md's "Dev vs. Production Data"). Store/brand/model are not inline columns on `price_observations` (see the schema note in §6) - they only exist behind a JOIN through `listings`/`products`/`brands`/`stores`.
 
 On Windows with Git Bash, `docker exec ... -f /tmp/...`-style paths get mangled by MSYS path conversion; prefix the command with `MSYS_NO_PATHCONV=1` when passing a literal container-side path (e.g. for `pg_dump -f /tmp/backup.dump`).
+
+## 9. Git Flow & Branching Strategy
+
+The project follows a three-tier Git Flow. Agents MUST branch from `develop` (never from `main` or `staging`) when starting new work, unless explicitly doing a hotfix (see below).
+
+### 9.1 Long-Lived Branches
+* **`main`** — Production. Only receives merges from `staging` (releases) or `hotfix/*` branches. Never commit directly.
+* **`staging`** — Homologation/QA. Receives merges from `develop` when a batch of work is ready for pre-production validation.
+* **`develop`** — Integration branch for active development. All feature/fix/chore branches are created from and merged back into `develop`.
+
+### 9.2 Working Branches & Naming Convention
+Create working branches from `develop` using `<category>/<short-kebab-case-description>`, e.g. `feat/amazon-spapi-scraper`, `fix/postgres-connection-leak`, `chore/bump-playwright-version`.
+
+| Category   | Use for |
+|------------|---------|
+| `feat`     | New features or capabilities (e.g. a new scraper, a new alert channel) |
+| `fix`      | Bug fixes in `develop`/`staging` that are not production-critical |
+| `hotfix`   | Urgent production bug fixes — branched from `main` instead of `develop` (see 9.3) |
+| `chore`    | Maintenance: dependency bumps, config changes, tooling, refactors with no behavior change |
+| `docs`     | Documentation-only changes (README, TESTING.md, AGENTS.md, etc.) |
+| `test`     | Adding or improving tests without changing production behavior |
+| `refactor` | Internal restructuring with no functional change (larger than a `chore`) |
+| `perf`     | Performance improvements |
+| `ci`       | CI/CD pipeline or GitHub Actions changes |
+
+### 9.3 Hotfix Flow (exception to "branch from develop")
+For urgent production-breaking bugs: branch `hotfix/<description>` directly from `main`, fix, then merge into **both** `main` (immediate release) and `develop` (so the fix isn't lost on the next `develop` → `staging` → `main` promotion).
+
+### 9.4 Promotion Flow
+```
+feat/*, fix/*, chore/*, docs/*, test/*, refactor/*, perf/*, ci/*
+        │  (PR + review)
+        ▼
+     develop  ──────────────►  staging  ──────────────►  main
+        ▲   (PR, when ready        (PR, after homologation
+        │    for homologation)      passes)
+        │
+   hotfix/*  ── (direct PR to main, then back-merged into develop)
+```
+
+* Never merge a working branch directly into `staging` or `main` — it must land on `develop` first (hotfixes excepted).
+* Commit messages follow Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `perf:`, `ci:`) matching the branch category, consistent with this repo's existing git history.
