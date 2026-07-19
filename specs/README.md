@@ -36,3 +36,4 @@ Write a spec for anything that changes architecture, adds a new integration patt
 | [`kabum-scraper/`](kabum-scraper/spec.md) | Living — documents the existing, already-enabled scraper |
 | [`terabyte-scraper/`](terabyte-scraper/spec.md) | Living — documents the existing, already-enabled scraper |
 | [`amazon-scraper/`](amazon-scraper/spec.md) | Living — documents the active HTML scraper and the dormant SP-API path |
+| [`mercadolivre-scraper/`](mercadolivre-scraper/spec.md) | Living — documents the existing, already-enabled API-based scraper |
