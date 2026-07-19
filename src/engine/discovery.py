@@ -1,16 +1,12 @@
-import json
 import logging
-import os
 
 from src.core.catalog import GPU_CATEGORY_SLUG, Categoria, Marca, Produto, infer_chip_maker
-from src.core.config import settings
 from src.core.contract import ProductSKU, StoreConfig
 from src.repositories.base_repository import PriceRepository
 from src.repositories.catalog_repository import CatalogRepository
+from src.repositories.target_url_repository import TargetUrlRepository
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_TARGET_URLS_PATH = settings.target_urls_path
 
 # search_keyword -> canonical chipset name. Keeps spelling/noise variations
 # ("rx 9070 oc" is search noise, not part of the chipset) from becoming
@@ -29,19 +25,20 @@ class DiscoveryEngine:
     """
     Coordinates the discovery of SKUs across target stores.
 
-    Currently backed by a static manifest (`target_urls.json`) rather than
-    live search-grid crawling; see .agents/AGENTS.md for the rationale.
+    Currently backed by a static manifest (the `target_urls` table, see
+    specs/target-urls-table/spec.md) rather than live search-grid crawling;
+    see .agents/AGENTS.md for the rationale.
     """
 
     def __init__(
         self,
         repository: PriceRepository,
         catalog_repository: CatalogRepository,
-        target_urls_path: str = DEFAULT_TARGET_URLS_PATH,
+        target_url_repository: TargetUrlRepository,
     ):
         self.repository = repository
         self.catalog_repository = catalog_repository
-        self.target_urls_path = target_urls_path
+        self.target_url_repository = target_url_repository
 
     async def _resolve_catalog(
         self,
@@ -84,43 +81,38 @@ class DiscoveryEngine:
     async def run_discovery(self, configs: list[StoreConfig]) -> None:
         """
         Runs the discovery process: backfills any legacy anuncio row missing
-        a produto_id, then loads static URLs from the target manifest.
+        a produto_id, then loads static URLs from the target_urls manifest.
         """
         logger.info("Starting Discovery Engine run (Static Mode)...")
 
         await self._backfill_existing_rows()
 
-        if not os.path.exists(self.target_urls_path):
-            logger.warning("File %s not found. Skipping discovery.", self.target_urls_path)
-            return
-
         try:
-            with open(self.target_urls_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
+            entries = await self.target_url_repository.list_all()
 
             skus = []
-            for item in data:
+            for entry in entries:
                 _, marca, produto = await self._resolve_catalog(
-                    item["search_keyword"], item.get("brand"), item.get("model"), item.get("product_title")
+                    entry.search_keyword, entry.brand, entry.model, entry.product_title
                 )
                 skus.append(
                     ProductSKU(
-                        store_name=item["store_name"],
-                        search_keyword=produto.specs.get("chipset", item["search_keyword"]),
-                        product_url=item["product_url"],
+                        store_name=entry.store_name,
+                        search_keyword=produto.specs.get("chipset", entry.search_keyword),
+                        product_url=entry.product_url,
                         produto_id=produto.id,
                         brand=marca.nome,
                         model=produto.nome,
-                        product_title=item.get("product_title", "Unknown"),
+                        product_title=entry.product_title or "Unknown",
                     )
                 )
 
             if skus:
                 await self.repository.save_skus(skus)
-                logger.info("Saved %d static SKUs from %s", len(skus), self.target_urls_path)
+                logger.info("Saved %d static SKUs from target_urls.", len(skus))
             else:
-                logger.warning("No SKUs found in %s", self.target_urls_path)
+                logger.warning("No rows in target_urls. Skipping discovery.")
         except Exception as e:
-            logger.error("Failed to load static URLs from %s: %s", self.target_urls_path, e)
+            logger.error("Failed to load static URLs from target_urls: %s", e)
 
         logger.info("Discovery run complete.")

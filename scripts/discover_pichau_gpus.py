@@ -1,7 +1,8 @@
 """Search-grid discovery for Pichau: crawls the store's search results for
-RTX 5070 / RTX 5070 Ti and upserts any new matches into data/target_urls.json
-- the same manifest DiscoveryEngine/migrate_target_urls.py already treat as
-the source of truth for tracked SKUs.
+RTX 5070 / RTX 5070 Ti and upserts any new matches into the `target_urls`
+DB table (src/db/schema.py - see specs/target-urls-table/spec.md) - the same
+manifest DiscoveryEngine already treats as the source of truth for tracked
+SKUs.
 
 Deliberately NOT wired into DiscoveryEngine or the orchestrator boot
 sequence - see specs/pichau-scraper/spec.md §3 for why. Run manually
@@ -24,7 +25,6 @@ without ever touching a real browser (see
 tests/unit/test_discover_pichau_gpus.py).
 """
 import asyncio
-import json
 import os
 import re
 import sys
@@ -38,10 +38,12 @@ if PROJECT_ROOT not in sys.path:
 from src.core.base_scraper import StoreUnavailableException
 from src.core.browser import BrowserFactory
 from src.core.config import settings
+from src.core.contract import TargetUrlEntry
 from src.core.parsing_utils import has_maintenance_marker_in_html
+from src.db.schema import initialize_schema as initialize_db_schema
+from src.repositories.postgres_target_url_repository import PostgresTargetUrlRepository
 from src.scrapers.pichau import extract_pichau_products
 
-TARGET_URLS_PATH = settings.target_urls_path
 BASE_URL = "https://www.pichau.com.br"
 
 SEARCH_URLS = {
@@ -113,17 +115,13 @@ def parse_search_results(html: str, search_keyword: str) -> list[dict]:
     return found
 
 
-def _load_existing_manifest() -> list[dict]:
-    if not os.path.exists(TARGET_URLS_PATH):
-        return []
-    with open(TARGET_URLS_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
 async def discover() -> None:
+    await initialize_db_schema(settings.db_dsn)
+    target_url_repo = PostgresTargetUrlRepository(dsn=settings.db_dsn)
+
     factory = BrowserFactory()
-    existing = _load_existing_manifest()
-    existing_urls = {row["product_url"] for row in existing}
+    existing = await target_url_repo.list_all()
+    existing_urls = {entry.product_url for entry in existing}
 
     all_found: list[dict] = []
     store_unavailable = False
@@ -149,28 +147,31 @@ async def discover() -> None:
     if store_unavailable and not all_found:
         print(
             "\nAborted: pichau.com.br was down for every search query. Not touching "
-            f"{TARGET_URLS_PATH} - re-run this script once the site is back."
+            "target_urls - re-run this script once the site is back."
         )
         return
 
-    new_rows = []
+    new_entries = []
     seen_this_run = set()
     for row in all_found:
         if row["product_url"] in existing_urls or row["product_url"] in seen_this_run:
             continue
         seen_this_run.add(row["product_url"])
-        row.pop("_discovered_price_cash", None)  # not part of the manifest schema
-        new_rows.append(row)
+        new_entries.append(TargetUrlEntry(
+            store_name=row["store_name"],
+            search_keyword=row["search_keyword"],
+            product_url=row["product_url"],
+            brand=row["brand"],
+            model=row["model"],
+            product_title=row["product_title"],
+        ))
 
-    if new_rows:
-        merged = existing + new_rows
-        with open(TARGET_URLS_PATH, "w", encoding="utf-8") as f:
-            json.dump(merged, f, ensure_ascii=False, indent=2)
+    inserted = await target_url_repo.upsert_many(new_entries) if new_entries else 0
 
     print(
-        f"\nDone. {len(all_found)} candidate(s) found, {len(new_rows)} new, "
-        f"{len(all_found) - len(new_rows)} already tracked. "
-        f"{'Wrote ' + str(len(new_rows)) + ' row(s) to ' + TARGET_URLS_PATH + '.' if new_rows else 'Nothing to write.'}"
+        f"\nDone. {len(all_found)} candidate(s) found, {inserted} new, "
+        f"{len(all_found) - inserted} already tracked. "
+        f"{'Wrote ' + str(inserted) + ' row(s) to target_urls.' if inserted else 'Nothing to write.'}"
     )
 
 

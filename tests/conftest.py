@@ -14,7 +14,7 @@ def setup_test_env():
 _ALL_TABLES = [
     "alert_events", "alert_rules", "trigger_requests", "price_observations",
     "listing_runs", "scraper_runs", "listings", "products", "brands",
-    "categories", "stores",
+    "categories", "stores", "target_urls",
 ]
 
 

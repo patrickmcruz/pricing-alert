@@ -110,6 +110,27 @@ class ProductSKU(BaseModel):
     product_title: str
 
 
+class TargetUrlEntry(BaseModel):
+    """
+    A row in the `target_urls` table (src/db/schema.py) - the raw manifest of
+    record DiscoveryEngine reads from, replacing data/target_urls.json (see
+    specs/target-urls-table/spec.md). Free-text brand/model, same as the old
+    JSON rows: DiscoveryEngine._resolve_catalog() is what turns these into a
+    real Produto, not this model. Distinct from LegacyTargetUrlRow, which
+    describes an already-resolved listings row that's merely missing its
+    produto_id - a different table, a different repair concern.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    store_name: str
+    search_keyword: str
+    product_url: str
+    brand: str | None = None
+    model: str | None = None
+    product_title: str | None = None
+
+
 class LegacyTargetUrlRow(BaseModel):
     """
     An anuncio row still carrying its pre-catalog free-text brand/model

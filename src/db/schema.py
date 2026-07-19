@@ -86,6 +86,23 @@ _DDL = [
         parser_version         TEXT NOT NULL,
         scraped_at             TIMESTAMPTZ NOT NULL
     )""",
+    # Raw manifest of record for DiscoveryEngine, replacing data/target_urls.json
+    # (see specs/target-urls-table/spec.md) - deliberately a plain, denormalized
+    # staging table, not FK'd into products/brands: it holds whatever a human or
+    # a discovery script *proposed* tracking, in free-text form, before
+    # DiscoveryEngine._resolve_catalog() turns it into a real Produto. Keeping it
+    # separate from `listings` (which holds the *resolved* record) preserves that
+    # distinction instead of blurring it.
+    """CREATE TABLE IF NOT EXISTS target_urls (
+        id             UUID PRIMARY KEY,
+        store_name     TEXT NOT NULL,
+        search_keyword TEXT NOT NULL,
+        product_url    TEXT NOT NULL UNIQUE,
+        brand          TEXT,
+        model          TEXT,
+        product_title  TEXT,
+        created_at     TIMESTAMPTZ NOT NULL
+    )""",
     """CREATE TABLE IF NOT EXISTS trigger_requests (
         id            UUID PRIMARY KEY,
         store_id      UUID REFERENCES stores(id),
@@ -125,6 +142,7 @@ _INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_alert_events_rule ON alert_events(alert_rule_id)",
     "CREATE INDEX IF NOT EXISTS idx_listings_store ON listings(store_id)",
     "CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id)",
+    "CREATE INDEX IF NOT EXISTS idx_target_urls_store ON target_urls(store_name)",
 ]
 
 

@@ -15,6 +15,7 @@ from src.engine.discovery import DiscoveryEngine
 from src.engine.scheduler import PriceEngine
 from src.engine.trigger_processor import TriggerProcessor
 from src.repositories.postgres_catalog_repository import PostgresCatalogRepository
+from src.repositories.postgres_target_url_repository import PostgresTargetUrlRepository
 from src.repositories.postgres_repository import PostgresPriceRepository
 from src.repositories.postgres_execution_repository import PostgresExecutionRepository
 from src.repositories.postgres_store_repository import PostgresStoreRepository
@@ -167,18 +168,22 @@ async def main():
     # trigger_requests/alert_rules resolves to a real row.
     await _seed_stores(store_repository)
 
-    # Re-assert the full data/target_urls.json catalog as active on every
-    # boot - save_skus() is an upsert (ON CONFLICT ... is_active = true), so
-    # this is idempotent and safe to run every time, not just once. This is
-    # what guarantees `docker compose up` always brings up the complete SKU
-    # set in production, independent of whatever a local APP_ENV=develop
-    # session has trimmed in its own separate pricing_dev database (see
+    # Re-assert the full target_urls manifest (src/db/schema.py - see
+    # specs/target-urls-table/spec.md) as active on every boot - save_skus()
+    # is an upsert (ON CONFLICT ... is_active = true), so this is idempotent
+    # and safe to run every time, not just once. This is what guarantees
+    # `docker compose up` always brings up the complete SKU set in
+    # production, independent of whatever a local APP_ENV=develop session
+    # has trimmed in its own separate pricing_dev database (see
     # scripts/trim_dev_listings.py) - this container is always
     # APP_ENV=production (Dockerfile.orchestrator), so it can never run
     # against pricing_dev in the first place.
     if settings.env == "production":
         catalog_repository = PostgresCatalogRepository(dsn=DB_DSN)
-        discovery_engine = DiscoveryEngine(repository=repository, catalog_repository=catalog_repository)
+        target_url_repository = PostgresTargetUrlRepository(dsn=DB_DSN)
+        discovery_engine = DiscoveryEngine(
+            repository=repository, catalog_repository=catalog_repository, target_url_repository=target_url_repository
+        )
         await discovery_engine.run_discovery(configs=[])
 
     # Same rationale as fail_stale_processing below: a "running" row can only
