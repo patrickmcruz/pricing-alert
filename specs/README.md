@@ -35,3 +35,4 @@ Write a spec for anything that changes architecture, adds a new integration patt
 | [`target-urls-table/`](target-urls-table/spec.md) | Done — replaced `data/target_urls.json` with a real DB table |
 | [`kabum-scraper/`](kabum-scraper/spec.md) | Living — documents the existing, already-enabled scraper |
 | [`terabyte-scraper/`](terabyte-scraper/spec.md) | Living — documents the existing, already-enabled scraper |
+| [`amazon-scraper/`](amazon-scraper/spec.md) | Living — documents the active HTML scraper and the dormant SP-API path |
