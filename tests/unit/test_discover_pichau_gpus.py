@@ -2,14 +2,20 @@
 Tests parse_search_results() against synthetic fixture HTML reproducing the
 real shape of a Pichau search-results page (Next.js RSC payload embedding
 the GraphQL product list) - see tests/unit/test_pichau_parser.py and
-src.scrapers.pichau.extract_pichau_products for the same mechanism.
+src.scrapers.pichau.extract_pichau_products for the same mechanism - plus
+discover()'s own orchestration logic (dedup, abort-when-unavailable), which
+parse_search_results()'s tests don't reach since they only exercise the
+pure helper, not the async function that drives it.
 """
 import json
 from decimal import Decimal
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+import scripts.discover_pichau_gpus as discover_pichau_gpus
 from src.core.base_scraper import StoreUnavailableException
+from src.core.contract import TargetUrlEntry
 from scripts.discover_pichau_gpus import _matches_chipset, parse_search_results
 
 
@@ -116,3 +122,109 @@ def test_parse_search_results_raises_store_unavailable_for_a_maintenance_page():
 
     with pytest.raises(StoreUnavailableException):
         parse_search_results(html, "rtx 5070 ti")
+
+
+def _target_url_entry(product_url: str, **overrides) -> TargetUrlEntry:
+    fields = {
+        "store_name": "pichau",
+        "search_keyword": "rtx 5070",
+        "product_url": product_url,
+        "brand": "MSI",
+        "model": None,
+        "product_title": "Existing product",
+    }
+    fields.update(overrides)
+    return TargetUrlEntry(**fields)
+
+
+def _found_row(product_url: str, search_keyword: str = "rtx 5070") -> dict:
+    return {
+        "store_name": "pichau",
+        "search_keyword": search_keyword,
+        "product_url": product_url,
+        "brand": "MSI",
+        "model": None,
+        "product_title": "Found product",
+        "_discovered_price_cash": Decimal("100.00"),
+    }
+
+
+@pytest.fixture
+def patched_discover(monkeypatch):
+    """
+    discover() drives real network I/O (Playwright) and a real DB repository
+    internally - patches those construction points so its own orchestration
+    logic (dedup against existing rows and within a single run, aborting
+    without writing when every search query is unavailable) can be tested
+    without either. parse_search_results() itself is patched too, since its
+    own correctness is already covered by the tests above - these tests are
+    only about what discover() does with what parse_search_results returns.
+    """
+    fake_page = MagicMock()
+    fake_page.goto = AsyncMock(return_value=None)
+    fake_page.content = AsyncMock(return_value="<html></html>")
+
+    fake_factory = MagicMock()
+    fake_factory.create = AsyncMock(return_value=fake_page)
+    fake_factory.close = AsyncMock(return_value=None)
+    monkeypatch.setattr(discover_pichau_gpus, "BrowserFactory", MagicMock(return_value=fake_factory))
+
+    monkeypatch.setattr(discover_pichau_gpus, "initialize_db_schema", AsyncMock(return_value=None))
+
+    fake_repo = MagicMock()
+    fake_repo.list_all = AsyncMock(return_value=[])
+    fake_repo.upsert_many = AsyncMock(return_value=0)
+    monkeypatch.setattr(discover_pichau_gpus, "PostgresTargetUrlRepository", MagicMock(return_value=fake_repo))
+
+    return fake_repo
+
+
+@pytest.mark.asyncio
+async def test_discover_dedupes_against_existing_rows_and_within_the_same_run(monkeypatch, patched_discover):
+    fake_repo = patched_discover
+    fake_repo.list_all = AsyncMock(return_value=[_target_url_entry("https://www.pichau.com.br/existing")])
+
+    def fake_parse_search_results(html, search_keyword):
+        if search_keyword == "rtx 5070":
+            return [_found_row("https://www.pichau.com.br/existing"), _found_row("https://www.pichau.com.br/new-1")]
+        return [_found_row("https://www.pichau.com.br/new-1", search_keyword), _found_row("https://www.pichau.com.br/new-2", search_keyword)]
+
+    monkeypatch.setattr(discover_pichau_gpus, "parse_search_results", fake_parse_search_results)
+
+    await discover_pichau_gpus.discover()
+
+    fake_repo.upsert_many.assert_called_once()
+    written_urls = {entry.product_url for entry in fake_repo.upsert_many.call_args[0][0]}
+    assert written_urls == {"https://www.pichau.com.br/new-1", "https://www.pichau.com.br/new-2"}
+
+
+@pytest.mark.asyncio
+async def test_discover_aborts_without_writing_when_every_query_is_unavailable(monkeypatch, patched_discover):
+    fake_repo = patched_discover
+
+    def fake_parse_search_results(html, search_keyword):
+        raise StoreUnavailableException("[pichau] Store appears to be down for maintenance.")
+
+    monkeypatch.setattr(discover_pichau_gpus, "parse_search_results", fake_parse_search_results)
+
+    await discover_pichau_gpus.discover()
+
+    fake_repo.upsert_many.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_discover_continues_when_only_one_query_is_unavailable(monkeypatch, patched_discover):
+    fake_repo = patched_discover
+
+    def fake_parse_search_results(html, search_keyword):
+        if search_keyword == "rtx 5070":
+            raise StoreUnavailableException("[pichau] Store appears to be down for maintenance.")
+        return [_found_row("https://www.pichau.com.br/new-1", search_keyword)]
+
+    monkeypatch.setattr(discover_pichau_gpus, "parse_search_results", fake_parse_search_results)
+
+    await discover_pichau_gpus.discover()
+
+    fake_repo.upsert_many.assert_called_once()
+    written_urls = {entry.product_url for entry in fake_repo.upsert_many.call_args[0][0]}
+    assert written_urls == {"https://www.pichau.com.br/new-1"}
