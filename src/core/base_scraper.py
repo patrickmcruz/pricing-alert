@@ -17,6 +17,20 @@ class SelectorOutdatedException(Exception):
     pass
 
 
+class StoreUnavailableException(Exception):
+    """
+    Raised when a scraper detects the store itself is down (maintenance page,
+    503, etc.) rather than its own selectors being stale - see
+    src.core.parsing_utils.has_maintenance_marker. Deliberately a different
+    exception than SelectorOutdatedException: the two look identical from
+    "a selector didn't match", but mean opposite things operationally - one
+    says "go fix the TOML", the other says "wait and retry, nothing to fix".
+    Conflating them would raise false selector-drift alarms every time a
+    store's maintenance page happens to be up during a scheduled run.
+    """
+    pass
+
+
 class BaseScraper(ABC):
     """
     Base abstraction for all scraper implementations.

@@ -64,6 +64,7 @@ class SkuRunStatus(str, Enum):
     TIMEOUT = "timeout"
     NO_PRICE = "no_price"
     SELECTOR_OUTDATED = "selector_outdated"
+    STORE_UNAVAILABLE = "store_unavailable"
 
 
 # Display-only labels for the failure_breakdown lines logged in
@@ -74,6 +75,7 @@ SKU_FAILURE_LABELS_PT: Dict[str, str] = {
     SkuRunStatus.TIMEOUT.value: "timeout",
     SkuRunStatus.NO_PRICE.value: "sem preço",
     SkuRunStatus.SELECTOR_OUTDATED.value: "seletor desatualizado",
+    SkuRunStatus.STORE_UNAVAILABLE.value: "loja indisponível",
 }
 
 

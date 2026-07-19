@@ -1,123 +1,659 @@
 [
   {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/37277/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-gaming-trio-oc-white-16gb-gddr7-dlss-ray-tracing",
-    "brand": "MSI",
-    "model": "Gaming Trio OC White",
-    "product_title": "Placa de Video MSI NVIDIA GeForce RTX 5070 Ti Gaming Trio OC White 16GB GDDR7 DLSS Ray Tracing"
-  },
-  {
     "store_name": "kabum",
     "search_keyword": "rtx 5070",
-    "brand": "MSI",
-    "model": "Shadow 2X OC",
-    "product_title": "Placa De Video Msi Rtx 5070 12gb Gddr7",
-    "product_url": "https://www.kabum.com.br/produto/875474/placa-de-video-msi-rtx-5070-12gb-gddr7-192-bits-shadow-2x-oc-912-v532-011"
-  },
-  {
-    "store_name": "kabum",
-    "search_keyword": "rtx 5070",
+    "product_url": "https://www.kabum.com.br/produto/725587/placa-de-video-msi-geforce-rtx-5070-12g-ventus-2x-oc-12-gb-gddr7-28gbps-nvidia-geforce-rtx-5070-g5070-12v2c",
     "brand": "MSI",
     "model": "Ventus 2X OC",
-    "product_title": "Placa De Video Msi Geforce Rtx 5070 12g Ventus 2x Oc",
-    "product_url": "https://www.kabum.com.br/produto/725587/placa-de-video-msi-geforce-rtx-5070-12g-ventus-2x-oc-12-gb-gddr7-28gbps-nvidia-geforce-rtx-5070-g5070-12v2c"
-  },
-  {
-    "store_name": "kabum",
-    "search_keyword": "rtx 5070 ti",
-    "brand": "MSI",
-    "model": "Shadow 3X OC",
-    "product_title": "Placa De Video Nvidia Geforce Msi Rtx5070ti 16gb",
-    "product_url": "https://www.kabum.com.br/produto/857022/placa-de-video-nvidia-geforce-msi-rtx5070ti-16gb-gddr7-256its-shadow-3x-oc-912-v531-097"
-  },
-  {
-    "store_name": "kabum",
-    "search_keyword": "rtx 5070 ti",
-    "brand": "Gainward",
-    "model": "Phoenix",
-    "product_title": "Placa De Video Gainward Rtx 5070 Ti Phoenix 16gb",
-    "product_url": "https://www.kabum.com.br/produto/996236/placa-de-video-gainward-rtx-5070-ti-phoenix-16gb-gddr7"
+    "product_title": "Placa De Video Msi Geforce Rtx 5070 12g Ventus 2x Oc"
   },
   {
     "store_name": "kabum",
     "search_keyword": "rx 9070 oc",
+    "product_url": "https://www.kabum.com.br/produto/725937/placa-de-video-xfx-swift-rx-9070-oc-triple-fan-gaming-edition-with-amd-radeon-16gb-gddr6-hdmi-3xdp-rdna-4-rx-97swfb3b9",
     "brand": "xfx",
     "model": "swift",
-    "product_title": "Placa De Video Xfx Swift Rx 9070 Oc Triple Fan Gaming Edition",
-    "product_url": "https://www.kabum.com.br/produto/725937/placa-de-video-xfx-swift-rx-9070-oc-triple-fan-gaming-edition-with-amd-radeon-16gb-gddr6-hdmi-3xdp-rdna-4-rx-97swfb3b9"
+    "product_title": "Placa De Video Xfx Swift Rx 9070 Oc Triple Fan Gaming Edition"
   },
   {
     "store_name": "kabum",
     "search_keyword": "rx 9070 xt",
+    "product_url": "https://www.kabum.com.br/produto/725947/placa-de-video-xfx-swift-rx-9070-xt-triple-fan-gaming-edition-with-amd-radeon-16gb-gddr6-hdmi-3xdp-rdna-4-rx-97tswf3b9",
     "brand": "xfx",
     "model": "swift",
-    "product_title": "Placa de Video Xfx Swift Rx 9070 Oc Triple Fan Gaming Edition",
-    "product_url": "https://www.kabum.com.br/produto/725947/placa-de-video-xfx-swift-rx-9070-xt-triple-fan-gaming-edition-with-amd-radeon-16gb-gddr6-hdmi-3xdp-rdna-4-rx-97tswf3b9"
+    "product_title": "Placa de Video Xfx Swift Rx 9070 Oc Triple Fan Gaming Edition"
+  },
+  {
+    "store_name": "kabum",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.kabum.com.br/produto/857022/placa-de-video-nvidia-geforce-msi-rtx5070ti-16gb-gddr7-256its-shadow-3x-oc-912-v531-097",
+    "brand": "MSI",
+    "model": "Shadow 3X OC",
+    "product_title": "Placa De Video Nvidia Geforce Msi Rtx5070ti 16gb"
+  },
+  {
+    "store_name": "kabum",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.kabum.com.br/produto/875474/placa-de-video-msi-rtx-5070-12gb-gddr7-192-bits-shadow-2x-oc-912-v532-011",
+    "brand": "MSI",
+    "model": "Shadow 2X OC",
+    "product_title": "Placa De Video Msi Rtx 5070 12gb Gddr7"
+  },
+  {
+    "store_name": "kabum",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.kabum.com.br/produto/996236/placa-de-video-gainward-rtx-5070-ti-phoenix-16gb-gddr7",
+    "brand": "Gainward",
+    "model": "Phoenix",
+    "product_title": "Placa De Video Gainward Rtx 5070 Ti Phoenix 16gb"
   },
   {
     "store_name": "mercado-livre",
     "search_keyword": "rtx 5070",
+    "product_url": "https://www.mercadolivre.com.br/placa-de-video-pny-nvidia-geforce-rtx-5070-oc-12gb-gddr7-dlss-ray-tracing-vcg507012tfxpb1-o/p/MLB53508354",
     "brand": "PNY",
     "model": "rtx 5070",
-    "product_title": "Placa De Video Pny Nvidia Geforce Rtx 5070 Oc",
-    "product_url": "https://www.mercadolivre.com.br/placa-de-video-pny-nvidia-geforce-rtx-5070-oc-12gb-gddr7-dlss-ray-tracing-vcg507012tfxpb1-o/p/MLB53508354"
+    "product_title": "Placa De Video Pny Nvidia Geforce Rtx 5070 Oc"
   },
   {
     "store_name": "mercado-livre",
     "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.mercadolivre.com.br/placa-de-video-zotac-rtx-5070ti-gaming-solid-sff-oc-16gb/p/MLB53264127",
     "brand": "Zotac",
     "model": "rtx 5070 ti",
-    "product_title": "Placa De Video Zotac Rtx 5070ti Gaming Solid Sff Oc",
-    "product_url": "https://www.mercadolivre.com.br/placa-de-video-zotac-rtx-5070ti-gaming-solid-sff-oc-16gb/p/MLB53264127"
+    "product_title": "Placa De Video Zotac Rtx 5070ti Gaming Solid Sff Oc"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-asus-geforce-rtx-5070-12gb-gddr7-192-bit-dual-rtx5070-12g",
+    "brand": "Asus",
+    "model": null,
+    "product_title": "Placa de Video Asus GeForce RTX 5070, 12GB, GDDR7, 192-bit, DUAL-RTX5070-12G"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-asus-geforce-rtx-5070-ats-rgb-oc-12gb-gddr7-192-bit-ats-rtx5070-o12g",
+    "brand": "Asus",
+    "model": null,
+    "product_title": "Placa de Video Asus GeForce RTX 5070 ATS RGB OC, 12GB, GDDR7, 192-bit, ATS-RTX5070-O12G"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-asus-geforce-rtx-5070-prime-oc-edition-12gb-gddr7-192-bit-prime-rtx5070-o12g",
+    "brand": "Asus",
+    "model": null,
+    "product_title": "Placa de Video Asus GeForce RTX 5070 Prime OC Edition, 12GB, GDDR7, 192-bit, PRIME-RTX5070-O12G"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-asus-geforce-rtx-5070-prime-oc-white-edition-12gb-gddr7-192-bit-prime-rtx5070-o12g-white",
+    "brand": "Asus",
+    "model": null,
+    "product_title": "Placa de Video Asus GeForce RTX 5070 Prime OC White Edition, 12GB, GDDR7, 192-bit, PRIME-RTX5070-O12G-WHITE"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-asus-geforce-rtx-5070-ti-16gb-gddr7-256-bit-prime-rtx5070ti-16g",
+    "brand": "Asus",
+    "model": null,
+    "product_title": "Placa de Video Asus GeForce RTX 5070 Ti, 16GB, GDDR7, 256-bit, PRIME-RTX5070TI-16G"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-asus-geforce-rtx-5070-ti-prime-16gb-gddr7-256-bit-prime-rtx5070ti-16g-nac",
+    "brand": "Asus",
+    "model": null,
+    "product_title": "Placa de Video Asus GeForce RTX 5070 Ti Prime, 16GB, GDDR7, 256-bit, PRIME-RTX5070TI-16G-NAC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-asus-geforce-rtx-5070-ti-prime-oc-edition-16gb-gddr7-256-bit-prime-rtx5070ti-o16g",
+    "brand": "Asus",
+    "model": null,
+    "product_title": "Placa de Video Asus GeForce RTX 5070 Ti Prime OC Edition, 16GB, GDDR7, 256-bit, PRIME-RTX5070TI-O16G"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-asus-geforce-rtx-5070-ti-prime-oc-edition-16gb-gddr7-256-bit-prime-rtx5070ti-o16g-nac",
+    "brand": "Asus",
+    "model": null,
+    "product_title": "Placa de Video Asus GeForce RTX 5070 Ti Prime OC Edition, 16GB, GDDR7, 256-bit, PRIME-RTX5070TI-O16G-NAC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-asus-geforce-rtx-5070-ti-tuf-gaming-oc-edition-16gb-gddr7-256-bit-tuf-rtx5070ti-o16g-gaming",
+    "brand": "Asus",
+    "model": null,
+    "product_title": "Placa de Video Asus GeForce RTX 5070 Ti TUF Gaming OC Edition, 16GB, GDDR7, 256-bit, TUF-RTX5070TI-O16G-GAMING"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-asus-rog-strix-geforce-rtx-5070-ti-oc-16gb-gddr7-256-bit-rog-strix-rtx5070ti-o16g-gaming",
+    "brand": "Asus",
+    "model": null,
+    "product_title": "Placa de Video Asus Rog Strix GeForce RTX 5070 TI OC, 16GB, GDDR7, 256-bit, ROG-STRIX-RTX5070TI-O16G-GAMING"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gainward-geforce-rtx-5070-phoenix-12gb-gddr7-192-bit-ne75070019k9-gb2050x-nac",
+    "brand": "Gainward",
+    "model": null,
+    "product_title": "Placa de Video Gainward GeForce RTX 5070 Phoenix, 12GB, GDDR7, 192-bit, NE75070019K9-GB2050X-NAC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gainward-geforce-rtx-5070-ti-phoenix-s-16gb-gddr7-256-bit-ne7507t019t2-gb2031k-nac",
+    "brand": "Gainward",
+    "model": null,
+    "product_title": "Placa de Video Gainward GeForce RTX 5070 Ti Phoenix-S, 16GB, GDDR7, 256-bit, NE7507T019T2-GB2031K-NAC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-galax-geforce-rtx-5070-1-click-oc-12gb-gddr7-192-bit-57non7mdbroc",
+    "brand": "Galax",
+    "model": null,
+    "product_title": "Placa de Video Galax GeForce RTX 5070 1-Click OC, 12GB, GDDR7, 192-bit, 57NON7MDBROC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-galax-geforce-rtx-5070-1-click-oc-12gb-gddr7-192-bit-57non7mdbroc-nac",
+    "brand": "Galax",
+    "model": null,
+    "product_title": "Placa de Video Galax GeForce RTX 5070 1-Click OC, 12GB, GDDR7, 192-bit, 57NON7MDBROC-NAC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-galax-geforce-rtx-5070-1-click-oc-white-12gb-gddr7-192-bit-57non7mdbswh",
+    "brand": "Galax",
+    "model": null,
+    "product_title": "Placa de Video Galax GeForce RTX 5070 1-Click OC White, 12GB, GDDR7, 192-bit, 57NON7MDBSWH"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-galax-geforce-rtx-5070-ti-ex-gamer-1-click-oc-16gb-gddr7-256-bit-57izn6mdbuex",
+    "brand": "Galax",
+    "model": null,
+    "product_title": "Placa de Video Galax GeForce RTX 5070 Ti EX Gamer 1-Click OC, 16GB, GDDR7, 256-bit, 57IZN6MDBUEX"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-galax-geforce-rtx-5070-ti-ex-gamer-1-click-oc-16gb-gddr7-256-bit-57izn6mdbuex-nac",
+    "brand": "Galax",
+    "model": null,
+    "product_title": "Placa de Video Galax GeForce RTX 5070 Ti EX Gamer 1-Click OC, 16GB, GDDR7, 256-bit, 57IZN6MDBUEX-NAC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gigabyte-geforce-rtx-5070-aero-oc-12gb-gddr7-192-bit-gv-n5070aero-oc-12gd",
+    "brand": "Gigabyte",
+    "model": null,
+    "product_title": "Placa de Video Gigabyte GeForce RTX 5070 Aero OC, 12GB, GDDR7, 192-bit, GV-N5070AERO-OC-12GD"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gigabyte-geforce-rtx-5070-aorus-master-12gb-gddr7-192-bit-gv-n5070aorus-m-12gd",
+    "brand": "Gigabyte",
+    "model": null,
+    "product_title": "Placa de Video Gigabyte GeForce RTX 5070 Aorus Master, 12GB, GDDR7, 192-bit, GV-N5070AORUS-M-12GD"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gigabyte-geforce-rtx-5070-eagle-oc-ice-12gb-gddr7-192-bit-gv-n5070eagleoc-ice-12gd",
+    "brand": "Gigabyte",
+    "model": null,
+    "product_title": "Placa de Video Gigabyte GeForce RTX 5070 Eagle OC Ice, 12GB, GDDR7, 192-bit, GV-N5070EAGLEOC-ICE-12GD"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gigabyte-geforce-rtx-5070-eagle-oc-sff-12gb-gddr7-192-bit-gv-n5070eagle-oc-12gd",
+    "brand": "Gigabyte",
+    "model": null,
+    "product_title": "Placa de Video Gigabyte GeForce RTX 5070 Eagle OC SFF, 12GB, GDDR7, 192-bit, GV-N5070EAGLE-OC-12GD"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gigabyte-geforce-rtx-5070-gaming-oc-12gb-gddr7-192-bit-gv-n5070gaming-oc-12gd",
+    "brand": "Gigabyte",
+    "model": null,
+    "product_title": "Placa de Video Gigabyte GeForce RTX 5070 Gaming OC, 12GB, GDDR7, 192-bit, GV-N5070GAMING-OC-12GD"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gigabyte-geforce-rtx-5070-ti-aero-oc-16gb-gddr7-256-bit-gv-n507taero-oc-16gd",
+    "brand": "Gigabyte",
+    "model": null,
+    "product_title": "Placa de Video Gigabyte GeForce RTX 5070 Ti Aero OC, 16GB, GDDR7, 256-bit, GV-N507TAERO-OC-16GD"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gigabyte-geforce-rtx-5070-ti-aorus-master-16gb-gddr7-256-bit-gv-n507taorus-m-16gd",
+    "brand": "Gigabyte",
+    "model": null,
+    "product_title": "Placa de Video Gigabyte GeForce RTX 5070 Ti Aorus Master, 16GB, GDDR7, 256-bit, GV-N507TAORUS-M-16GD"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gigabyte-geforce-rtx-5070-ti-aorus-master-16gb-gddr7-256-bit-gv-n507taorus-m-16gd-nac",
+    "brand": "Gigabyte",
+    "model": null,
+    "product_title": "Placa de Video Gigabyte GeForce RTX 5070 Ti Aorus Master, 16GB, GDDR7, 256-bit, GV-N507TAORUS-M-16GD-NAC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gigabyte-geforce-rtx-5070-ti-eagle-oc-ice-sff-16gb-gddr7-256-bit-gv-n507teagleoc-ice-16gd",
+    "brand": "Gigabyte",
+    "model": null,
+    "product_title": "Placa de Video Gigabyte GeForce RTX 5070 Ti Eagle OC Ice SFF, 16GB, GDDR7, 256-bit, GV-N507TEAGLEOC-ICE-16GD"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gigabyte-geforce-rtx-5070-ti-eagle-oc-sff-16gb-gddr7-256-bit-gv-n507teagle-oc-16gd",
+    "brand": "Gigabyte",
+    "model": null,
+    "product_title": "Placa de Video Gigabyte GeForce RTX 5070 Ti Eagle OC SFF, 16GB, GDDR7, 256-bit, GV-N507TEAGLE-OC-16GD"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gigabyte-geforce-rtx-5070-ti-gaming-oc-16gb-gddr7-256-bit-gv-n507tgaming-oc-16gd",
+    "brand": "Gigabyte",
+    "model": null,
+    "product_title": "Placa de Video Gigabyte GeForce RTX 5070 Ti Gaming OC, 16GB, GDDR7, 256-bit, GV-N507TGAMING-OC-16GD"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gigabyte-geforce-rtx-5070-ti-windforce-oc-sff-16gb-gddr7-256-bit-gv-n507twf3oc-16gd",
+    "brand": "Gigabyte",
+    "model": null,
+    "product_title": "Placa de Video Gigabyte GeForce RTX 5070 Ti Windforce OC SFF, 16GB, GDDR7, 256-bit, GV-N507TWF3OC-16GD"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gigabyte-geforce-rtx-5070-ti-windforce-sff-16gb-gddr7-256-bit-gv-n507twf3-16gd",
+    "brand": "Gigabyte",
+    "model": null,
+    "product_title": "Placa de Video Gigabyte GeForce RTX 5070 Ti Windforce SFF, 16GB, GDDR7, 256-bit, GV-N507TWF3-16GD"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gigabyte-geforce-rtx-5070-ti-winforce-oc-v2-16gb-gddr7-256-bit-gv-n507twf3ocv2-16gd",
+    "brand": "Gigabyte",
+    "model": null,
+    "product_title": "Placa de Video Gigabyte GeForce RTX 5070 Ti Winforce OC V2, 16GB, GDDR7, 256-bit, GV-N507TWF3OCV2-16GD"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-gigabyte-geforce-rtx-5070-windforce-oc-sff-12gb-gddr7-192-bit-gv-n5070wf3oc-12gd",
+    "brand": "Gigabyte",
+    "model": null,
+    "product_title": "Placa de Video Gigabyte GeForce RTX 5070 Windforce OC SFF, 12GB, GDDR7, 192-bit, GV-N5070WF3OC-12GD"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-inno3d-geforce-rtx-5070-ti-x3-16gb-gddr7-256-bit-n507t3-16d7-176068n",
+    "brand": "INNO3D",
+    "model": null,
+    "product_title": "Placa de Video INNO3D GeForce RTX 5070 Ti X3, 16GB, GDDR7, 256-bit, N507T3-16D7-176068N"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-inno3d-geforce-rtx-5070-ti-x3-oc-16gb-gddr7-256-bit-n507t3-16d7x-176068n",
+    "brand": "INNO3D",
+    "model": null,
+    "product_title": "Placa de Video INNO3D GeForce RTX 5070 Ti X3 OC, 16GB, GDDR7, 256-bit, N507T3-16D7X-176068N"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-inno3d-geforce-rtx-5070-ti-x3-oc-white-16gb-gddr7-256-bit-n507t3-16d7x-176068w",
+    "brand": "INNO3D",
+    "model": null,
+    "product_title": "Placa de Video INNO3D GeForce RTX 5070 Ti X3 OC White, 16GB, GDDR7, 256-bit, N507T3-16D7X-176068W"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-inno3d-geforce-rtx-5070-twin-x2-12gb-gddr7-192-bit-n50702-12d7-195064n",
+    "brand": "INNO3D",
+    "model": null,
+    "product_title": "Placa de Video INNO3D GeForce RTX 5070 Twin X2, 12GB, GDDR7, 192-bit, N50702-12D7-195064N"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-inno3d-geforce-rtx-5070-twin-x2-12gb-gddr7-192-bit-n50702-12d7-195064n-nac",
+    "brand": "INNO3D",
+    "model": null,
+    "product_title": "Placa de Video INNO3D GeForce RTX 5070 Twin X2, 12GB, GDDR7, 192-bit, N50702-12D7-195064N-NAC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-inno3d-geforce-rtx-5070-twin-x2-oc-12gb-gddr7-192-bit-n50702-12d7x-195064n",
+    "brand": "INNO3D",
+    "model": null,
+    "product_title": "Placa de Video INNO3D GeForce RTX 5070 Twin X2 OC, 12GB, GDDR7, 192-bit, N50702-12D7X-195064N"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-inno3d-geforce-rtx-5070-twin-x2-oc-white-12gb-gddr7-192-bit-n50702-12d7x-195064w",
+    "brand": "INNO3D",
+    "model": null,
+    "product_title": "Placa de Video INNO3D GeForce RTX 5070 Twin X2 OC White, 12GB, GDDR7, 192-bit, N50702-12D7X-195064W"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-inno3d-geforce-rtx-5070-twin-x2-oc-white-12gb-gddr7-192-bit-n50702-12d7x-195064w-nac",
+    "brand": "INNO3D",
+    "model": null,
+    "product_title": "Placa de Video INNO3D GeForce RTX 5070 Twin X2 OC White, 12GB, GDDR7, 192-bit, N50702-12D7X-195064W-NAC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-inno3d-geforce-rtx-5070-x3-oc-12gb-gddr7-192-bit-n50703-12d7x-195064l",
+    "brand": "INNO3D",
+    "model": null,
+    "product_title": "Placa de Video INNO3D GeForce RTX 5070 X3 OC, 12GB, GDDR7, 192-bit, N50703-12D7X-195064L"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-inno3d-geforce-rtx-5070-x3-oc-12gb-gddr7-192-bit-n50703-12d7x-195064l-nac",
+    "brand": "INNO3D",
+    "model": null,
+    "product_title": "Placa de Video INNO3D GeForce RTX 5070 X3 OC, 12GB, GDDR7, 192-bit, N50703-12D7X-195064L-NAC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-msi-geforce-rtx-5070-shadow-2x-oc-12gb-gddr7-192-bit-g5070-12s2c",
+    "brand": "MSI",
+    "model": null,
+    "product_title": "Placa de Video MSI GeForce RTX 5070 Shadow 2X OC, 12GB, GDDR7, 192-bit, G5070-12S2C"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-msi-geforce-rtx-5070-shadow-2x-oc-12gb-gddr7-192-bit-g5070-12s2c-nac",
+    "brand": "MSI",
+    "model": null,
+    "product_title": "Placa de Video MSI GeForce RTX 5070 Shadow 2X OC, 12GB, GDDR7, 192-bit, G5070-12S2C-NAC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-msi-geforce-rtx-5070-shadow-3x-oc-12gb-gddr7-192-bit-g5070-12s3c",
+    "brand": "MSI",
+    "model": null,
+    "product_title": "Placa de Video MSI GeForce RTX 5070 Shadow 3X OC, 12GB, GDDR7, 192-bit, G5070-12S3C"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-msi-geforce-rtx-5070-ti-gaming-trio-3x-oc-16gb-gddr7-256-bit-912-v531-272-nac",
+    "brand": "MSI",
+    "model": null,
+    "product_title": "Placa de Video MSI GeForce RTX 5070 Ti Gaming Trio 3X OC, 16GB, GDDR7, 256-bit, 912-V531-272-NAC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-msi-geforce-rtx-5070-ti-gaming-trio-oc-plus-16gb-gddr7-256-bit-g507t-16gtcp",
+    "brand": "MSI",
+    "model": null,
+    "product_title": "Placa de Video MSI GeForce RTX 5070 Ti Gaming Trio OC Plus, 16GB, GDDR7, 256-bit, G507T-16GTCP"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-msi-geforce-rtx-5070-ti-inspire-3x-oc-16gb-gddr7-256-bit-g507t-16i3c",
+    "brand": "MSI",
+    "model": null,
+    "product_title": "Placa de Video MSI GeForce RTX 5070 Ti Inspire 3X OC, 16GB, GDDR7, 256-bit, G507T-16I3C"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-msi-geforce-rtx-5070-ti-inspire-3x-oc-16gb-gddr7-256-bit-g507t-16i3c-nac",
+    "brand": "MSI",
+    "model": null,
+    "product_title": "Placa de Video MSI GeForce RTX 5070 Ti Inspire 3X OC, 16GB, GDDR7, 256-bit, G507T-16I3C-NAC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-msi-geforce-rtx-5070-ti-shadow-3x-oc-16gb-gddr7-256-bit-g507t-16s3c",
+    "brand": "MSI",
+    "model": null,
+    "product_title": "Placa de Video MSI GeForce RTX 5070 Ti Shadow 3X OC, 16GB, GDDR7, 256-bit, G507T-16S3C"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-msi-geforce-rtx-5070-ti-vanguard-soc-launch-edition-16gb-gddr7-256-bit-g507t-16vgsl",
+    "brand": "MSI",
+    "model": null,
+    "product_title": "Placa de Video MSI GeForce RTX 5070 Ti Vanguard SOC Launch Edition, 16GB, GDDR7, 256-bit, G507T-16VGSL"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-msi-geforce-rtx-5070-ti-ventus-3x-oc-16gb-gddr7-256-bit-g507t-16v3c",
+    "brand": "MSI",
+    "model": null,
+    "product_title": "Placa de Video MSI GeForce RTX 5070 Ti Ventus 3X OC, 16GB, GDDR7, 256-bit, G507T-16V3C"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-msi-geforce-rtx-5070-ti-ventus-3x-oc-16gb-gddr7-256-bit-g507t-16v3c-nac",
+    "brand": "MSI",
+    "model": null,
+    "product_title": "Placa de Video MSI GeForce RTX 5070 Ti Ventus 3X OC, 16GB, GDDR7, 256-bit, G507T-16V3C-NAC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-msi-geforce-rtx-5070-ventus-2x-oc-12gb-gddr7-192-bit-g5070-12v2c",
+    "brand": "MSI",
+    "model": null,
+    "product_title": "Placa de Video MSI GeForce RTX 5070 Ventus 2X OC, 12GB, GDDR7, 192-bit, G5070-12V2C"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-msi-geforce-rtx-5070-ventus-2x-oc-white-12gb-gddr7-192-bit-g5070-12v2cw",
+    "brand": "MSI",
+    "model": null,
+    "product_title": "Placa de Video MSI GeForce RTX 5070 Ventus 2X OC White, 12GB, GDDR7, 192-bit, G5070-12V2CW"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-msi-geforce-rtx-5070-ventus-3x-oc-12gb-gddr7-192-bit-g5070-12v3c",
+    "brand": "MSI",
+    "model": null,
+    "product_title": "Placa de Video MSI GeForce RTX 5070 Ventus 3X OC, 12GB, GDDR7, 192-bit, G5070-12V3C"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-palit-geforce-rtx-5070-gaming-pro-12gb-gddr7-192-bit-ne75070019k9-gb2050a",
+    "brand": "PALIT",
+    "model": null,
+    "product_title": "Placa de Video Palit GeForce RTX 5070 Gaming Pro, 12GB, GDDR7, 192-bit, NE75070019K9-GB2050A"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-palit-geforce-rtx-5070-gaming-pro-s-12gb-gddr7-192-bit-ne75070019k9-gb2050u",
+    "brand": "PALIT",
+    "model": null,
+    "product_title": "Placa de Video Palit GeForce RTX 5070 Gaming Pro-S, 12GB, GDDR7, 192-bit, NE75070019K9-GB2050U"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-palit-geforce-rtx-5070-gaming-pro-s-oc-12gb-gddr7-192-bit-ne75070t19k9-gb2050u",
+    "brand": "PALIT",
+    "model": null,
+    "product_title": "Placa de Video Palit GeForce RTX 5070 Gaming Pro-S OC, 12GB, GDDR7, 192-bit, NE75070T19K9-GB2050U"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-palit-geforce-rtx-5070-infinity-3-12gb-gddr7-192-bit-ne75070019k9-gb2050s",
+    "brand": "PALIT",
+    "model": null,
+    "product_title": "Placa de Video Palit GeForce RTX 5070 Infinity 3, 12GB, GDDR7, 192-bit, NE75070019K9-GB2050S"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-palit-geforce-rtx-5070-infinity-3-12gb-gddr7-192-bit-ne75070019k9-gb2050s-nac",
+    "brand": "PALIT",
+    "model": null,
+    "product_title": "Placa de Video Palit GeForce RTX 5070 Infinity 3, 12GB, GDDR7, 192-bit, NE75070019K9-GB2050S-NAC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-palit-geforce-rtx-5070-infinity-3-oc-12gb-gddr7-192-bit-ne75070s19k9-gb2050s-nac",
+    "brand": "PALIT",
+    "model": null,
+    "product_title": "Placa de Video Palit GeForce RTX 5070 Infinity 3 OC, 12GB, GDDR7, 192-bit, NE75070S19K9-GB2050S-NAC"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-palit-geforce-rtx-5070-ti-gaming-pro-16gb-gddr7-256-bit-ne7507t019t2-gb2031a",
+    "brand": "PALIT",
+    "model": null,
+    "product_title": "Placa de Video Palit GeForce RTX 5070 Ti Gaming Pro, 16GB, GDDR7, 256-bit, NE7507T019T2-GB2031A"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-palit-geforce-rtx-5070-ti-gaming-pro-oc-16gb-gddr7-256-bit-ne7507ts19t2-gb2031a",
+    "brand": "PALIT",
+    "model": null,
+    "product_title": "Placa de Video Palit GeForce RTX 5070 Ti Gaming Pro OC, 16GB, GDDR7, 256-bit, NE7507TS19T2-GB2031A"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-palit-geforce-rtx-5070-ti-gaming-pro-s-16gb-gddr7-256-bit-ne7507t019t2-gb2031u",
+    "brand": "PALIT",
+    "model": null,
+    "product_title": "Placa de Video Palit GeForce RTX 5070 Ti Gaming Pro-S, 16GB, GDDR7, 256-bit, NE7507T019T2-GB2031U"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-palit-geforce-rtx-5070-ti-gaming-pro-s-oc-16gb-gddr7-256-bit-ne7507ts19t2-gb2031u",
+    "brand": "PALIT",
+    "model": null,
+    "product_title": "Placa de Video Palit GeForce RTX 5070 Ti Gaming Pro-S OC, 16GB, GDDR7, 256-bit, NE7507TS19T2-GB2031U"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-palit-geforce-rtx-5070-white-oc-12gb-gddr7-192-bit-ne75070u19k9-gb2050w",
+    "brand": "PALIT",
+    "model": null,
+    "product_title": "Placa de Video Palit GeForce RTX 5070 White OC, 12GB, GDDR7, 192-bit, NE75070U19K9-GB2050W"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-pny-geforce-rtx-5070-epic-x-oc-12gb-gddr7-192-bit-vcg507012tfxxpb1-o",
+    "brand": "PNY",
+    "model": null,
+    "product_title": "Placa de Video PNY GeForce RTX 5070 Epic-X OC, 12GB, GDDR7, 192-bit, VCG507012TFXXPB1-O"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.pichau.com.br/placa-de-video-pny-geforce-rtx-5070-oc-triple-fan-12gb-gddr7-192-bit-vcg507012tfxpb1-o",
+    "brand": "PNY",
+    "model": null,
+    "product_title": "Placa de Video PNY GeForce RTX 5070 OC Triple Fan, 12GB, GDDR7, 192-bit, VCG507012TFXPB1-O"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-pny-geforce-rtx-5070-ti-argb-epic-x-oc-triple-fan-16gb-gddr7-256-bit-vcg5070t16tfxxpb1-o",
+    "brand": "PNY",
+    "model": null,
+    "product_title": "Placa de Video PNY GeForce RTX 5070 Ti ARGB Epic-X OC Triple Fan, 16GB, GDDR7, 256-bit, VCG5070T16TFXXPB1-O"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-pny-geforce-rtx-5070-ti-oc-triple-fan-16gb-gddr7-256-bit-vcg5070t16tfxpb1-o",
+    "brand": "PNY",
+    "model": null,
+    "product_title": "Placa de Video PNY GeForce RTX 5070 Ti OC Triple Fan, 16GB, GDDR7, 256-bit, VCG5070T16TFXPB1-O"
+  },
+  {
+    "store_name": "pichau",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.pichau.com.br/placa-de-video-zotac-gaming-geforce-rtx-5070-ti-solid-sff-oc-16gb-gddr7-256-bit-zt-b50710j3-10p-nac",
+    "brand": "Zotac",
+    "model": null,
+    "product_title": "Placa de Video Zotac Gaming GeForce RTX 5070 Ti Solid SFF OC, 16GB, GDDR7, 256-bit, ZT-B50710J3-10P-NAC"
   },
   {
     "store_name": "terabyte",
     "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/39450/placa-de-video-pny-nvidia-geforce-rtx-5070-ti-oc-16gb-gddr7-dlss-ray-tracing-vcg5070t16tfxpb1-o",
-    "brand": "Unknown",
-    "model": "Placa De Video Pny NVIDIA Geforce RTX 5070 Ti Oc 16gb Gddr7 Dlss Ray Tracing Vcg5070t16tfxpb1 O",
-    "product_title": "Placa De Video Pny NVIDIA Geforce RTX 5070 Ti Oc 16gb Gddr7 Dlss Ray Tracing Vcg5070t16tfxpb1 O"
+    "product_url": "https://www.terabyteshop.com.br/produto/34579/placa-de-video-asus-prime-nvidia-geforce-rtx-5070-ti-oc-edition-16gb-gddr7-dlss-ray-tracing-prime-rtx5070ti-o16g",
+    "brand": "ASUS",
+    "model": "Placa De Video ASUS Prime NVIDIA Geforce RTX 5070 Ti Oc Edition 16gb Gddr7 Dlss Ray Tracing Prime RTX5070ti O16g",
+    "product_title": "Placa De Video ASUS Prime NVIDIA Geforce RTX 5070 Ti Oc Edition 16gb Gddr7 Dlss Ray Tracing Prime RTX5070ti O16g"
   },
   {
     "store_name": "terabyte",
     "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/37704/placa-de-video-palit-nvidia-geforce-rtx-5070-ti-gamingpro-s-16gb-gddr7-dlss-ray-tracing-ne7507t019t2-gb2031u",
-    "brand": "Palit",
-    "model": "Placa De Video Palit NVIDIA Geforce RTX 5070 Ti Gamingpro S 16gb Gddr7 Dlss Ray Tracing Ne7507t019t2 Gb2031u",
-    "product_title": "Placa De Video Palit NVIDIA Geforce RTX 5070 Ti Gamingpro S 16gb Gddr7 Dlss Ray Tracing Ne7507t019t2 Gb2031u"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/42069/placa-de-video-colorful-nvidia-geforce-rtx-5070-ti-battle-ax-16gb-gddr7-dlss-ray-tracing",
-    "brand": "Unknown",
-    "model": "Placa De Video Colorful NVIDIA Geforce RTX 5070 Ti Battle Ax 16gb Gddr7 Dlss Ray Tracing",
-    "product_title": "Placa De Video Colorful NVIDIA Geforce RTX 5070 Ti Battle Ax 16gb Gddr7 Dlss Ray Tracing"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/35242/placa-de-video-palit-nvidia-geforce-rtx-5070-infinity-3-12gb-gddr7-dlss-ray-tracing-ne75070019k9-gb2050s",
-    "brand": "Palit",
-    "model": "Placa De Video Palit NVIDIA Geforce RTX 5070 Infinity 3 12gb Gddr7 Dlss Ray Tracing Ne75070019k9 Gb2050s",
-    "product_title": "Placa De Video Palit NVIDIA Geforce RTX 5070 Infinity 3 12gb Gddr7 Dlss Ray Tracing Ne75070019k9 Gb2050s"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/39452/placa-de-video-pny-nvidia-geforce-rtx-5070-oc-12gb-gddr7-dlss-ray-tracing-vcg507012tfxpb1-o",
-    "brand": "Unknown",
-    "model": "Placa De Video Pny NVIDIA Geforce RTX 5070 Oc 12gb Gddr7 Dlss Ray Tracing Vcg507012tfxpb1 O",
-    "product_title": "Placa De Video Pny NVIDIA Geforce RTX 5070 Oc 12gb Gddr7 Dlss Ray Tracing Vcg507012tfxpb1 O"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/40135/placa-de-video-palit-nvidia-geforce-rtx-5070-white-oc-12gb-gddr7-dlss-ray-tracing-ne75070u19k9-gb2050w",
-    "brand": "Palit",
-    "model": "Placa De Video Palit NVIDIA Geforce RTX 5070 White Oc 12gb Gddr7 Dlss Ray Tracing Ne75070u19k9 Gb2050w",
-    "product_title": "Placa De Video Palit NVIDIA Geforce RTX 5070 White Oc 12gb Gddr7 Dlss Ray Tracing Ne75070u19k9 Gb2050w"
+    "product_url": "https://www.terabyteshop.com.br/produto/34580/placa-de-video-asus-tuf-gaming-nvidia-geforce-rtx-5070-ti-oc-edition-16gb-gddr7-dlss-ray-tracing-tuf-rtx5070ti-o16g-gaming",
+    "brand": "ASUS",
+    "model": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Ti Oc Edition 16gb Gddr7 Dlss Ray Tracing Tuf RTX5070ti O16g Gaming",
+    "product_title": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Ti Oc Edition 16gb Gddr7 Dlss Ray Tracing Tuf RTX5070ti O16g Gaming"
   },
   {
     "store_name": "terabyte",
@@ -130,26 +666,18 @@
   {
     "store_name": "terabyte",
     "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/34700/placa-de-video-inno3d-nvidia-geforce-rtx-5070-twin-x3-oc-12gb-gddr7-dlss-ray-tracing-n50703-12d7x-195064l",
+    "brand": "Inno3D",
+    "model": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Twin X3 Oc 12gb Gddr7 Dlss Ray Tracing N50703 12d7x 195064l",
+    "product_title": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Twin X3 Oc 12gb Gddr7 Dlss Ray Tracing N50703 12d7x 195064l"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
     "product_url": "https://www.terabyteshop.com.br/produto/34702/placa-de-video-inno3d-nvidia-geforce-rtx-5070-twin-x2-oc-white-12gb-gddr7-dlss-ray-tracing-n50702-12d7x-195064w",
     "brand": "Inno3D",
     "model": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Twin X2 Oc White 12gb Gddr7 Dlss Ray Tracing N50702 12d7x 195064w",
     "product_title": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Twin X2 Oc White 12gb Gddr7 Dlss Ray Tracing N50702 12d7x 195064w"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/34888/placa-de-video-gigabyte-nvidia-geforce-rtx-5070-eagle-oc-sff-12gb-gddr7-dlss-ray-tracing-gv-n5070eagle-oc-12gd",
-    "brand": "Gigabyte",
-    "model": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Eagle Oc Sff 12gb Gddr7 Dlss Ray Tracing Gv N5070eagle Oc 12gd",
-    "product_title": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Eagle Oc Sff 12gb Gddr7 Dlss Ray Tracing Gv N5070eagle Oc 12gd"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/36347/placa-de-video-msi-nvidia-geforce-rtx-5070-ventus-3x-oc-12gb-gddr7-dlss-ray-tracing-g5070-12v3c",
-    "brand": "MSI",
-    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ventus 3x Oc 12gb Gddr7 Dlss Ray Tracing G5070 12v3c",
-    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ventus 3x Oc 12gb Gddr7 Dlss Ray Tracing G5070 12v3c"
   },
   {
     "store_name": "terabyte",
@@ -161,46 +689,6 @@
   },
   {
     "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/42210/placa-de-video-pny-nvidia-geforce-rtx-5070-epic-x-rgb-oc-triple-fan-12gb-gddr7-dlss-ray-tracing-vcg507012tfxxpb1-o",
-    "brand": "Unknown",
-    "model": "Placa De Video Pny NVIDIA Geforce RTX 5070 Epic X Rgb Oc Triple Fan 12gb Gddr7 Dlss Ray Tracing Vcg507012tfxxpb1 O",
-    "product_title": "Placa De Video Pny NVIDIA Geforce RTX 5070 Epic X Rgb Oc Triple Fan 12gb Gddr7 Dlss Ray Tracing Vcg507012tfxxpb1 O"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/34836/placa-de-video-asus-prime-nvidia-geforce-rtx-5070-oc-edition-12gb-gddr7-dlss-ray-tracing-90yv0m10-m0na00",
-    "brand": "ASUS",
-    "model": "Placa De Video ASUS Prime NVIDIA Geforce RTX 5070 Oc Edition 12gb Gddr7 Dlss Ray Tracing 90yv0m10 M0na00",
-    "product_title": "Placa De Video ASUS Prime NVIDIA Geforce RTX 5070 Oc Edition 12gb Gddr7 Dlss Ray Tracing 90yv0m10 M0na00"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/36116/placa-de-video-zotac-gaming-nvidia-geforce-rtx-5070-solid-oc-12gb-gddr7-dlss-ray-tracing-zt-b50700j-10p",
-    "brand": "Unknown",
-    "model": "Placa De Video Zotac Gaming NVIDIA Geforce RTX 5070 Solid Oc 12gb Gddr7 Dlss Ray Tracing Zt B50700j 10p",
-    "product_title": "Placa De Video Zotac Gaming NVIDIA Geforce RTX 5070 Solid Oc 12gb Gddr7 Dlss Ray Tracing Zt B50700j 10p"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/42078/placa-de-video-colorful-igame-nvidia-geforce-rtx-5070-ultra-w-oc-12gb-gddr7-dlss-ray-tracing-white",
-    "brand": "Unknown",
-    "model": "Placa De Video Colorful Igame NVIDIA Geforce RTX 5070 Ultra W Oc 12gb Gddr7 Dlss Ray Tracing White",
-    "product_title": "Placa De Video Colorful Igame NVIDIA Geforce RTX 5070 Ultra W Oc 12gb Gddr7 Dlss Ray Tracing White"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/40616/placa-de-video-asus-dual-nvidia-geforce-rtx-5070-oc-12gb-gddr7-dlss-ray-tracing-90yv0m17-m0na00",
-    "brand": "ASUS",
-    "model": "Placa De Video ASUS Dual NVIDIA Geforce RTX 5070 Oc 12gb Gddr7 Dlss Ray Tracing 90yv0m17 M0na00",
-    "product_title": "Placa De Video ASUS Dual NVIDIA Geforce RTX 5070 Oc 12gb Gddr7 Dlss Ray Tracing 90yv0m17 M0na00"
-  },
-  {
-    "store_name": "terabyte",
     "search_keyword": "rtx 5070 ti",
     "product_url": "https://www.terabyteshop.com.br/produto/34716/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-ventus-3x-oc-16gb-gddr7-dlss-ray-tracing-g507t-16v3c",
     "brand": "MSI",
@@ -209,19 +697,19 @@
   },
   {
     "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/36523/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-inspire-3x-oc-16gb-gddr7-dlss-ray-tracing-912-v531-273",
-    "brand": "MSI",
-    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Inspire 3x Oc 16gb Gddr7 Dlss Ray Tracing 912 V531 273",
-    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Inspire 3x Oc 16gb Gddr7 Dlss Ray Tracing 912 V531 273"
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/34833/placa-de-video-asus-tuf-gaming-nvidia-geforce-rtx-5070-oc-edition-12gb-gddr7-dlss-ray-tracing-90yv0lz0-m0na00",
+    "brand": "ASUS",
+    "model": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Oc Edition 12gb Gddr7 Dlss Ray Tracing 90yv0lz0 M0na00",
+    "product_title": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Oc Edition 12gb Gddr7 Dlss Ray Tracing 90yv0lz0 M0na00"
   },
   {
     "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/37443/placa-de-video-inno3d-nvidia-geforce-rtx-5070-ti-x3-16gb-gddr7-dlss-ray-tracing-n507t3-16d7-176068n",
-    "brand": "Inno3D",
-    "model": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Ti X3 16gb Gddr7 Dlss Ray Tracing N507t3 16d7 176068n",
-    "product_title": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Ti X3 16gb Gddr7 Dlss Ray Tracing N507t3 16d7 176068n"
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/34836/placa-de-video-asus-prime-nvidia-geforce-rtx-5070-oc-edition-12gb-gddr7-dlss-ray-tracing-90yv0m10-m0na00",
+    "brand": "ASUS",
+    "model": "Placa De Video ASUS Prime NVIDIA Geforce RTX 5070 Oc Edition 12gb Gddr7 Dlss Ray Tracing 90yv0m10 M0na00",
+    "product_title": "Placa De Video ASUS Prime NVIDIA Geforce RTX 5070 Oc Edition 12gb Gddr7 Dlss Ray Tracing 90yv0m10 M0na00"
   },
   {
     "store_name": "terabyte",
@@ -265,6 +753,54 @@
   },
   {
     "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/34880/placa-de-video-gigabyte-nvidia-geforce-rtx-5070-aorus-master-12gb-gddr7-dlss-ray-tracing-gv-n5070aorus-m-12gd",
+    "brand": "Gigabyte",
+    "model": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Aorus Master 12gb Gddr7 Dlss Ray Tracing Gv N5070aorus M 12gd",
+    "product_title": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Aorus Master 12gb Gddr7 Dlss Ray Tracing Gv N5070aorus M 12gd"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/34882/placa-de-video-gigabyte-nvidia-geforce-rtx-5070-aero-oc-12gb-gddr7-dlss-ray-tracing-gv-n5070aero-oc-12gd",
+    "brand": "Gigabyte",
+    "model": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Aero Oc 12gb Gddr7 Dlss Ray Tracing Gv N5070aero Oc 12gd",
+    "product_title": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Aero Oc 12gb Gddr7 Dlss Ray Tracing Gv N5070aero Oc 12gd"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/34884/placa-de-video-gigabyte-nvidia-geforce-rtx-5070-gaming-oc-12gb-gddr7-dlss-ray-tracing-gv-n5070gaming-oc-12gd",
+    "brand": "Gigabyte",
+    "model": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Gaming Oc 12gb Gddr7 Dlss Ray Tracing Gv N5070gaming Oc 12gd",
+    "product_title": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Gaming Oc 12gb Gddr7 Dlss Ray Tracing Gv N5070gaming Oc 12gd"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/34886/placa-de-video-gigabyte-nvidia-geforce-rtx-5070-eagle-oc-ice-sff-12gb-gddr7-dlss-ray-tracing-gv-n5070eagleoc-ice-12gd",
+    "brand": "Gigabyte",
+    "model": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Eagle Oc Ice Sff 12gb Gddr7 Dlss Ray Tracing Gv N5070eagleoc Ice 12gd",
+    "product_title": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Eagle Oc Ice Sff 12gb Gddr7 Dlss Ray Tracing Gv N5070eagleoc Ice 12gd"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/34888/placa-de-video-gigabyte-nvidia-geforce-rtx-5070-eagle-oc-sff-12gb-gddr7-dlss-ray-tracing-gv-n5070eagle-oc-12gd",
+    "brand": "Gigabyte",
+    "model": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Eagle Oc Sff 12gb Gddr7 Dlss Ray Tracing Gv N5070eagle Oc 12gd",
+    "product_title": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Eagle Oc Sff 12gb Gddr7 Dlss Ray Tracing Gv N5070eagle Oc 12gd"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/34894/placa-de-video-msi-nvidia-geforce-rtx-5070-gaming-trio-oc-12gb-gddr7-dlss-ray-tracing-g5070-12gtc",
+    "brand": "MSI",
+    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Gaming Trio Oc 12gb Gddr7 Dlss Ray Tracing G5070 12gtc",
+    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Gaming Trio Oc 12gb Gddr7 Dlss Ray Tracing G5070 12gtc"
+  },
+  {
+    "store_name": "terabyte",
     "search_keyword": "rtx 5070 ti",
     "product_url": "https://www.terabyteshop.com.br/produto/34904/placa-de-video-gigabyte-nvidia-geforce-rtx-5070-ti-windforce-oc-sff-16gb-gddr7-dlss-ray-tracing-gv-n507twf3oc-16gd",
     "brand": "Gigabyte",
@@ -305,6 +841,14 @@
   },
   {
     "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/35091/placa-de-video-palit-nvidia-geforce-rtx-5070-gamingpro-oc-12gb-gddr7-dlss-ray-tracing-ne75070t19k9-gb2050a",
+    "brand": "Palit",
+    "model": "Placa De Video Palit NVIDIA Geforce RTX 5070 Gamingpro Oc 12gb Gddr7 Dlss Ray Tracing Ne75070t19k9 Gb2050a",
+    "product_title": "Placa De Video Palit NVIDIA Geforce RTX 5070 Gamingpro Oc 12gb Gddr7 Dlss Ray Tracing Ne75070t19k9 Gb2050a"
+  },
+  {
+    "store_name": "terabyte",
     "search_keyword": "rtx 5070 ti",
     "product_url": "https://www.terabyteshop.com.br/produto/35231/placa-de-video-palit-nvidia-geforce-rtx-5070-ti-gamerock-oc-16gb-gddr7-dlss-ray-tracing-ne7507th19t2-gb2030g",
     "brand": "Palit",
@@ -337,211 +881,11 @@
   },
   {
     "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/35475/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-shadow-3x-oc-16gb-gddr7-dlss-ray-tracing-912-v531-097",
-    "brand": "MSI",
-    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Shadow 3x Oc 16gb Gddr7 Dlss Ray Tracing 912 V531 097",
-    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Shadow 3x Oc 16gb Gddr7 Dlss Ray Tracing 912 V531 097"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/36345/placa-de-video-inno3d-nvidia-geforce-rtx-5070-ti-x3-oc-16gb-gddr7-dlss-ray-tracing-n507t3-16d7x-176068n",
-    "brand": "Inno3D",
-    "model": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Ti X3 Oc 16gb Gddr7 Dlss Ray Tracing N507t3 16d7x 176068n",
-    "product_title": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Ti X3 Oc 16gb Gddr7 Dlss Ray Tracing N507t3 16d7x 176068n"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/36349/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-inspire-3x-oc-plus-16gb-gddr7-dlss-ray-tracing-g507t-16i3cp",
-    "brand": "MSI",
-    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Inspire 3x Oc Plus 16gb Gddr7 Dlss Ray Tracing G507t 16i3cp",
-    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Inspire 3x Oc Plus 16gb Gddr7 Dlss Ray Tracing G507t 16i3cp"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/37442/placa-de-video-inno3d-nvidia-geforce-rtx-5070-ti-x3-oc-white-16gb-gddr7-dlss-ray-tracing-n507t3-16d7x-176068w",
-    "brand": "Inno3D",
-    "model": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Ti X3 Oc White 16gb Gddr7 Dlss Ray Tracing N507t3 16d7x 176068w",
-    "product_title": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Ti X3 Oc White 16gb Gddr7 Dlss Ray Tracing N507t3 16d7x 176068w"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/38291/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-gaming-trio-oc-16gb-gddr7-dlss-ray-tracing-g507t-16gtc",
-    "brand": "MSI",
-    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Gaming Trio Oc 16gb Gddr7 Dlss Ray Tracing G507t 16gtc",
-    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Gaming Trio Oc 16gb Gddr7 Dlss Ray Tracing G507t 16gtc"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/39722/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-expert-oc-16gb-gddr7-dlss-ray-tracing-g507t-16ec",
-    "brand": "MSI",
-    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Expert Oc 16gb Gddr7 Dlss Ray Tracing G507t 16ec",
-    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Expert Oc 16gb Gddr7 Dlss Ray Tracing G507t 16ec"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/40776/placa-de-video-palit-nvidia-geforce-rtx-5070-ti-gamingpro-s-oc-16gb-gddr7-dlss-ray-tracing-ne7507ts19t2-gb2031u",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/35242/placa-de-video-palit-nvidia-geforce-rtx-5070-infinity-3-12gb-gddr7-dlss-ray-tracing-ne75070019k9-gb2050s",
     "brand": "Palit",
-    "model": "Placa De Video Palit NVIDIA Geforce RTX 5070 Ti Gamingpro S Oc 16gb Gddr7 Dlss Ray Tracing Ne7507ts19t2 Gb2031u",
-    "product_title": "Placa De Video Palit NVIDIA Geforce RTX 5070 Ti Gamingpro S Oc 16gb Gddr7 Dlss Ray Tracing Ne7507ts19t2 Gb2031u"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/34579/placa-de-video-asus-prime-nvidia-geforce-rtx-5070-ti-oc-edition-16gb-gddr7-dlss-ray-tracing-prime-rtx5070ti-o16g",
-    "brand": "ASUS",
-    "model": "Placa De Video ASUS Prime NVIDIA Geforce RTX 5070 Ti Oc Edition 16gb Gddr7 Dlss Ray Tracing Prime RTX5070ti O16g",
-    "product_title": "Placa De Video ASUS Prime NVIDIA Geforce RTX 5070 Ti Oc Edition 16gb Gddr7 Dlss Ray Tracing Prime RTX5070ti O16g"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/40961/placa-de-video-asus-prime-nvidia-geforce-rtx-5070-ti-16gb-gddr7-dlss-ray-tracing-prime-rtx5070ti-16g",
-    "brand": "ASUS",
-    "model": "Placa De Video ASUS Prime NVIDIA Geforce RTX 5070 Ti 16gb Gddr7 Dlss Ray Tracing Prime RTX5070ti 16g",
-    "product_title": "Placa De Video ASUS Prime NVIDIA Geforce RTX 5070 Ti 16gb Gddr7 Dlss Ray Tracing Prime RTX5070ti 16g"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/34580/placa-de-video-asus-tuf-gaming-nvidia-geforce-rtx-5070-ti-oc-edition-16gb-gddr7-dlss-ray-tracing-tuf-rtx5070ti-o16g-gaming",
-    "brand": "ASUS",
-    "model": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Ti Oc Edition 16gb Gddr7 Dlss Ray Tracing Tuf RTX5070ti O16g Gaming",
-    "product_title": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Ti Oc Edition 16gb Gddr7 Dlss Ray Tracing Tuf RTX5070ti O16g Gaming"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/37163/placa-de-video-asus-tuf-gaming-nvidia-geforce-rtx-5070-ti-btf-white-oc-edition-16gb-gddr7-dlss-ray-tracing-tuf-rtx5070ti-o16g-btf-white",
-    "brand": "ASUS",
-    "model": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Ti Btf White Oc Edition 16gb Gddr7 Dlss Ray Tracing Tuf RTX5070ti O16g Btf White",
-    "product_title": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Ti Btf White Oc Edition 16gb Gddr7 Dlss Ray Tracing Tuf RTX5070ti O16g Btf White"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/40960/placa-de-video-asus-tuf-gaming-nvidia-geforce-rtx-5070-ti-16gb-gddr7-dlss-ray-tracing-tuf-rtx5070ti-16g-gaming",
-    "brand": "ASUS",
-    "model": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Ti 16gb Gddr7 Dlss Ray Tracing Tuf RTX5070ti 16g Gaming",
-    "product_title": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Ti 16gb Gddr7 Dlss Ray Tracing Tuf RTX5070ti 16g Gaming"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/40814/placa-de-video-asus-rog-strix-nvidia-geforce-rtx-5070-ti-oc-edition-16gb-gddr7-dlss-ray-tracing-rog-strix-rtx5070ti-o16-gaming",
-    "brand": "ASUS",
-    "model": "Placa De Video ASUS Rog Strix NVIDIA Geforce RTX 5070 Ti Oc Edition 16gb Gddr7 Dlss Ray Tracing Rog Strix RTX5070ti O16 Gaming",
-    "product_title": "Placa De Video ASUS Rog Strix NVIDIA Geforce RTX 5070 Ti Oc Edition 16gb Gddr7 Dlss Ray Tracing Rog Strix RTX5070ti O16 Gaming"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/41059/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-gaming-trio-oc-16gb-gddr7-dlss-ray-tracing-g507t-16gtc-open-box",
-    "brand": "MSI",
-    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Gaming Trio Oc 16gb Gddr7 Dlss Ray Tracing G507t 16gtc Open Box",
-    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Gaming Trio Oc 16gb Gddr7 Dlss Ray Tracing G507t 16gtc Open Box"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/41717/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-ventus-3x-oc-16gb-gddr7-dlss-ray-tracing-g507t-16v3c-open-box",
-    "brand": "MSI",
-    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Ventus 3x Oc 16gb Gddr7 Dlss Ray Tracing G507t 16v3c Open Box",
-    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Ventus 3x Oc 16gb Gddr7 Dlss Ray Tracing G507t 16v3c Open Box"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070 ti",
-    "product_url": "https://www.terabyteshop.com.br/produto/41276/placa-de-video-asus-tuf-gaming-nvidia-geforce-rtx-5070-ti-oc-edition-16gb-gddr7-dlss-ray-tracing-tuf-rtx5070ti-o16g-gaming-open-box",
-    "brand": "ASUS",
-    "model": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Ti Oc Edition 16gb Gddr7 Dlss Ray Tracing Tuf RTX5070ti O16g Gaming Open Box",
-    "product_title": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Ti Oc Edition 16gb Gddr7 Dlss Ray Tracing Tuf RTX5070ti O16g Gaming Open Box"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/37278/placa-de-video-msi-nvidia-geforce-rtx-5070-shadow-3x-oc-12gb-gddr7-dlss-ray-tracing",
-    "brand": "MSI",
-    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Shadow 3x Oc 12gb Gddr7 Dlss Ray Tracing",
-    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Shadow 3x Oc 12gb Gddr7 Dlss Ray Tracing"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/36043/placa-de-video-galax-nvidia-geforce-rtx-5070-1-click-oc-12gb-gddr7-dlss-ray-tracing-57non7mdbroc",
-    "brand": "Galax",
-    "model": "Placa De Video Galax NVIDIA Geforce RTX 5070 1 Click Oc 12gb Gddr7 Dlss Ray Tracing 57non7mdbroc",
-    "product_title": "Placa De Video Galax NVIDIA Geforce RTX 5070 1 Click Oc 12gb Gddr7 Dlss Ray Tracing 57non7mdbroc"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/38981/placa-de-video-asus-nvidia-geforce-rtx-5070-ats-oc-12gb-gddr7-dlss-ray-tracing-ats-rtx5070-o12g",
-    "brand": "ASUS",
-    "model": "Placa De Video ASUS NVIDIA Geforce RTX 5070 Ats Oc 12gb Gddr7 Dlss Ray Tracing Ats RTX5070 O12g",
-    "product_title": "Placa De Video ASUS NVIDIA Geforce RTX 5070 Ats Oc 12gb Gddr7 Dlss Ray Tracing Ats RTX5070 O12g"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/34700/placa-de-video-inno3d-nvidia-geforce-rtx-5070-twin-x3-oc-12gb-gddr7-dlss-ray-tracing-n50703-12d7x-195064l",
-    "brand": "Inno3D",
-    "model": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Twin X3 Oc 12gb Gddr7 Dlss Ray Tracing N50703 12d7x 195064l",
-    "product_title": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Twin X3 Oc 12gb Gddr7 Dlss Ray Tracing N50703 12d7x 195064l"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/34880/placa-de-video-gigabyte-nvidia-geforce-rtx-5070-aorus-master-12gb-gddr7-dlss-ray-tracing-gv-n5070aorus-m-12gd",
-    "brand": "Gigabyte",
-    "model": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Aorus Master 12gb Gddr7 Dlss Ray Tracing Gv N5070aorus M 12gd",
-    "product_title": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Aorus Master 12gb Gddr7 Dlss Ray Tracing Gv N5070aorus M 12gd"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/34882/placa-de-video-gigabyte-nvidia-geforce-rtx-5070-aero-oc-12gb-gddr7-dlss-ray-tracing-gv-n5070aero-oc-12gd",
-    "brand": "Gigabyte",
-    "model": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Aero Oc 12gb Gddr7 Dlss Ray Tracing Gv N5070aero Oc 12gd",
-    "product_title": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Aero Oc 12gb Gddr7 Dlss Ray Tracing Gv N5070aero Oc 12gd"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/34884/placa-de-video-gigabyte-nvidia-geforce-rtx-5070-gaming-oc-12gb-gddr7-dlss-ray-tracing-gv-n5070gaming-oc-12gd",
-    "brand": "Gigabyte",
-    "model": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Gaming Oc 12gb Gddr7 Dlss Ray Tracing Gv N5070gaming Oc 12gd",
-    "product_title": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Gaming Oc 12gb Gddr7 Dlss Ray Tracing Gv N5070gaming Oc 12gd"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/34886/placa-de-video-gigabyte-nvidia-geforce-rtx-5070-eagle-oc-ice-sff-12gb-gddr7-dlss-ray-tracing-gv-n5070eagleoc-ice-12gd",
-    "brand": "Gigabyte",
-    "model": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Eagle Oc Ice Sff 12gb Gddr7 Dlss Ray Tracing Gv N5070eagleoc Ice 12gd",
-    "product_title": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Eagle Oc Ice Sff 12gb Gddr7 Dlss Ray Tracing Gv N5070eagleoc Ice 12gd"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/34894/placa-de-video-msi-nvidia-geforce-rtx-5070-gaming-trio-oc-12gb-gddr7-dlss-ray-tracing-g5070-12gtc",
-    "brand": "MSI",
-    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Gaming Trio Oc 12gb Gddr7 Dlss Ray Tracing G5070 12gtc",
-    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Gaming Trio Oc 12gb Gddr7 Dlss Ray Tracing G5070 12gtc"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/35091/placa-de-video-palit-nvidia-geforce-rtx-5070-gamingpro-oc-12gb-gddr7-dlss-ray-tracing-ne75070t19k9-gb2050a",
-    "brand": "Palit",
-    "model": "Placa De Video Palit NVIDIA Geforce RTX 5070 Gamingpro Oc 12gb Gddr7 Dlss Ray Tracing Ne75070t19k9 Gb2050a",
-    "product_title": "Placa De Video Palit NVIDIA Geforce RTX 5070 Gamingpro Oc 12gb Gddr7 Dlss Ray Tracing Ne75070t19k9 Gb2050a"
+    "model": "Placa De Video Palit NVIDIA Geforce RTX 5070 Infinity 3 12gb Gddr7 Dlss Ray Tracing Ne75070019k9 Gb2050s",
+    "product_title": "Placa De Video Palit NVIDIA Geforce RTX 5070 Infinity 3 12gb Gddr7 Dlss Ray Tracing Ne75070019k9 Gb2050s"
   },
   {
     "store_name": "terabyte",
@@ -558,6 +902,14 @@
     "brand": "Gigabyte",
     "model": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Windforce Sff 12gb Gddr7 Dlss Ray Tracing Gv N5070wf3 12gd",
     "product_title": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Windforce Sff 12gb Gddr7 Dlss Ray Tracing Gv N5070wf3 12gd"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/35475/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-shadow-3x-oc-16gb-gddr7-dlss-ray-tracing-912-v531-097",
+    "brand": "MSI",
+    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Shadow 3x Oc 16gb Gddr7 Dlss Ray Tracing 912 V531 097",
+    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Shadow 3x Oc 16gb Gddr7 Dlss Ray Tracing 912 V531 097"
   },
   {
     "store_name": "terabyte",
@@ -578,6 +930,14 @@
   {
     "store_name": "terabyte",
     "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/36043/placa-de-video-galax-nvidia-geforce-rtx-5070-1-click-oc-12gb-gddr7-dlss-ray-tracing-57non7mdbroc",
+    "brand": "Galax",
+    "model": "Placa De Video Galax NVIDIA Geforce RTX 5070 1 Click Oc 12gb Gddr7 Dlss Ray Tracing 57non7mdbroc",
+    "product_title": "Placa De Video Galax NVIDIA Geforce RTX 5070 1 Click Oc 12gb Gddr7 Dlss Ray Tracing 57non7mdbroc"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
     "product_url": "https://www.terabyteshop.com.br/produto/36044/placa-de-video-palit-nvidia-geforce-rtx-5070-infinity-3-oc-12gb-gddr7-dlss-ray-tracing-ne75070s19k9-gb2050s",
     "brand": "Palit",
     "model": "Placa De Video Palit NVIDIA Geforce RTX 5070 Infinity 3 Oc 12gb Gddr7 Dlss Ray Tracing Ne75070s19k9 Gb2050s",
@@ -594,10 +954,98 @@
   {
     "store_name": "terabyte",
     "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/36116/placa-de-video-zotac-gaming-nvidia-geforce-rtx-5070-solid-oc-12gb-gddr7-dlss-ray-tracing-zt-b50700j-10p",
+    "brand": "Unknown",
+    "model": "Placa De Video Zotac Gaming NVIDIA Geforce RTX 5070 Solid Oc 12gb Gddr7 Dlss Ray Tracing Zt B50700j 10p",
+    "product_title": "Placa De Video Zotac Gaming NVIDIA Geforce RTX 5070 Solid Oc 12gb Gddr7 Dlss Ray Tracing Zt B50700j 10p"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/36345/placa-de-video-inno3d-nvidia-geforce-rtx-5070-ti-x3-oc-16gb-gddr7-dlss-ray-tracing-n507t3-16d7x-176068n",
+    "brand": "Inno3D",
+    "model": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Ti X3 Oc 16gb Gddr7 Dlss Ray Tracing N507t3 16d7x 176068n",
+    "product_title": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Ti X3 Oc 16gb Gddr7 Dlss Ray Tracing N507t3 16d7x 176068n"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
     "product_url": "https://www.terabyteshop.com.br/produto/36346/placa-de-video-msi-nvidia-geforce-rtx-5070-vanguard-soc-launch-edition-12gb-gddr7-dlss-ray-tracing-g5070-12vgsl",
     "brand": "MSI",
     "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Vanguard Soc Launch Edition 12gb Gddr7 Dlss Ray Tracing G5070 12vgsl",
     "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Vanguard Soc Launch Edition 12gb Gddr7 Dlss Ray Tracing G5070 12vgsl"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/36347/placa-de-video-msi-nvidia-geforce-rtx-5070-ventus-3x-oc-12gb-gddr7-dlss-ray-tracing-g5070-12v3c",
+    "brand": "MSI",
+    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ventus 3x Oc 12gb Gddr7 Dlss Ray Tracing G5070 12v3c",
+    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ventus 3x Oc 12gb Gddr7 Dlss Ray Tracing G5070 12v3c"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/36349/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-inspire-3x-oc-plus-16gb-gddr7-dlss-ray-tracing-g507t-16i3cp",
+    "brand": "MSI",
+    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Inspire 3x Oc Plus 16gb Gddr7 Dlss Ray Tracing G507t 16i3cp",
+    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Inspire 3x Oc Plus 16gb Gddr7 Dlss Ray Tracing G507t 16i3cp"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/36403/placa-de-video-palit-nvidia-geforce-rtx-5070-infinity-3-12gb-gddr7-dlss-ray-tracing-ne75070019k9-gb2050s-open-box",
+    "brand": "Palit",
+    "model": "Placa De Video Palit NVIDIA Geforce RTX 5070 Infinity 3 12gb Gddr7 Dlss Ray Tracing Ne75070019k9 Gb2050s Open Box",
+    "product_title": "Placa De Video Palit NVIDIA Geforce RTX 5070 Infinity 3 12gb Gddr7 Dlss Ray Tracing Ne75070019k9 Gb2050s Open Box"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/36523/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-inspire-3x-oc-16gb-gddr7-dlss-ray-tracing-912-v531-273",
+    "brand": "MSI",
+    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Inspire 3x Oc 16gb Gddr7 Dlss Ray Tracing 912 V531 273",
+    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Inspire 3x Oc 16gb Gddr7 Dlss Ray Tracing 912 V531 273"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/37163/placa-de-video-asus-tuf-gaming-nvidia-geforce-rtx-5070-ti-btf-white-oc-edition-16gb-gddr7-dlss-ray-tracing-tuf-rtx5070ti-o16g-btf-white",
+    "brand": "ASUS",
+    "model": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Ti Btf White Oc Edition 16gb Gddr7 Dlss Ray Tracing Tuf RTX5070ti O16g Btf White",
+    "product_title": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Ti Btf White Oc Edition 16gb Gddr7 Dlss Ray Tracing Tuf RTX5070ti O16g Btf White"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/37277/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-gaming-trio-oc-white-16gb-gddr7-dlss-ray-tracing",
+    "brand": "MSI",
+    "model": "Gaming Trio OC White",
+    "product_title": "Placa de Video MSI NVIDIA GeForce RTX 5070 Ti Gaming Trio OC White 16GB GDDR7 DLSS Ray Tracing"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/37278/placa-de-video-msi-nvidia-geforce-rtx-5070-shadow-3x-oc-12gb-gddr7-dlss-ray-tracing",
+    "brand": "MSI",
+    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Shadow 3x Oc 12gb Gddr7 Dlss Ray Tracing",
+    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Shadow 3x Oc 12gb Gddr7 Dlss Ray Tracing"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/37442/placa-de-video-inno3d-nvidia-geforce-rtx-5070-ti-x3-oc-white-16gb-gddr7-dlss-ray-tracing-n507t3-16d7x-176068w",
+    "brand": "Inno3D",
+    "model": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Ti X3 Oc White 16gb Gddr7 Dlss Ray Tracing N507t3 16d7x 176068w",
+    "product_title": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Ti X3 Oc White 16gb Gddr7 Dlss Ray Tracing N507t3 16d7x 176068w"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/37443/placa-de-video-inno3d-nvidia-geforce-rtx-5070-ti-x3-16gb-gddr7-dlss-ray-tracing-n507t3-16d7-176068n",
+    "brand": "Inno3D",
+    "model": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Ti X3 16gb Gddr7 Dlss Ray Tracing N507t3 16d7 176068n",
+    "product_title": "Placa De Video Inno3d NVIDIA Geforce RTX 5070 Ti X3 16gb Gddr7 Dlss Ray Tracing N507t3 16d7 176068n"
   },
   {
     "store_name": "terabyte",
@@ -609,11 +1057,99 @@
   },
   {
     "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/37704/placa-de-video-palit-nvidia-geforce-rtx-5070-ti-gamingpro-s-16gb-gddr7-dlss-ray-tracing-ne7507t019t2-gb2031u",
+    "brand": "Palit",
+    "model": "Placa De Video Palit NVIDIA Geforce RTX 5070 Ti Gamingpro S 16gb Gddr7 Dlss Ray Tracing Ne7507t019t2 Gb2031u",
+    "product_title": "Placa De Video Palit NVIDIA Geforce RTX 5070 Ti Gamingpro S 16gb Gddr7 Dlss Ray Tracing Ne7507t019t2 Gb2031u"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/38291/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-gaming-trio-oc-16gb-gddr7-dlss-ray-tracing-g507t-16gtc",
+    "brand": "MSI",
+    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Gaming Trio Oc 16gb Gddr7 Dlss Ray Tracing G507t 16gtc",
+    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Gaming Trio Oc 16gb Gddr7 Dlss Ray Tracing G507t 16gtc"
+  },
+  {
+    "store_name": "terabyte",
     "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/34833/placa-de-video-asus-tuf-gaming-nvidia-geforce-rtx-5070-oc-edition-12gb-gddr7-dlss-ray-tracing-90yv0lz0-m0na00",
+    "product_url": "https://www.terabyteshop.com.br/produto/38981/placa-de-video-asus-nvidia-geforce-rtx-5070-ats-oc-12gb-gddr7-dlss-ray-tracing-ats-rtx5070-o12g",
     "brand": "ASUS",
-    "model": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Oc Edition 12gb Gddr7 Dlss Ray Tracing 90yv0lz0 M0na00",
-    "product_title": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Oc Edition 12gb Gddr7 Dlss Ray Tracing 90yv0lz0 M0na00"
+    "model": "Placa De Video ASUS NVIDIA Geforce RTX 5070 Ats Oc 12gb Gddr7 Dlss Ray Tracing Ats RTX5070 O12g",
+    "product_title": "Placa De Video ASUS NVIDIA Geforce RTX 5070 Ats Oc 12gb Gddr7 Dlss Ray Tracing Ats RTX5070 O12g"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/39450/placa-de-video-pny-nvidia-geforce-rtx-5070-ti-oc-16gb-gddr7-dlss-ray-tracing-vcg5070t16tfxpb1-o",
+    "brand": "Unknown",
+    "model": "Placa De Video Pny NVIDIA Geforce RTX 5070 Ti Oc 16gb Gddr7 Dlss Ray Tracing Vcg5070t16tfxpb1 O",
+    "product_title": "Placa De Video Pny NVIDIA Geforce RTX 5070 Ti Oc 16gb Gddr7 Dlss Ray Tracing Vcg5070t16tfxpb1 O"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/39452/placa-de-video-pny-nvidia-geforce-rtx-5070-oc-12gb-gddr7-dlss-ray-tracing-vcg507012tfxpb1-o",
+    "brand": "Unknown",
+    "model": "Placa De Video Pny NVIDIA Geforce RTX 5070 Oc 12gb Gddr7 Dlss Ray Tracing Vcg507012tfxpb1 O",
+    "product_title": "Placa De Video Pny NVIDIA Geforce RTX 5070 Oc 12gb Gddr7 Dlss Ray Tracing Vcg507012tfxpb1 O"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/39518/placa-de-video-gigabyte-nvidia-geforce-rtx-5070-aero-oc-12gb-gddr7-dlss-ray-tracing-gv-n5070aero-oc-12gd-open-box",
+    "brand": "Gigabyte",
+    "model": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Aero Oc 12gb Gddr7 Dlss Ray Tracing Gv N5070aero Oc 12gd Open Box",
+    "product_title": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Aero Oc 12gb Gddr7 Dlss Ray Tracing Gv N5070aero Oc 12gd Open Box"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/39722/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-expert-oc-16gb-gddr7-dlss-ray-tracing-g507t-16ec",
+    "brand": "MSI",
+    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Expert Oc 16gb Gddr7 Dlss Ray Tracing G507t 16ec",
+    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Expert Oc 16gb Gddr7 Dlss Ray Tracing G507t 16ec"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/40135/placa-de-video-palit-nvidia-geforce-rtx-5070-white-oc-12gb-gddr7-dlss-ray-tracing-ne75070u19k9-gb2050w",
+    "brand": "Palit",
+    "model": "Placa De Video Palit NVIDIA Geforce RTX 5070 White Oc 12gb Gddr7 Dlss Ray Tracing Ne75070u19k9 Gb2050w",
+    "product_title": "Placa De Video Palit NVIDIA Geforce RTX 5070 White Oc 12gb Gddr7 Dlss Ray Tracing Ne75070u19k9 Gb2050w"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/40616/placa-de-video-asus-dual-nvidia-geforce-rtx-5070-oc-12gb-gddr7-dlss-ray-tracing-90yv0m17-m0na00",
+    "brand": "ASUS",
+    "model": "Placa De Video ASUS Dual NVIDIA Geforce RTX 5070 Oc 12gb Gddr7 Dlss Ray Tracing 90yv0m17 M0na00",
+    "product_title": "Placa De Video ASUS Dual NVIDIA Geforce RTX 5070 Oc 12gb Gddr7 Dlss Ray Tracing 90yv0m17 M0na00"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/40776/placa-de-video-palit-nvidia-geforce-rtx-5070-ti-gamingpro-s-oc-16gb-gddr7-dlss-ray-tracing-ne7507ts19t2-gb2031u",
+    "brand": "Palit",
+    "model": "Placa De Video Palit NVIDIA Geforce RTX 5070 Ti Gamingpro S Oc 16gb Gddr7 Dlss Ray Tracing Ne7507ts19t2 Gb2031u",
+    "product_title": "Placa De Video Palit NVIDIA Geforce RTX 5070 Ti Gamingpro S Oc 16gb Gddr7 Dlss Ray Tracing Ne7507ts19t2 Gb2031u"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/40814/placa-de-video-asus-rog-strix-nvidia-geforce-rtx-5070-ti-oc-edition-16gb-gddr7-dlss-ray-tracing-rog-strix-rtx5070ti-o16-gaming",
+    "brand": "ASUS",
+    "model": "Placa De Video ASUS Rog Strix NVIDIA Geforce RTX 5070 Ti Oc Edition 16gb Gddr7 Dlss Ray Tracing Rog Strix RTX5070ti O16 Gaming",
+    "product_title": "Placa De Video ASUS Rog Strix NVIDIA Geforce RTX 5070 Ti Oc Edition 16gb Gddr7 Dlss Ray Tracing Rog Strix RTX5070ti O16 Gaming"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/40829/placa-de-video-asus-dual-nvidia-geforce-rtx-5070-12gb-gddr7-dlss-ray-tracing-dual-rtx5070-12g",
+    "brand": "ASUS",
+    "model": "Placa De Video ASUS Dual NVIDIA Geforce RTX 5070 12gb Gddr7 Dlss Ray Tracing Dual RTX5070 12g",
+    "product_title": "Placa De Video ASUS Dual NVIDIA Geforce RTX 5070 12gb Gddr7 Dlss Ray Tracing Dual RTX5070 12g"
   },
   {
     "store_name": "terabyte",
@@ -622,6 +1158,22 @@
     "brand": "ASUS",
     "model": "Placa De Video ASUS Rog Strix NVIDIA Geforce RTX 5070 Oc Edition 12gb Gddr7 Dlss Ray Tracing Rog Strix RTX5070 O12g Gaming",
     "product_title": "Placa De Video ASUS Rog Strix NVIDIA Geforce RTX 5070 Oc Edition 12gb Gddr7 Dlss Ray Tracing Rog Strix RTX5070 O12g Gaming"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/40960/placa-de-video-asus-tuf-gaming-nvidia-geforce-rtx-5070-ti-16gb-gddr7-dlss-ray-tracing-tuf-rtx5070ti-16g-gaming",
+    "brand": "ASUS",
+    "model": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Ti 16gb Gddr7 Dlss Ray Tracing Tuf RTX5070ti 16g Gaming",
+    "product_title": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Ti 16gb Gddr7 Dlss Ray Tracing Tuf RTX5070ti 16g Gaming"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/40961/placa-de-video-asus-prime-nvidia-geforce-rtx-5070-ti-16gb-gddr7-dlss-ray-tracing-prime-rtx5070ti-16g",
+    "brand": "ASUS",
+    "model": "Placa De Video ASUS Prime NVIDIA Geforce RTX 5070 Ti 16gb Gddr7 Dlss Ray Tracing Prime RTX5070ti 16g",
+    "product_title": "Placa De Video ASUS Prime NVIDIA Geforce RTX 5070 Ti 16gb Gddr7 Dlss Ray Tracing Prime RTX5070ti 16g"
   },
   {
     "store_name": "terabyte",
@@ -649,26 +1201,50 @@
   },
   {
     "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/36403/placa-de-video-palit-nvidia-geforce-rtx-5070-infinity-3-12gb-gddr7-dlss-ray-tracing-ne75070019k9-gb2050s-open-box",
-    "brand": "Palit",
-    "model": "Placa De Video Palit NVIDIA Geforce RTX 5070 Infinity 3 12gb Gddr7 Dlss Ray Tracing Ne75070019k9 Gb2050s Open Box",
-    "product_title": "Placa De Video Palit NVIDIA Geforce RTX 5070 Infinity 3 12gb Gddr7 Dlss Ray Tracing Ne75070019k9 Gb2050s Open Box"
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/41059/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-gaming-trio-oc-16gb-gddr7-dlss-ray-tracing-g507t-16gtc-open-box",
+    "brand": "MSI",
+    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Gaming Trio Oc 16gb Gddr7 Dlss Ray Tracing G507t 16gtc Open Box",
+    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Gaming Trio Oc 16gb Gddr7 Dlss Ray Tracing G507t 16gtc Open Box"
   },
   {
     "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/39518/placa-de-video-gigabyte-nvidia-geforce-rtx-5070-aero-oc-12gb-gddr7-dlss-ray-tracing-gv-n5070aero-oc-12gd-open-box",
-    "brand": "Gigabyte",
-    "model": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Aero Oc 12gb Gddr7 Dlss Ray Tracing Gv N5070aero Oc 12gd Open Box",
-    "product_title": "Placa De Video Gigabyte NVIDIA Geforce RTX 5070 Aero Oc 12gb Gddr7 Dlss Ray Tracing Gv N5070aero Oc 12gd Open Box"
-  },
-  {
-    "store_name": "terabyte",
-    "search_keyword": "rtx 5070",
-    "product_url": "https://www.terabyteshop.com.br/produto/40829/placa-de-video-asus-dual-nvidia-geforce-rtx-5070-12gb-gddr7-dlss-ray-tracing-dual-rtx5070-12g",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/41276/placa-de-video-asus-tuf-gaming-nvidia-geforce-rtx-5070-ti-oc-edition-16gb-gddr7-dlss-ray-tracing-tuf-rtx5070ti-o16g-gaming-open-box",
     "brand": "ASUS",
-    "model": "Placa De Video ASUS Dual NVIDIA Geforce RTX 5070 12gb Gddr7 Dlss Ray Tracing Dual RTX5070 12g",
-    "product_title": "Placa De Video ASUS Dual NVIDIA Geforce RTX 5070 12gb Gddr7 Dlss Ray Tracing Dual RTX5070 12g"
+    "model": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Ti Oc Edition 16gb Gddr7 Dlss Ray Tracing Tuf RTX5070ti O16g Gaming Open Box",
+    "product_title": "Placa De Video ASUS Tuf Gaming NVIDIA Geforce RTX 5070 Ti Oc Edition 16gb Gddr7 Dlss Ray Tracing Tuf RTX5070ti O16g Gaming Open Box"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/41717/placa-de-video-msi-nvidia-geforce-rtx-5070-ti-ventus-3x-oc-16gb-gddr7-dlss-ray-tracing-g507t-16v3c-open-box",
+    "brand": "MSI",
+    "model": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Ventus 3x Oc 16gb Gddr7 Dlss Ray Tracing G507t 16v3c Open Box",
+    "product_title": "Placa De Video MSI NVIDIA Geforce RTX 5070 Ti Ventus 3x Oc 16gb Gddr7 Dlss Ray Tracing G507t 16v3c Open Box"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070 ti",
+    "product_url": "https://www.terabyteshop.com.br/produto/42069/placa-de-video-colorful-nvidia-geforce-rtx-5070-ti-battle-ax-16gb-gddr7-dlss-ray-tracing",
+    "brand": "Unknown",
+    "model": "Placa De Video Colorful NVIDIA Geforce RTX 5070 Ti Battle Ax 16gb Gddr7 Dlss Ray Tracing",
+    "product_title": "Placa De Video Colorful NVIDIA Geforce RTX 5070 Ti Battle Ax 16gb Gddr7 Dlss Ray Tracing"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/42078/placa-de-video-colorful-igame-nvidia-geforce-rtx-5070-ultra-w-oc-12gb-gddr7-dlss-ray-tracing-white",
+    "brand": "Unknown",
+    "model": "Placa De Video Colorful Igame NVIDIA Geforce RTX 5070 Ultra W Oc 12gb Gddr7 Dlss Ray Tracing White",
+    "product_title": "Placa De Video Colorful Igame NVIDIA Geforce RTX 5070 Ultra W Oc 12gb Gddr7 Dlss Ray Tracing White"
+  },
+  {
+    "store_name": "terabyte",
+    "search_keyword": "rtx 5070",
+    "product_url": "https://www.terabyteshop.com.br/produto/42210/placa-de-video-pny-nvidia-geforce-rtx-5070-epic-x-rgb-oc-triple-fan-12gb-gddr7-dlss-ray-tracing-vcg507012tfxxpb1-o",
+    "brand": "Unknown",
+    "model": "Placa De Video Pny NVIDIA Geforce RTX 5070 Epic X Rgb Oc Triple Fan 12gb Gddr7 Dlss Ray Tracing Vcg507012tfxxpb1 O",
+    "product_title": "Placa De Video Pny NVIDIA Geforce RTX 5070 Epic X Rgb Oc Triple Fan 12gb Gddr7 Dlss Ray Tracing Vcg507012tfxxpb1 O"
   }
 ]

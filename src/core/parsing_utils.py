@@ -33,3 +33,50 @@ def has_out_of_stock_marker(soup: BeautifulSoup, pattern: str | Pattern[str]) ->
     """Checks whether the document contains an out-of-stock text marker."""
     regex = pattern if isinstance(pattern, re.Pattern) else re.compile(pattern, re.I)
     return soup.find(string=regex) is not None
+
+
+# Phrases stores commonly show instead of real content when they're down for
+# maintenance, rather than when a scraper's own selectors have drifted.
+# Deliberately checked against <title> only (see has_maintenance_marker) -
+# body text is far more likely to contain an incidental false-positive match
+# (e.g. a product review mentioning "manutenção").
+DEFAULT_MAINTENANCE_MARKERS = (
+    "em manutenção",
+    "under maintenance",
+    "site indisponível",
+    "service unavailable",
+    "server error",
+)
+
+
+def has_maintenance_marker(
+    soup: BeautifulSoup, markers: tuple[str, ...] = DEFAULT_MAINTENANCE_MARKERS
+) -> bool:
+    """
+    Checks the document's <title> for a known "store is down" phrase, so a
+    maintenance page can be told apart from a real page whose selectors have
+    gone stale - the two otherwise look identical to a scraper (a title
+    element that doesn't match `selectors["title"]`). Scrapers should call
+    this first in parse() and raise StoreUnavailableException
+    (src.core.base_scraper) rather than letting it fall through to
+    SelectorOutdatedException, which would misreport a store outage as a
+    selector needing an update.
+    """
+    title = soup.title.get_text(strip=True).lower() if soup.title else ""
+    return any(marker in title for marker in markers)
+
+
+_TITLE_TAG_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.IGNORECASE | re.DOTALL)
+
+
+def has_maintenance_marker_in_html(
+    html: str, markers: tuple[str, ...] = DEFAULT_MAINTENANCE_MARKERS
+) -> bool:
+    """
+    Same check as has_maintenance_marker(), for scrapers that extract data
+    straight from the raw HTML/JSON text (see src.scrapers.pichau) instead of
+    a BeautifulSoup tree - avoids building a full DOM just to read <title>.
+    """
+    match = _TITLE_TAG_RE.search(html)
+    title = match.group(1).strip().lower() if match else ""
+    return any(marker in title for marker in markers)

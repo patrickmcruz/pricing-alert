@@ -8,7 +8,7 @@ from uuid import UUID
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from src.core.base_scraper import BaseScraper, SelectorOutdatedException
+from src.core.base_scraper import BaseScraper, SelectorOutdatedException, StoreUnavailableException
 from src.core.config import settings
 from src.core.contract import PriceContract, StoreConfig
 from src.core.execution import RunStatus, SKU_FAILURE_LABELS_PT, ScraperRunResult, SkuRunStatus
@@ -166,6 +166,20 @@ class PriceEngine:
                         listings_failed += 1
                         failure_breakdown[SkuRunStatus.SELECTOR_OUTDATED.value] += 1
                         await self._finish_sku_run(sku_run_id, SkuRunStatus.SELECTOR_OUTDATED, str(e))
+                    except StoreUnavailableException as e:
+                        # Deliberately logger.warning, not .critical/.error like the
+                        # other failure branches - a store being down is an external,
+                        # expected-to-recur condition, not a code/selector problem to
+                        # page anyone about. See StoreUnavailableException's docstring.
+                        logger.warning(
+                            "Store %s appears to be down (SKU '%s'): %s",
+                            scraper.store_name,
+                            sku.product_url,
+                            e,
+                        )
+                        listings_failed += 1
+                        failure_breakdown[SkuRunStatus.STORE_UNAVAILABLE.value] += 1
+                        await self._finish_sku_run(sku_run_id, SkuRunStatus.STORE_UNAVAILABLE, str(e))
                     except Exception as e:
                         logger.error(
                             "Scraper %s failed on SKU '%s': %s",
