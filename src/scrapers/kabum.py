@@ -2,16 +2,55 @@ import logging
 import re
 from typing import Any, Optional
 
+from bs4.element import Tag
+
 from bs4 import BeautifulSoup
 
 from src.core.base_scraper import BaseScraper, SelectorOutdatedException
 from src.core.config import settings
 from src.core.contract import PriceContract, ProductSKU
-from src.core.contract_factory import build_price_contract
+from src.core.contract_factory import build_price_contract, build_unavailable_contract
 from src.core.parsing_utils import clean_brl_price, compute_discount, has_out_of_stock_marker
 from src.core.registry import register_scraper
 
 logger = logging.getLogger(__name__)
+
+
+def _extract_price_from_candidates(soup: BeautifulSoup, selectors: list[str]) -> Optional[str]:
+    def _is_price_text(text: str) -> bool:
+        if not text:
+            return False
+        if re.search(r"(indisponível|não está disponível|avise quando o produto chegar|avise quando o produto estiver disponível)", text, re.I):
+            return False
+        return bool(re.search(r"R\$\s*([\d.,]+)", text))
+
+    for selector in selectors:
+        elem = soup.select_one(selector)
+        if elem is None:
+            continue
+        text = elem.get_text(" ", strip=True)
+        if _is_price_text(text):
+            match = re.search(r"R\$\s*([\d.,]+)", text)
+            if match:
+                return match.group(0)
+
+    for elem in soup.find_all(string=re.compile(r"R\$\s*[\d.,]+")):
+        if isinstance(elem, str):
+            if _is_price_text(elem):
+                match = re.search(r"R\$\s*([\d.,]+)", elem)
+                if match:
+                    return match.group(0)
+
+    for elem in soup.find_all():
+        if not isinstance(elem, Tag):
+            continue
+        text = elem.get_text(" ", strip=True)
+        if _is_price_text(text) and len(text) < 140:
+            match = re.search(r"R\$\s*([\d.,]+)", text)
+            if match:
+                return match.group(0)
+
+    return None
 
 
 @register_scraper
@@ -50,11 +89,17 @@ class KabumScraper(BaseScraper):
             raise SelectorOutdatedException(f"[{self.store_name}] Title selector '{selectors['title']}' failed.")
         title = title_elem.text.strip()
 
-        price_cash_elem = soup.select_one(selectors["price_cash"])
-        if not price_cash_elem:
+        is_available = not has_out_of_stock_marker(soup, selectors["out_of_stock"])
+        if not is_available:
+            return build_unavailable_contract(self, sku, parser_version=parser_version, product_title=title)
+
+        price_cash_str = _extract_price_from_candidates(
+            soup,
+            [selectors["price_cash"], ".text-secondary-500.font-semibold", "span.text-base.font-bold.text-secondary-500", "span[aria-label*='Preço']"],
+        )
+        if not price_cash_str:
             raise SelectorOutdatedException(f"[{self.store_name}] Cash price selector '{selectors['price_cash']}' failed.")
 
-        price_cash_str = price_cash_elem.text.strip()
         price_cash = clean_brl_price(price_cash_str)
         if price_cash is None or price_cash <= 0:
             return None
@@ -63,7 +108,21 @@ class KabumScraper(BaseScraper):
         price_inst_str = price_inst_elem.text.strip() if price_inst_elem else ""
         price_installments = clean_brl_price(price_inst_str)
 
-        is_available = not has_out_of_stock_marker(soup, selectors["out_of_stock"])
+        if price_installments is None and price_inst_elem is not None:
+            installment_match = re.search(r"(\d+)x\s+de\s+R\$\s*([\d.,]+)", price_inst_elem.get_text(" ", strip=True), re.IGNORECASE)
+            if installment_match:
+                monthly_price = clean_brl_price(installment_match.group(2))
+                installment_count = int(installment_match.group(1))
+                if monthly_price is not None:
+                    price_installments = monthly_price
+
+        if price_installments is None:
+            installment_match = re.search(r"(\d+)x\s+de\s+R\$\s*([\d.,]+)", document, re.IGNORECASE)
+            if installment_match:
+                monthly_price = clean_brl_price(installment_match.group(2))
+                installment_count = int(installment_match.group(1))
+                if monthly_price is not None:
+                    price_installments = monthly_price
 
         # Extract installment count if selector is present
         installment_count = None

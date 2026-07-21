@@ -36,6 +36,7 @@ services:
       - .env
     environment:
       - APP_ENV=production
+      - TEST_CONTAINER_MODE=true
     restart: unless-stopped
 
   dashboard:

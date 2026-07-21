@@ -76,7 +76,13 @@ def has_maintenance_marker_in_html(
     Same check as has_maintenance_marker(), for scrapers that extract data
     straight from the raw HTML/JSON text (see src.scrapers.pichau) instead of
     a BeautifulSoup tree - avoids building a full DOM just to read <title>.
+    The maintenance banner may appear in either the document title or the body
+    text, so we inspect both.
     """
     match = _TITLE_TAG_RE.search(html)
     title = match.group(1).strip().lower() if match else ""
-    return any(marker in title for marker in markers)
+    if any(marker in title for marker in markers):
+        return True
+
+    text = re.sub(r"<[^>]+>", " ", html).lower()
+    return any(marker in text for marker in markers)

@@ -1,16 +1,17 @@
 import asyncio
 import json
 import logging
+import os
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from src.core.contract import StoreConfig
+from src.core.contract import StoreConfig, TargetUrlEntry
 from src.core.browser import BrowserFactory
 from src.core.execution import SKU_FAILURE_LABELS_PT, ScraperRunResult
 from src.core.http_client import HTTPClientFactory
 from src.core.config import settings
 from src.core.logging_setup import configure_logging
-from src.db.schema import initialize_schema as initialize_db_schema
+from src.db.schema import connect, initialize_schema as initialize_db_schema
 from src.engine.discovery import DiscoveryEngine
 from src.engine.scheduler import PriceEngine
 from src.engine.trigger_processor import TriggerProcessor
@@ -36,25 +37,24 @@ logger = logging.getLogger(__name__)
 DB_DSN = settings.db_dsn
 
 
-def load_stores_config() -> list[StoreConfig]:
-    """Loads configuration and returns StoreConfig instances based on the JSON definitions."""
-    stores_file = settings.stores_config_path
-    try:
-        with open(stores_file, "r", encoding="utf-8") as f:
-            data = json.load(f)
-    except Exception as e:
-        logger.error("Failed to load stores config from %s: %s", stores_file, e)
-        return []
+async def load_stores_config(store_repository) -> list[StoreConfig]:
+    """Loads configuration and returns StoreConfig instances from the database-backed store registry."""
+    stores = await store_repository.list_stores()
 
+    registered_names = set(get_registered_scrapers().keys())
     configs = []
-    # For now, we apply standard GPU keywords and a sample cron schedule to all loaded stores.
-    for store_key, store_info in data.items():
+    for store in stores:
+        if not store.is_active:
+            continue
+        if store.slug not in registered_names:
+            logger.info("Skipping store '%s' because no scraper is registered for it.", store.slug)
+            continue
         configs.append(
             StoreConfig(
-                store_name=store_info["store_name"],
+                store_name=store.slug,
                 target_keywords=settings.default_gpus,
                 cron_times=settings.default_cron_times,
-                enabled=store_info.get("enabled", False),
+                enabled=True,
             )
         )
     return configs
@@ -124,6 +124,119 @@ async def _seed_stores(store_repository: PostgresStoreRepository) -> None:
         )
 
 
+async def _seed_test_container_targets(target_url_repository) -> None:
+    """Seeds a tiny, deterministic target-url set for container smoke tests."""
+    if os.getenv("TEST_CONTAINER_MODE", "").lower() not in {"1", "true", "yes", "on"}:
+        return
+
+    logger.info("TEST_CONTAINER_MODE enabled; seeding a reduced SKU set for container smoke testing.")
+    entries = [
+        TargetUrlEntry(
+            store_name="kabum",
+            search_keyword="rtx 5070",
+            product_url="https://www.kabum.com.br/produto/875474/placa-de-video-msi-rtx-5070-12gb-gddr7-192-bits-shadow-2x-oc-912-v532-011",
+            brand="MSI",
+            model="Shadow 2X OC",
+            product_title="Placa de vídeo MSI RTX 5070 12GB",
+        ),
+        TargetUrlEntry(
+            store_name="kabum",
+            search_keyword="rtx 5070",
+            product_url="https://www.kabum.com.br/produto/725587/placa-de-video-msi-geforce-rtx-5070-12g-ventus-2x-oc-12-gb-gddr7-28gbps-nvidia-geforce-rtx-5070-g5070-12v2c",
+            brand="MSI",
+            model="Ventus 2X OC",
+            product_title="Placa de vídeo MSI RTX 5070 Ventus 2X",
+        ),
+        TargetUrlEntry(
+            store_name="kabum",
+            search_keyword="rtx 5070 ti",
+            product_url="https://www.kabum.com.br/produto/857022/placa-de-video-nvidia-geforce-msi-rtx5070ti-16gb-gddr7-256its-shadow-3x-oc-912-v531-097",
+            brand="MSI",
+            model="Shadow 3X OC",
+            product_title="Placa de vídeo MSI RTX 5070 Ti",
+        ),
+        TargetUrlEntry(
+            store_name="kabum",
+            search_keyword="rtx 5070 ti",
+            product_url="https://www.kabum.com.br/produto/996236/placa-de-video-gainward-rtx-5070-ti-phoenix-16gb-gddr7",
+            brand="Gainward",
+            model="Phoenix",
+            product_title="Placa de vídeo Gainward RTX 5070 Ti",
+        ),
+        TargetUrlEntry(
+            store_name="pichau",
+            search_keyword="rtx 5070",
+            product_url="https://www.pichau.com.br/placa-de-video-asus-geforce-rtx-5070-12gb-gddr7-192-bit-dual-rtx5070-12g",
+            brand="ASUS",
+            model="Dual 12GB",
+            product_title="Placa de vídeo ASUS RTX 5070 Dual",
+        ),
+        TargetUrlEntry(
+            store_name="pichau",
+            search_keyword="rtx 5070",
+            product_url="https://www.pichau.com.br/placa-de-video-asus-geforce-rtx-5070-prime-oc-edition-12gb-gddr7-192-bit-prime-rtx5070-o12g",
+            brand="ASUS",
+            model="Prime OC",
+            product_title="Placa de vídeo ASUS RTX 5070 Prime",
+        ),
+        TargetUrlEntry(
+            store_name="pichau",
+            search_keyword="rtx 5070 ti",
+            product_url="https://www.pichau.com.br/placa-de-video-asus-geforce-rtx-5070-ti-prime-16gb-gddr7-256-bit-prime-rtx5070ti-16g-nac",
+            brand="ASUS",
+            model="Prime 16GB",
+            product_title="Placa de vídeo ASUS RTX 5070 Ti Prime",
+        ),
+        TargetUrlEntry(
+            store_name="pichau",
+            search_keyword="rtx 5070 ti",
+            product_url="https://www.pichau.com.br/placa-de-video-asus-geforce-rtx-5070-ti-16gb-gddr7-256-bit-prime-rtx5070ti-16g",
+            brand="ASUS",
+            model="Prime 16GB",
+            product_title="Placa de vídeo ASUS RTX 5070 Ti",
+        ),
+        TargetUrlEntry(
+            store_name="terabyte",
+            search_keyword="rtx 5070",
+            product_url="https://www.terabyteshop.com.br/produto/34699/placa-de-video-inno3d-nvidia-geforce-rtx-5070-twin-x2-oc-12gb-gddr7-dlss-ray-tracing-n50702-12d7x-195064n",
+            brand="Inno3D",
+            model="Twin X2 OC",
+            product_title="Placa de vídeo Inno3D RTX 5070",
+        ),
+        TargetUrlEntry(
+            store_name="terabyte",
+            search_keyword="rtx 5070",
+            product_url="https://www.terabyteshop.com.br/produto/34705/placa-de-video-inno3d-nvidia-geforce-rtx-5070-twin-x2-12gb-gddr7-dlss-ray-tracing-n50702-12d7-195064n",
+            brand="Inno3D",
+            model="Twin X2",
+            product_title="Placa de vídeo Inno3D RTX 5070 Twin X2",
+        ),
+        TargetUrlEntry(
+            store_name="terabyte",
+            search_keyword="rtx 5070 ti",
+            product_url="https://www.terabyteshop.com.br/produto/34579/placa-de-video-asus-prime-nvidia-geforce-rtx-5070-ti-oc-edition-16gb-gddr7-dlss-ray-tracing-prime-rtx5070ti-o16g",
+            brand="ASUS",
+            model="Prime OC",
+            product_title="Placa de vídeo ASUS RTX 5070 Ti Prime",
+        ),
+        TargetUrlEntry(
+            store_name="terabyte",
+            search_keyword="rtx 5070 ti",
+            product_url="https://www.terabyteshop.com.br/produto/34580/placa-de-video-asus-tuf-gaming-nvidia-geforce-rtx-5070-ti-oc-edition-16gb-gddr7-dlss-ray-tracing-tuf-rtx5070ti-o16g-gaming",
+            brand="ASUS",
+            model="TUF Gaming OC",
+            product_title="Placa de vídeo ASUS RTX 5070 Ti TUF",
+        ),
+    ]
+
+    async with connect(DB_DSN) as db:
+        await db.execute("TRUNCATE TABLE price_observations RESTART IDENTITY CASCADE")
+        await db.execute("TRUNCATE TABLE listings RESTART IDENTITY CASCADE")
+        await db.execute("TRUNCATE TABLE target_urls RESTART IDENTITY CASCADE")
+
+    await target_url_repository.upsert_many(entries)
+
+
 async def startup_routine(engine: PriceEngine):
     """Runs immediately on startup to update graphs for the user."""
     logger.info("Executing immediate startup routine (Scrapers)...")
@@ -181,6 +294,7 @@ async def main():
     if settings.env == "production":
         catalog_repository = PostgresCatalogRepository(dsn=DB_DSN)
         target_url_repository = PostgresTargetUrlRepository(dsn=DB_DSN)
+        await _seed_test_container_targets(target_url_repository)
         discovery_engine = DiscoveryEngine(
             repository=repository, catalog_repository=catalog_repository, target_url_repository=target_url_repository
         )
@@ -233,7 +347,7 @@ async def main():
     engine.register_scrapers(get_registered_scrapers().values())
 
     # 5. Build Schedule
-    configs = load_stores_config()
+    configs = await load_stores_config(store_repository)
     engine.build_schedule(configs)
 
     # Daily DB backup, independent of the boot-time one above - covers

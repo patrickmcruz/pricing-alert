@@ -45,6 +45,67 @@ def test_kabum_product_parser():
     assert product.scraped_at is not None
 
 
+def test_kabum_parser_falls_back_to_new_price_block_layout():
+    html_content = """
+    <html><body>
+      <h1>Placa de Vídeo MSI RTX 5070</h1>
+      <div class="flex flex-col gap-4">
+        <span class="text-secondary-500 font-semibold">R$ 2.999,99</span>
+      </div>
+      <span class="block my-12">10x de R$ 299,99</span>
+      <div>Indisponível</div>
+    </body></html>
+    """
+    scraper = KabumScraper()
+    sku = ProductSKU(
+        store_name="kabum",
+        search_keyword="rtx 5070",
+        product_url="https://www.kabum.com.br/produto/123",
+        produto_id="test-gpu-model-id",
+        brand="MSI",
+        model="Ventus 2X",
+        product_title="MockTitle",
+    )
+
+    product = scraper.parse(document=html_content, sku=sku)
+
+    assert product is not None
+    assert product.price_cash == Decimal("2999.99")
+    assert product.price_installments == Decimal("2999.90")
+    assert product.installment_count == 10
+
+
+def test_kabum_parser_ignores_unavailable_message():
+    html_content = """
+    <html><body>
+      <h1>Placa de Vídeo MSI RTX 5070</h1>
+      <div class="flex flex-col gap-4">
+        <span class="text-secondary-500 font-semibold">R$ 5.499,99</span>
+      </div>
+      <div>AVISE QUANDO O PRODUTO CHEGAR</div>
+      <div>Não está disponível</div>
+      <span class="text-secondary-500 text-xs font-bold">AVISE QUANDO O PRODUTO CHEGAR</span>
+    </body></html>
+    """
+    scraper = KabumScraper()
+    sku = ProductSKU(
+        store_name="kabum",
+        search_keyword="rtx 5070",
+        product_url="https://www.kabum.com.br/produto/123",
+        produto_id="test-gpu-model-id",
+        brand="MSI",
+        model="Ventus 2X",
+        product_title="MockTitle",
+    )
+
+    product = scraper.parse(document=html_content, sku=sku)
+
+    assert product is not None
+    assert product.is_available is False
+    assert product.price_cash == Decimal("0")
+    assert product.price_installments is None
+
+
 def test_terabyte_product_parser():
     """Validates the new Terabyte Product Page parser."""
     html_content = get_fixture_content("terabyte_product_mock.html")
