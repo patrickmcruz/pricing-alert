@@ -5,9 +5,9 @@ price_installments = ".regularPrice"
 out_of_stock = "indisponível"
 
 [v2]
-# Layout atual observado na página do Kabum para o bloco de preço à vista vs parcelado.
+# Layout principal do produto no KaBuM (h4 text-4xl / text-secondary-500 / finalPrice).
 title = "h1"
-price_cash = "h4.finalPrice, .finalPrice, h4[class*='finalPrice'], [data-testid='price-cash']"
+price_cash = "h4.text-4xl, h4[class*='text-secondary-500'], h4[class*='finalPrice'], .finalPrice"
 price_installments = "span.block.my-12, .regularPrice"
 installment_count = "span.block.my-12"
 out_of_stock = "(não está disponível|avise quando o produto chegar|avise quando o produto estiver disponível)"

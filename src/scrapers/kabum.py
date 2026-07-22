@@ -96,9 +96,21 @@ class KabumScraper(BaseScraper):
         if not is_available:
             return build_unavailable_contract(self, sku, parser_version=parser_version, product_title=title)
 
+        # Scope extraction to main product container wrapper to avoid carousel/cross-sell recommended items
+        main_container = None
+        if title_elem:
+            curr = title_elem.parent
+            for _ in range(5):
+                if curr and (curr.get("id") or "product" in " ".join(curr.get("class", [])) or curr.name == "main"):
+                    main_container = curr
+                    break
+                if curr and curr.parent:
+                    curr = curr.parent
+        target_scope = main_container or soup
+
         price_cash_str = _extract_price_from_candidates(
-            soup,
-            [selectors["price_cash"], ".text-secondary-500.font-semibold", "span.text-base.font-bold.text-secondary-500", "span[aria-label*='Preço']"],
+            target_scope,
+            [selectors["price_cash"], "h4.text-4xl", "h4[class*='text-secondary-500']", "h4[class*='finalPrice']", ".finalPrice"],
         )
         if not price_cash_str:
             raise SelectorOutdatedException(f"[{self.store_name}] Cash price selector '{selectors['price_cash']}' failed.")
