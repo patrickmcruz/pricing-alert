@@ -26,17 +26,19 @@ st.title(t("app_title", lang=lang))
 st.markdown(t("app_desc", lang=lang))
 
 
-def load_data():
+@st.cache_data(ttl=300)
+def load_data(days_history: int = 60):
     try:
         with psycopg.connect(DB_DSN) as conn:
-            df = pd.read_sql_query(
-                "SELECT * FROM vw_dashboard_products",
-                conn,
-            )
+            query = """
+                SELECT * FROM vw_dashboard_products
+                WHERE scraped_at >= NOW() - (%s || ' days')::INTERVAL
+            """
+            df = pd.read_sql_query(query, conn, params=(days_history,))
 
         if not df.empty:
             # Schema validation: Ensure critical columns exist. If not, inject empty columns gracefully.
-            required_cols = ["brand", "model", "discount", "price_installments", "installment_count", "parser_version"]
+            required_cols = ["brand", "model", "mpn", "product_line", "is_oc", "vram_gb", "vram_type", "chipset", "form_factor", "discount", "price_installments", "installment_count", "parser_version"]
             for col in required_cols:
                 if col not in df.columns:
                     df[col] = pd.NA
