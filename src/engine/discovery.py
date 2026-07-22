@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from src.core.catalog import GPU_CATEGORY_SLUG, Categoria, Marca, Produto, infer_chip_maker
 from src.core.contract import ProductSKU, StoreConfig
@@ -62,7 +63,7 @@ class DiscoveryEngine:
         
         # Extract structured specs using TitleParserRegistry
         parsed_gpu = TitleParserRegistry.parse_gpu(product_title or model or "", search_keyword=chipset_name)
-        brand_name = brand or parsed_gpu.brand_name or "Unknown"
+        brand_name = brand or parsed_gpu.chip_maker or "Unknown"
         marca = await self.catalog_repository.get_or_create_marca(brand_name)
         model_name = model or product_title or "Unknown"
         
@@ -165,7 +166,8 @@ class DiscoveryEngine:
                     continue
 
                 try:
-                    async with client_factory.create_client() as client:
+                    client = await client_factory.create(spider)
+                    try:
                         found_skus = await spider.execute(keyword, category, client)
                         for d_sku in found_skus:
                             if category.lower() == "cpu":
@@ -193,6 +195,8 @@ class DiscoveryEngine:
                                 product_title=d_sku.product_title,
                             )
                             discovered_skus.append(sku)
+                    finally:
+                        await client_factory.close(client)
                 except Exception as e:
                     logger.error("Spider '%s' failed for keyword %r: %s", store_name, keyword, e)
 
