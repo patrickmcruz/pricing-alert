@@ -32,6 +32,7 @@ Write a spec for anything that changes architecture, adds a new integration patt
 | [`system/`](system/spec.md) | Living — overall architecture |
 | [`data-contract/`](data-contract/spec.md) | Living — Pydantic contracts + DB schema |
 | [`hardware-catalog-expansion/`](hardware-catalog-expansion/spec.md) | Living / In Progress — UUIDv7, range partitioning, MPN catalog deduplication, multi-hardware specs |
+| [`hardware-discovery-spiders/`](hardware-discovery-spiders/spec.md) | Living / Active — Pluggable store spiders for automated CPU/GPU/RAM hardware discovery |
 | [`pichau-scraper/`](pichau-scraper/spec.md) | Verified against the live site — first store using search-grid discovery instead of a static manifest; disabled pending review |
 | [`target-urls-table/`](target-urls-table/spec.md) | Done — replaced `data/target_urls.json` with a real DB table |
 | [`kabum-scraper/`](kabum-scraper/spec.md) | Living — documents the existing, already-enabled scraper |
