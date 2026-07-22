@@ -42,6 +42,17 @@ class PostgresPriceRepository(PriceRepository):
                                 "cannot save a price for an untracked listing."
                             )
                         listing_id = row["id"]
+
+                        # Zero-price / unavailable prevention:
+                        # If a product is out-of-stock or has no positive price, soft-deactivate the listing and skip inserting into price_observations.
+                        if p.price_cash is None or p.price_cash <= 0 or not p.is_available:
+                            await db.execute(
+                                "UPDATE listings SET is_active = false, updated_at = $1 WHERE id = $2",
+                                datetime.now(timezone.utc), listing_id
+                            )
+                            logger.info("Soft-deactivated unavailable/zero-price listing %s", p.product_url)
+                            continue
+
                         observation_id = str(uuid4())
                         observation_ids.append(observation_id)
                         await db.execute(
@@ -64,7 +75,7 @@ class PostgresPriceRepository(PriceRepository):
                             p.parser_version,
                             p.scraped_at,
                         )
-            logger.info("Successfully saved %d price records to PostgreSQL.", len(prices))
+            logger.info("Successfully saved %d positive price records to PostgreSQL.", len(observation_ids))
             return observation_ids
         except Exception as e:
             logger.error("Failed to save price records to PostgreSQL: %s", e)

@@ -87,7 +87,7 @@ _DDL = [
         id                     UUID NOT NULL,
         listing_id             UUID NOT NULL REFERENCES listings(id),
         scraper_run_id         UUID REFERENCES scraper_runs(id),
-        price_cash             NUMERIC(12,2) NOT NULL,
+        price_cash             NUMERIC(12,2) NOT NULL CHECK (price_cash > 0),
         price_installments     NUMERIC(12,2),
         installment_count      INTEGER,
         currency               TEXT NOT NULL,
