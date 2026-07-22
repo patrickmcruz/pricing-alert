@@ -28,6 +28,7 @@ _DDL = [
         id            UUID PRIMARY KEY,
         brand_id      UUID NOT NULL REFERENCES brands(id),
         category_id   UUID NOT NULL REFERENCES categories(id),
+        chipset_id    UUID REFERENCES chipsets(id),
         name          TEXT NOT NULL,
         mpn           TEXT UNIQUE,
         product_line  TEXT,

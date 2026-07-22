@@ -74,6 +74,7 @@ class Produto(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     marca_id: str
     categoria_id: str
+    chipset_id: str | None = None
     nome: str
     mpn: str | None = None
     product_line: str | None = None
