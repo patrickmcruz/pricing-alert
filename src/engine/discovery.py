@@ -16,6 +16,9 @@ _CHIPSET_ALIASES = {
 }
 
 
+from src.core.title_parser import TitleParserRegistry
+
+
 def _resolve_chipset_name(search_keyword: str) -> str:
     key = search_keyword.strip().lower()
     return _CHIPSET_ALIASES.get(key, key)
@@ -56,11 +59,24 @@ class DiscoveryEngine:
         """
         chipset_name = _resolve_chipset_name(search_keyword)
         categoria = await self.catalog_repository.get_or_create_categoria("GPU", GPU_CATEGORY_SLUG)
-        marca = await self.catalog_repository.get_or_create_marca(brand or "Unknown")
+        
+        # Extract structured specs using TitleParserRegistry
+        parsed_gpu = TitleParserRegistry.parse_gpu(product_title or model or "", search_keyword=chipset_name)
+        brand_name = brand or parsed_gpu.brand_name or "Unknown"
+        marca = await self.catalog_repository.get_or_create_marca(brand_name)
         model_name = model or product_title or "Unknown"
-        specs = {"chipset": chipset_name, "chip_maker": infer_chip_maker(chipset_name).value}
+        
+        specs = parsed_gpu.to_dict()
+        specs["chipset"] = chipset_name
+        
         produto = await self.catalog_repository.get_or_create_produto(
-            marca.id, categoria.id, model_name, specs=specs
+            marca_id=marca.id,
+            categoria_id=categoria.id,
+            nome=model_name,
+            specs=specs,
+            mpn=parsed_gpu.mpn,
+            product_line=parsed_gpu.product_line,
+            is_oc=parsed_gpu.is_oc,
         )
         return categoria, marca, produto
 

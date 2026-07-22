@@ -28,22 +28,11 @@ st.markdown(t("app_desc", lang=lang))
 
 def load_data():
     try:
-        conn = psycopg.connect(DB_DSN)
-        df = pd.read_sql_query(
-            """
-            SELECT cp.id AS execution_id, l.slug AS store_name, a.search_keyword, a.product_title,
-                   a.product_url, cp.price_cash, cp.price_installments, cp.installment_count,
-                   cp.currency, cp.parser_version, cp.is_available, ma.name AS brand,
-                   p.name AS model, cp.discount, cp.scraped_at
-            FROM price_observations cp
-            JOIN listings a ON a.id = cp.listing_id
-            JOIN stores l ON l.id = a.store_id
-            JOIN products p ON p.id = a.product_id
-            JOIN brands ma ON ma.id = p.brand_id
-            """,
-            conn,
-        )
-        conn.close()
+        with psycopg.connect(DB_DSN) as conn:
+            df = pd.read_sql_query(
+                "SELECT * FROM vw_dashboard_products",
+                conn,
+            )
 
         if not df.empty:
             # Schema validation: Ensure critical columns exist. If not, inject empty columns gracefully.

@@ -75,6 +75,9 @@ class Produto(BaseModel):
     marca_id: str
     categoria_id: str
     nome: str
+    mpn: str | None = None
+    product_line: str | None = None
+    is_oc: bool = False
     gtin: str | None = None
     specs: dict[str, Any] = Field(default_factory=dict)
 
@@ -88,4 +91,7 @@ class ResolvedProduto(BaseModel):
     marca_nome: str
     categoria_nome: str
     nome: str
+    mpn: str | None = None
+    product_line: str | None = None
+    is_oc: bool = False
     specs: dict[str, Any] = Field(default_factory=dict)

@@ -18,11 +18,20 @@ _DDL = [
         name        TEXT NOT NULL UNIQUE,
         created_at  TIMESTAMPTZ NOT NULL
     )""",
+    """CREATE TABLE IF NOT EXISTS chipsets (
+        id          UUID PRIMARY KEY,
+        maker       TEXT NOT NULL,
+        family      TEXT NOT NULL,
+        model       TEXT NOT NULL UNIQUE
+    )""",
     """CREATE TABLE IF NOT EXISTS products (
         id            UUID PRIMARY KEY,
         brand_id      UUID NOT NULL REFERENCES brands(id),
         category_id   UUID NOT NULL REFERENCES categories(id),
         name          TEXT NOT NULL,
+        mpn           TEXT UNIQUE,
+        product_line  TEXT,
+        is_oc         BOOLEAN NOT NULL DEFAULT false,
         gtin          TEXT UNIQUE,
         specs         JSONB NOT NULL DEFAULT '{}'::jsonb,
         created_at    TIMESTAMPTZ NOT NULL
@@ -128,6 +137,21 @@ _DDL = [
         reason                  TEXT NOT NULL,
         triggered_at            TIMESTAMPTZ NOT NULL
     )""",
+    """CREATE OR REPLACE VIEW vw_dashboard_products AS 
+       SELECT cp.id AS execution_id, l.slug AS store_name, a.search_keyword, a.product_title, 
+              a.product_url, cp.price_cash, cp.price_installments, cp.installment_count, 
+              cp.currency, cp.parser_version, cp.is_available, ma.name AS brand, 
+              p.name AS model, p.mpn, p.product_line, p.is_oc,
+              (p.specs->>'vram_gb')::numeric AS vram_gb,
+              p.specs->>'vram_type' AS vram_type,
+              p.specs->>'chipset' AS chipset,
+              p.specs->>'form_factor' AS form_factor,
+              cp.discount, cp.scraped_at 
+       FROM price_observations cp 
+       JOIN listings a ON a.id = cp.listing_id 
+       JOIN stores l ON l.id = a.store_id 
+       JOIN products p ON p.id = a.product_id 
+       JOIN brands ma ON ma.id = p.brand_id""",
 ]
 
 _INDEXES = [
@@ -142,6 +166,7 @@ _INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_alert_events_rule ON alert_events(alert_rule_id)",
     "CREATE INDEX IF NOT EXISTS idx_listings_store ON listings(store_id)",
     "CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id)",
+    "CREATE INDEX IF NOT EXISTS idx_products_specs ON products USING gin (specs)",
     "CREATE INDEX IF NOT EXISTS idx_target_urls_store ON target_urls(store_name)",
 ]
 

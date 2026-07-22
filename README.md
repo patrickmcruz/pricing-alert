@@ -31,6 +31,20 @@ Para que o scraper do Mercado Livre funcione, você precisa preencher o `.env` c
 
 ---
 
+## 📚 Central de Documentação
+
+Esta base de código conta com uma suíte de documentação enterprise completa. Acesse os guias detalhados abaixo:
+
+| Documento | Descrição |
+| :--- | :--- |
+| 🗄️ [**DER / MER & Banco de Dados**](docs/database/DER_MER.md) | Modelo Entidade-Relacionamento (MER), Diagrama ER físico em Mermaid, Dicionário de Dados e Schemas JSONB para hardware (GPUs, Placas Mãe, RAM). |
+| 🏗️ [**Visão Geral da Arquitetura**](docs/architecture/OVERVIEW.md) | Diagramas de componentes e de sequência mostrando a interação entre orquestrador, scrapers, repositórios e alertas. |
+| 🔍 [**Title Parsers & Seletores**](docs/architecture/PARSERS.md) | Motor de parsing `TitleParserRegistry` e versionamento dinâmico de seletores CSS via arquivos TOML em `data/selectors/`. |
+| 🛠️ [**Guia de Expansão de Categorias**](docs/guides/ADDING_NEW_HARDWARE_CATEGORY.md) | Passo a passo para adicionar suporte a novas categorias de hardware (Processadores, Placas Mãe, Memórias RAM, SSDs). |
+| 🛒 [**Integração Mercado Livre Scraper**](docs/scrapers/mercadolivre.md) | Guia de autenticação e consumo da API oficial pública do Mercado Livre via OAuth 2.0. |
+
+---
+
 ## 🛠️ Project Structure
 
 ```text
