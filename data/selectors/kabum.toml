@@ -5,10 +5,9 @@ price_installments = ".regularPrice"
 out_of_stock = "indisponível"
 
 [v2]
-# Layout atual observado na página do Kabum para o bloco de preço/parcelamento.
-# O parser também aplica fallback por regex quando o DOM muda.
+# Layout atual observado na página do Kabum para o bloco de preço à vista vs parcelado.
 title = "h1"
-price_cash = "span.text-secondary-500.font-semibold"
-price_installments = "span.block.my-12"
+price_cash = "h4.finalPrice, .finalPrice, h4[class*='finalPrice'], [data-testid='price-cash']"
+price_installments = "span.block.my-12, .regularPrice"
 installment_count = "span.block.my-12"
 out_of_stock = "(não está disponível|avise quando o produto chegar|avise quando o produto estiver disponível)"

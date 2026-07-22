@@ -22,6 +22,9 @@ def _extract_price_from_candidates(soup: BeautifulSoup, selectors: list[str]) ->
             return False
         if re.search(r"(indisponível|não está disponível|avise quando o produto chegar|avise quando o produto estiver disponível)", text, re.I):
             return False
+        # Exclude monthly installment strings like "10x de R$ 1.167,82" from being parsed as cash price
+        if re.search(r"(\d+\s*x\s*de|\d+\s*x\s*R\$)", text, re.I):
+            return False
         return bool(re.search(r"R\$\s*([\d.,]+)", text))
 
     for selector in selectors:
@@ -144,6 +147,12 @@ class KabumScraper(BaseScraper):
         if price_installments and price_cash and installment_count:
             if price_installments < price_cash:
                 price_installments = price_installments * installment_count
+
+        # Sanity check: Reject cash prices that are unreasonably low or extracted from monthly installments
+        if price_installments and price_cash:
+            if price_cash < (price_installments / 3.0):
+                logger.warning("[%s] Cash price R$%s is suspiciously low compared to installment total R$%s. Rejecting anomaly.", self.store_name, price_cash, price_installments)
+                return None
 
         return build_price_contract(
             self,
