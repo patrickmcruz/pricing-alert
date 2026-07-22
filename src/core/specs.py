@@ -62,3 +62,22 @@ class RAMSpecs(BaseModel):
 
     def to_dict(self) -> Dict[str, Any]:
         return self.model_dump()
+
+
+class CPUSpecs(BaseModel):
+    """Category-specific specs for Processador / CPU."""
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    socket: str = Field(..., description="CPU Socket (e.g. AM5, AM4, LGA1851, LGA1700)")
+    manufacturer: str = Field(default="AMD", description="CPU Manufacturer (AMD or Intel)")
+    model_family: str = Field(..., description="CPU Family (e.g. Ryzen 7, Ryzen 5, Core i7, Core Ultra 7)")
+    model_number: str = Field(..., description="CPU Model Number (e.g. 9800X3D, 7800X3D, 14700K, 265K)")
+    cores: Optional[int] = Field(default=None, description="Number of CPU Cores")
+    threads: Optional[int] = Field(default=None, description="Number of CPU Threads")
+    base_clock_ghz: Optional[float] = Field(default=None, description="Base Clock in GHz")
+    boost_clock_ghz: Optional[float] = Field(default=None, description="Boost/Turbo Clock in GHz")
+    has_integrated_gpu: bool = Field(default=False, description="Has Integrated Graphics iGPU")
+    mpn: Optional[str] = Field(default=None, description="Manufacturer Part Number")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return self.model_dump()

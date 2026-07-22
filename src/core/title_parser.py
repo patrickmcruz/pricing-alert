@@ -3,7 +3,7 @@ import re
 import tomllib
 from typing import Any, Dict, List, Optional, Tuple
 
-from src.core.specs import GPUSpecs, MotherboardSpecs, RAMSpecs
+from src.core.specs import CPUSpecs, GPUSpecs, MotherboardSpecs, RAMSpecs
 
 PARSERS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data", "parsers"))
 
@@ -186,4 +186,70 @@ class TitleParserRegistry:
             speed_mhz=speed_mhz,
             latency_cl=latency_cl,
             has_rgb=has_rgb,
+        )
+
+    @staticmethod
+    def parse_cpu(raw_title: str | None, search_keyword: str = "") -> CPUSpecs:
+        title = raw_title or ""
+        title_upper = title.upper()
+        config = _load_toml_config("cpu.toml")
+
+        # Manufacturer
+        manufacturer = "AMD" if any(k in title_upper for k in ["AMD", "RYZEN", "THREADRIPPER"]) else "Intel"
+
+        # Socket
+        socket = "AM5"
+        for s in config.get("sockets", {}).get("known", ["AM5", "AM4", "LGA1851", "LGA1700"]):
+            if s.upper() in title_upper:
+                socket = s.upper().replace(" ", "")
+                break
+
+        # Model Family & Number
+        model_family = "Ryzen 7" if manufacturer == "AMD" else "Core i7"
+        model_number = "7800X3D" if manufacturer == "AMD" else "14700K"
+
+        # Check AMD Ryzen pattern
+        ryzen_match = re.search(config.get("patterns", {}).get("ryzen", r"\b(RYZEN\s*[3579]\s*\d{4}(?:X3D|XT|X)?)\b"), title_upper)
+        if ryzen_match:
+            parts = ryzen_match.group(1).split()
+            if len(parts) >= 3:
+                model_family = f"{parts[0].title()} {parts[1]}"
+                model_number = parts[2]
+            elif len(parts) == 2:
+                model_family = parts[0].title()
+                model_number = parts[1]
+
+        # Check Intel Core / Ultra pattern
+        intel_core_match = re.search(config.get("patterns", {}).get("intel_core", r"\b(CORE\s*I[3579]\s*\d{4,5}[KFKST]?)\b"), title_upper)
+        if intel_core_match:
+            parts = intel_core_match.group(1).split()
+            if len(parts) >= 3:
+                model_family = f"{parts[0].title()} {parts[1].lower()}"
+                model_number = parts[2]
+            elif len(parts) == 2:
+                model_family = parts[0].title()
+                model_number = parts[1]
+
+        intel_ultra_match = re.search(config.get("patterns", {}).get("intel_ultra", r"\b(CORE\s*ULTRA\s*[579]\s*\d{3}[KFKST]?)\b"), title_upper)
+        if intel_ultra_match:
+            parts = intel_ultra_match.group(1).split()
+            if len(parts) >= 3:
+                model_family = f"{parts[0].title()} {parts[1].title()} {parts[2]}"
+                model_number = parts[3] if len(parts) > 3 else parts[-1]
+
+        # Integrated GPU
+        igpu_pattern = config.get("patterns", {}).get("igpu", r"\b(RADEON\s*GRAPHICS|INTEL\s*GRAPHICS|UHD\s*GRAPHICS|IGPU)\b")
+        has_integrated_gpu = re.search(igpu_pattern, title_upper) is not None or "X3D" in model_number or (manufacturer == "Intel" and not model_number.endswith("F"))
+
+        # Clock speed
+        clock_match = re.search(config.get("patterns", {}).get("clock", r"\b(\d\.\d)\s*GHZ\b"), title_upper)
+        base_clock_ghz = float(clock_match.group(1)) if clock_match else None
+
+        return CPUSpecs(
+            socket=socket,
+            manufacturer=manufacturer,
+            model_family=model_family,
+            model_number=model_number,
+            base_clock_ghz=base_clock_ghz,
+            has_integrated_gpu=has_integrated_gpu,
         )

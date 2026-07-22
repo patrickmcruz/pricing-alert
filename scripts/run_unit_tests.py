@@ -63,6 +63,24 @@ def test_ram_parser():
     print("  [PASS] RAM Title Parser test")
 
 
+def test_cpu_parser():
+    title = "Processador AMD Ryzen 7 9800X3D, 4.7GHz (5.2GHz Turbo), 8 Cores 16 Threads, AM5, Cache 96MB"
+    specs = TitleParserRegistry.parse_cpu(title, search_keyword="ryzen 7 9800x3d")
+    assert specs.manufacturer == "AMD"
+    assert specs.socket == "AM5"
+    assert specs.model_number == "9800X3D"
+    print("  [PASS] CPU Title Parser test")
+
+
+def test_spiders_registry():
+    from src.spiders.registry import get_registered_spiders
+    spiders = get_registered_spiders()
+    assert "mercado-livre" in spiders
+    assert "pichau" in spiders
+    assert "kabum" in spiders
+    print("  [PASS] Store Spiders Registry test")
+
+
 def run_all():
     print("=" * 60)
     print("RUNNING AUTOMATED UNIT TEST SUITE")
@@ -72,6 +90,8 @@ def run_all():
     test_gpu_parser_edge_cases()
     test_motherboard_parser()
     test_ram_parser()
+    test_cpu_parser()
+    test_spiders_registry()
     print("=" * 60)
     print("ALL UNIT TESTS PASSED SUCCESSFULLY (100% SUCCESS RATE)")
     print("=" * 60)

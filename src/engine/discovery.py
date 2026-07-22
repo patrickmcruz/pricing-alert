@@ -132,3 +132,72 @@ class DiscoveryEngine:
             logger.error("Failed to load static URLs from target_urls: %s", e)
 
         logger.info("Discovery run complete.")
+
+    async def run_spider_discovery(
+        self,
+        keywords: list[str],
+        category: str = "cpu",
+        client_factories: dict[str, Any] | None = None,
+    ) -> list[ProductSKU]:
+        """
+        Executes registered Store Spiders to discover new hardware SKUs for the given keywords and category.
+        Idempotently persists discovered SKUs into target_urls and listings tables.
+        """
+        from src.spiders.registry import get_registered_spiders
+
+        registered_spiders = get_registered_spiders()
+        if not registered_spiders:
+            logger.warning("No store spiders registered for dynamic discovery.")
+            return []
+
+        cat_title = category.upper()
+        cat_slug = category.lower()
+        categoria = await self.catalog_repository.get_or_create_categoria(cat_title, cat_slug)
+
+        discovered_skus: list[ProductSKU] = []
+
+        for keyword in keywords:
+            for store_name, spider_cls in registered_spiders.items():
+                spider = spider_cls()
+                client_factory = client_factories.get(spider.transport_type) if client_factories else None
+                if not client_factory:
+                    logger.debug("No client factory provided for transport_type %r (store %s)", spider.transport_type, store_name)
+                    continue
+
+                try:
+                    async with client_factory.create_client() as client:
+                        found_skus = await spider.execute(keyword, category, client)
+                        for d_sku in found_skus:
+                            if category.lower() == "cpu":
+                                parsed_cpu = TitleParserRegistry.parse_cpu(d_sku.product_title, keyword)
+                                marca = await self.catalog_repository.get_or_create_marca(parsed_cpu.manufacturer)
+                                produto = await self.catalog_repository.get_or_create_produto(
+                                    marca_id=marca.id,
+                                    categoria_id=categoria.id,
+                                    nome=f"{parsed_cpu.model_family} {parsed_cpu.model_number}",
+                                    specs=parsed_cpu.to_dict(),
+                                    mpn=parsed_cpu.mpn,
+                                )
+                            else:
+                                _, marca, produto = await self._resolve_catalog(
+                                    keyword, d_sku.brand, d_sku.model, d_sku.product_title
+                                )
+
+                            sku = ProductSKU(
+                                store_name=store_name,
+                                search_keyword=keyword,
+                                product_url=d_sku.product_url,
+                                produto_id=produto.id,
+                                brand=marca.nome,
+                                model=produto.nome,
+                                product_title=d_sku.product_title,
+                            )
+                            discovered_skus.append(sku)
+                except Exception as e:
+                    logger.error("Spider '%s' failed for keyword %r: %s", store_name, keyword, e)
+
+        if discovered_skus:
+            await self.repository.save_skus(discovered_skus)
+            logger.info("Saved %d SKUs discovered by store spiders.", len(discovered_skus))
+
+        return discovered_skus

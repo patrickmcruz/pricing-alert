@@ -1,0 +1,12 @@
+[manufacturers]
+known = ["AMD", "Intel"]
+
+[sockets]
+known = ["AM5", "AM4", "LGA1851", "LGA1700", "LGA 1851", "LGA 1700"]
+
+[patterns]
+ryzen = '''\b(RYZEN\s*[3579]\s*\d{4}(?:X3D|XT|X)?)\b'''
+intel_core = '''\b(CORE\s*I[3579]\s*\d{4,5}[KFKST]?)\b'''
+intel_ultra = '''\b(CORE\s*ULTRA\s*[579]\s*\d{3}[KFKST]?)\b'''
+clock = '''\b(\d\.\d)\s*GHZ\b'''
+igpu = '''\b(RADEON\s*GRAPHICS|INTEL\s*GRAPHICS|UHD\s*GRAPHICS|IGPU)\b'''
