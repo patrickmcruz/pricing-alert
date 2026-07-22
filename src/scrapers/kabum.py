@@ -162,7 +162,8 @@ class KabumScraper(BaseScraper):
 
         # Sanity check: Reject cash prices that are unreasonably low or extracted from monthly installments
         if price_installments and price_cash:
-            if price_cash < (price_installments / 3.0):
+            from decimal import Decimal
+            if price_cash < (price_installments / Decimal("3")):
                 logger.warning("[%s] Cash price R$%s is suspiciously low compared to installment total R$%s. Rejecting anomaly.", self.store_name, price_cash, price_installments)
                 return None
 
