@@ -64,6 +64,11 @@ default_manufacturer = "NVIDIA"
 default_gpus = ["rtx 5070", "rtx 5070 ti"]
 default_stores = []
 default_brands = []
+
+# Limite de SKUs ativos por par (loja, chipset). 
+# Defina como 2 para testes rápidos end-to-end de todos os scrapers/alertas.
+# Defina como 0 para varredura COMPLETA de todas as 90+ GPUs do catálogo em produção.
+max_skus_per_chipset = 2
 scraper_timeout_seconds = 120
 display_timezone = "America/Sao_Paulo"
 default_cron_times = ["08:00", "12:00", "16:00", "20:00"]

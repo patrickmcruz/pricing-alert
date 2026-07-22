@@ -24,8 +24,8 @@ import psycopg
 from src.core.config import settings
 
 
-def trim_dev_listings(dsn: str, keep: int = 2) -> None:
-    if settings.env == "production":
+def trim_dev_listings(dsn: str, keep: int = 2, allow_production: bool = False) -> None:
+    if settings.env == "production" and not allow_production:
         raise SystemExit(
             "Refusing to trim anuncio in the production environment - "
             "production is meant to keep every GPU listing it has ever discovered."

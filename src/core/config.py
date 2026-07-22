@@ -40,6 +40,7 @@ class AppSettings:
         self.default_gpus = self.config_data.get("default_gpus", [])
         self.default_stores = self.config_data.get("default_stores", [])
         self.default_brands = self.config_data.get("default_brands", [])
+        self.max_skus_per_chipset = self.config_data.get("max_skus_per_chipset", 0)
         
         self.headless = self.config_data.get("headless", True)
 

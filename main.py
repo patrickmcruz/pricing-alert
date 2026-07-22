@@ -300,6 +300,16 @@ async def main():
         )
         await discovery_engine.run_discovery(configs=[])
 
+        # Configurable SKU cap from config.toml (max_skus_per_chipset) or env var (MAX_URLS_PER_CHIPSET)
+        max_skus_cap = settings.max_skus_per_chipset or (int(os.getenv("MAX_URLS_PER_CHIPSET")) if os.getenv("MAX_URLS_PER_CHIPSET") else 0)
+        if max_skus_cap > 0:
+            try:
+                from scripts.trim_dev_listings import trim_dev_listings
+                logger.info("Config mode active: Capping active listings to %d per (store, chipset)...", max_skus_cap)
+                trim_dev_listings(DB_DSN, keep=max_skus_cap, allow_production=True)
+            except Exception as e:
+                logger.warning("Failed to apply max_skus_per_chipset cap: %s", e)
+
     # Same rationale as fail_stale_processing below: a "running" row can only
     # be legitimate if this process is still alive, so after a restart it's
     # provably orphaned - left alone it shows as running forever on the
