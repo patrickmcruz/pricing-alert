@@ -52,10 +52,10 @@ class TitleParserRegistry:
             chip_maker = "NVIDIA"
 
         # 2. VRAM
-        vram_match = re.search(r"\b(\d{1,2})\s*GB\b", raw_title, re.IGNORECASE)
+        vram_match = re.search(r"\b(\d{1,2})\s*GB\b", title, re.IGNORECASE)
         vram_gb = int(vram_match.group(1)) if vram_match else 12
 
-        vtype_match = re.search(r"\b(GDDR7|GDDR6X|GDDR6|GDDR5X|GDDR5)\b", raw_title, re.IGNORECASE)
+        vtype_match = re.search(r"\b(GDDR7|GDDR6X|GDDR6|GDDR5X|GDDR5)\b", title, re.IGNORECASE)
         vram_type = vtype_match.group(1).upper() if vtype_match else "GDDR7"
 
         # 3. OC / Form factor
@@ -82,7 +82,7 @@ class TitleParserRegistry:
                 break
 
         # 5. MPN / SKU Code
-        mpn_match = re.search(r"\b([A-Z0-9]{3,}-[A-Z0-9]{3,}|GV-[A-Z0-9]+|VCG[A-Z0-9]+|NE[A-Z0-9]+|ZT-[A-Z0-9-]+)\b", raw_title)
+        mpn_match = re.search(r"\b([A-Z0-9]{3,}-[A-Z0-9]{3,}|GV-[A-Z0-9]+|VCG[A-Z0-9]+|NE[A-Z0-9]+|ZT-[A-Z0-9-]+)\b", title)
         mpn = mpn_match.group(1) if mpn_match else None
 
         # 6. Features
@@ -105,8 +105,9 @@ class TitleParserRegistry:
         )
 
     @staticmethod
-    def parse_motherboard(raw_title: str) -> MotherboardSpecs:
-        title_upper = raw_title.upper()
+    def parse_motherboard(raw_title: str | None) -> MotherboardSpecs:
+        title = raw_title or ""
+        title_upper = title.upper()
 
         # Socket
         socket = "AM5"
@@ -152,8 +153,9 @@ class TitleParserRegistry:
         )
 
     @staticmethod
-    def parse_ram(raw_title: str) -> RAMSpecs:
-        title_upper = raw_title.upper()
+    def parse_ram(raw_title: str | None) -> RAMSpecs:
+        title = raw_title or ""
+        title_upper = title.upper()
 
         # Capacity
         cap_match = re.search(r"\b(\d{1,3})\s*GB\b", title_upper)
