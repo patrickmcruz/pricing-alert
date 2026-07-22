@@ -84,7 +84,7 @@ _DDL = [
         error_message   TEXT
     )""",
     """CREATE TABLE IF NOT EXISTS price_observations (
-        id                     UUID PRIMARY KEY,
+        id                     UUID NOT NULL,
         listing_id             UUID NOT NULL REFERENCES listings(id),
         scraper_run_id         UUID REFERENCES scraper_runs(id),
         price_cash             NUMERIC(12,2) NOT NULL,
@@ -94,8 +94,10 @@ _DDL = [
         discount                NUMERIC(12,2),
         is_available           BOOLEAN NOT NULL,
         parser_version         TEXT NOT NULL,
-        scraped_at             TIMESTAMPTZ NOT NULL
-    )""",
+        scraped_at             TIMESTAMPTZ NOT NULL,
+        PRIMARY KEY (id, scraped_at)
+    ) PARTITION BY RANGE (scraped_at)""",
+    """CREATE TABLE IF NOT EXISTS price_observations_default PARTITION OF price_observations DEFAULT""",
     # Raw manifest of record for DiscoveryEngine, replacing data/target_urls.json
     # (see specs/target-urls-table/spec.md) - deliberately a plain, denormalized
     # staging table, not FK'd into products/brands: it holds whatever a human or
@@ -195,6 +197,30 @@ async def connect(dsn: str):
         await conn.close()
 
 
+async def ensure_monthly_partitions(db) -> None:
+    """Proactively provisions monthly partitions for the current and next months."""
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
+    for offset in range(0, 3):
+        m = (now.month + offset - 1) % 12 + 1
+        y = now.year + (now.month + offset - 1) // 12
+        next_m = m % 12 + 1
+        next_y = y + 1 if next_m == 1 else y
+
+        part_name = f"price_observations_y{y}m{m:02d}"
+        from_date = f"{y}-{m:02d}-01 00:00:00+00"
+        to_date = f"{next_y}-{next_m:02d}-01 00:00:00+00"
+
+        stmt = f"""
+            CREATE TABLE IF NOT EXISTS {part_name} PARTITION OF price_observations
+            FOR VALUES FROM ('{from_date}') TO ('{to_date}')
+        """
+        try:
+            await db.execute(stmt)
+        except Exception:
+            pass
+
+
 async def initialize_schema(dsn: str) -> None:
     """Single source of truth for the schema. Call once at boot (main.py) and
     from anywhere else that needs a guaranteed-initialized DB (Streamlit pages,
@@ -204,3 +230,4 @@ async def initialize_schema(dsn: str) -> None:
             await db.execute(stmt)
         for stmt in _INDEXES:
             await db.execute(stmt)
+        await ensure_monthly_partitions(db)
