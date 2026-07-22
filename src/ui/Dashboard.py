@@ -255,11 +255,12 @@ else:
                 
                 if selected_keywords:
                     # Unify the trend chart to compare the lowest prices of the selected models
-                    filtered_df["scrape_minute"] = filtered_df["scraped_at"].dt.floor("Min")
-                    idx_min = filtered_df.groupby(["scrape_minute", "search_keyword"])["price_cash"].idxmin()
-                    trend_data = filtered_df.loc[idx_min].sort_values("scrape_minute")
-                    
-                    if not trend_data.empty:
+                    active_trend_df = filtered_df[filtered_df["is_available"] & (filtered_df["price_cash"] > 0)].copy()
+                    if not active_trend_df.empty:
+                        active_trend_df["scrape_minute"] = active_trend_df["scraped_at"].dt.floor("Min")
+                        idx_min = active_trend_df.groupby(["scrape_minute", "search_keyword"])["price_cash"].idxmin()
+                        trend_data = active_trend_df.loc[idx_min].sort_values("scrape_minute")
+                        
                         fig = px.line(
                             trend_data,
                             x="scrape_minute",
@@ -322,7 +323,8 @@ else:
                                 best_current_idx = current_prod_market["price_cash"].idxmin()
                                 best_current = current_prod_market.loc[best_current_idx]
                                 
-                                lowest_price = product_df["price_cash"].min()
+                                valid_prod_df = product_df[product_df["price_cash"] > 0]
+                                lowest_price = valid_prod_df["price_cash"].min() if not valid_prod_df.empty else best_current["price_cash"]
                                 avg_price = current_prod_market["price_cash"].mean()
                                 
                                 st.markdown(t("analytics", lang=lang))
@@ -386,7 +388,7 @@ else:
                                 lbl_inst = t("label_inst", lang=lang)
                                 lbl_spread = t("label_spread", lang=lang)
                                 
-                                plot_df = product_df.copy()
+                                plot_df = product_df[product_df["is_available"] & (product_df["price_cash"] > 0)].copy()
                                 plot_df[lbl_cash] = plot_df["price_cash"]
                                 plot_df[lbl_inst] = plot_df["price_installments"]
                                 plot_df[lbl_spread] = plot_df["price_installments"] - plot_df["price_cash"]
