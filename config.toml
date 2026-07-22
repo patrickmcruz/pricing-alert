@@ -68,7 +68,7 @@ default_brands = []
 # Limite de SKUs ativos por par (loja, chipset). 
 # Defina como 2 para testes rápidos end-to-end de todos os scrapers/alertas.
 # Defina como 0 para varredura COMPLETA de todas as 90+ GPUs do catálogo em produção.
-max_skus_per_chipset = 2
+max_skus_per_chipset = 0
 scraper_timeout_seconds = 120
 display_timezone = "America/Sao_Paulo"
 default_cron_times = ["08:00", "12:00", "16:00", "20:00"]
