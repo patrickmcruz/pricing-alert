@@ -1,7 +1,0 @@
-alerts
-core
-db
-engine
-repositories
-scrapers
-ui
