@@ -1,0 +1,12 @@
+[brands]
+known = ["Gigabyte", "Asus", "Msi", "Galax", "Palit", "Pny", "Zotac", "Powercolor", "Sapphire", "Xfx", "Gainward"]
+
+[lines]
+known = ["Windforce", "Eagle", "Aorus", "Gaming OC", "Tuf Gaming", "Rog Strix", "Dual", "Ventus", "Gaming X", "Suprim", "Shadow", "Trinity", "Amp Extreme", "Epic-X", "Pegasus", "Gamingpro", "Steel Legend", "Taichi", "Hellhound", "Red Devil"]
+
+[patterns]
+chipset = '''\b(RTX\s*\d{4}(?:\s*TI)?|GTX\s*\d{4}(?:\s*TI)?|RX\s*\d{4}(?:\s*XTX|\s*XT|\s*GRE)?)\b'''
+vram = '''\b(\d{1,2})\s*GB\b'''
+vram_type = '''\b(GDDR7|GDDR6X|GDDR6|GDDR5X|GDDR5)\b'''
+oc = '''\b(OC|OVERCLOCK|OVERCLOCKED)\b'''
+mpn = '''\b([A-Z0-9]{3,}-[A-Z0-9]{3,}|GV-[A-Z0-9]+|VCG[A-Z0-9]+|NE[A-Z0-9]+|ZT-[A-Z0-9-]+)\b'''

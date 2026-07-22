@@ -1,23 +1,42 @@
-from __future__ import annotations
-
+import os
 import re
+import tomllib
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.core.specs import GPUSpecs, MotherboardSpecs, RAMSpecs
+
+PARSERS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data", "parsers"))
+
+
+def _load_toml_config(filename: str) -> dict:
+    filepath = os.path.join(PARSERS_DIR, filename)
+    if os.path.exists(filepath):
+        try:
+            with open(filepath, "rb") as f:
+                return tomllib.load(f)
+        except Exception:
+            pass
+    return {}
 
 
 class TitleParserRegistry:
     """
     Registry for category-specific product title parsers.
-    Parses unstructured retailer titles into typed specs models.
+    Parses unstructured retailer titles into typed specs models using TOML configs.
     """
 
     @staticmethod
-    def parse_gpu(raw_title: str, search_keyword: str = "") -> GPUSpecs:
-        title_upper = raw_title.upper()
+    def parse_gpu(raw_title: str | None, search_keyword: str = "") -> GPUSpecs:
+        title = raw_title or ""
+        title_upper = title.upper()
+        config = _load_toml_config("gpu.toml")
 
         # 1. Chipset
-        chipset_match = re.search(r"\b(RTX\s*\d{4}(?:\s*TI)?|GTX\s*\d{4}(?:\s*TI)?|RX\s*\d{4}(?:\s*XTX|\s*XT|\s*GRE)?)\b", raw_title, re.IGNORECASE)
+        pattern = config.get("patterns", {}).get(
+            "chipset",
+            r"\b(RTX\s*\d{4}(?:\s*TI)?|GTX\s*\d{4}(?:\s*TI)?|RX\s*\d{4}(?:\s*XTX|\s*XT|\s*GRE)?)\b",
+        )
+        chipset_match = re.search(pattern, title, re.IGNORECASE)
         if chipset_match:
             chipset_model = re.sub(r"\s+", " ", chipset_match.group(1).upper())
         else:

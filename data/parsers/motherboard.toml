@@ -1,0 +1,11 @@
+[brands]
+known = ["Asus", "Gigabyte", "Msi", "Asrock"]
+
+[lines]
+known = ["Aorus", "Tuf Gaming", "Rog Strix", "Pro", "Prime", "Steel Legend", "Mortar", "Tomahawk"]
+
+[patterns]
+chipset = '''\b(B650[M]?|X670[E]?|X870[E]?|B850[M]?|Z790|B760[M]?|H610[M]?|Z890)\b'''
+socket = '''\b(AM5|AM4|LGA1700|LGA1851|LGA 1700|LGA 1851)\b'''
+memory_type = '''\b(DDR5|DDR4)\b'''
+form_factor = '''\b(MICRO-ATX|MATX|MINI-ITX|ITX|E-ATX|ATX)\b'''

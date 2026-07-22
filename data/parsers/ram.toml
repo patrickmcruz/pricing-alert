@@ -1,0 +1,13 @@
+[brands]
+known = ["Corsair", "Kingston", "G.Skill", "Xpg", "Team Group", "Crucial", "Asrock"]
+
+[lines]
+known = ["Vengeance", "Fury Beast", "Trident Z", "Lancer", "Dominator"]
+
+[patterns]
+capacity = '''\b(\d{1,3})\s*GB\b'''
+modules = '''(\d)\s*X\s*(\d{1,2})\s*GB'''
+memory_type = '''\b(DDR5|DDR4)\b'''
+speed = '''\b(\d{4})\s*(?:MHZ|MT/S)?\b'''
+cl = '''\b(CL\d{2})\b'''
+rgb = '''\bRGB\b'''
