@@ -134,7 +134,7 @@ class PriceEngine:
                         if price:
                             logger.info("Extracted price for %s: %s (Available: %s)", sku.product_url, price.price_cash, price.is_available)
                             observation_ids = await self.repository.save_prices([price], scraper_run_id=run_id)
-                            if self.on_price_saved:
+                            if self.on_price_saved and observation_ids:
                                 await self.on_price_saved(price, observation_ids[0])
                             listings_succeeded += 1
                             await self._finish_sku_run(sku_run_id, SkuRunStatus.SUCCESS)
