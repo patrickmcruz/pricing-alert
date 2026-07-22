@@ -9,8 +9,8 @@ from bs4 import BeautifulSoup
 from src.core.base_scraper import BaseScraper, SelectorOutdatedException, StoreUnavailableException
 from src.core.config import settings
 from src.core.contract import PriceContract, ProductSKU
-from src.core.contract_factory import build_price_contract
-from src.core.parsing_utils import clean_brl_price, compute_discount, has_maintenance_marker_in_html
+from src.core.contract_factory import build_price_contract, build_unavailable_contract
+from src.core.parsing_utils import clean_brl_price, compute_discount, has_maintenance_marker_in_html, has_out_of_stock_marker
 from src.core.registry import register_scraper
 
 logger = logging.getLogger(__name__)
@@ -201,11 +201,21 @@ class PichauScraper(BaseScraper):
         if has_maintenance_marker_in_html(document):
             raise StoreUnavailableException(f"[{self.store_name}] Store appears to be down for maintenance.")
 
+        soup = BeautifulSoup(document, "lxml")
+
+        # DOM availability check: inspect availabilityBox selector and out-of-stock markers
+        dom_unavailable = False
+        avail_box = soup.select_one("div[class*='availabilityBox']") or soup.select_one("div.mui-ysen8z-availabilityBox")
+        if avail_box and re.search(r"(indisponível|fora de estoque|esgotado|avise-me)", avail_box.get_text(" ", strip=True), re.I):
+            dom_unavailable = True
+
+        out_of_stock_pattern = r"(produto\s+indisponível|fora\s+de\s+estoque|indisponível|esgotado|avise-me)"
+        if has_out_of_stock_marker(soup, out_of_stock_pattern):
+            dom_unavailable = True
+
         products = extract_pichau_products(document)
-        if not products:
-            raise SelectorOutdatedException(
-                f"[{self.store_name}] No embedded product JSON found for {sku.product_url}."
-            )
+        if not products or dom_unavailable:
+            return build_unavailable_contract(self, sku, parser_version=parser_version)
 
         target_url_key = _url_key_from_url(str(sku.product_url))
         product = next((p for p in products if p.get("url_key") == target_url_key), products[0])
@@ -215,8 +225,10 @@ class PichauScraper(BaseScraper):
         prices = product.get("pichau_prices") or {}
 
         price_cash = _to_decimal(prices.get("avista"))
-        if price_cash is None or price_cash <= 0:
-            return None
+        is_available = (product.get("stock_status") == "IN_STOCK") and not dom_unavailable
+
+        if not is_available or price_cash is None or price_cash <= 0:
+            return build_unavailable_contract(self, sku, parser_version=parser_version, product_title=title)
 
         price_installments = _to_decimal(prices.get("base_price"))
         installment_count = prices.get("max_installments")
@@ -226,8 +238,6 @@ class PichauScraper(BaseScraper):
             price_installments = dom_price_installments
         if dom_installment_count is not None:
             installment_count = dom_installment_count
-
-        is_available = product.get("stock_status") == "IN_STOCK"
 
         contract = build_price_contract(
             self,

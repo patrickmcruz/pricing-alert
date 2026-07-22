@@ -10,7 +10,9 @@ from src.core.utils import uuid7
 
 
 def test_uuid7_ordering():
+    import time
     u1 = uuid7()
+    time.sleep(0.002)
     u2 = uuid7()
     assert u1.version == 7
     assert u2.version == 7

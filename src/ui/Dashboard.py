@@ -52,11 +52,11 @@ def load_data(days_history: int = 60):
             df["scraped_at"] = df["scraped_at"].dt.tz_localize(None)
             
             # --- VALIDADOR DE DADOS ---
-            # Removemos qualquer registro com preço zero ou negativo, pois distorcem 
-            # os gráficos e os cálculos de "menor preço histórico"
-            df = df[df["price_cash"] > 0]
-            if "price_installments" in df.columns:
-                df = df[(df["price_installments"] > 0) | df["price_installments"].isna()]
+            # Manter is_available para filtrar ofertas ativas vs produtos esgotados
+            if "is_available" not in df.columns:
+                df["is_available"] = True
+            else:
+                df["is_available"] = df["is_available"].fillna(True).astype(bool)
             
             # Create a composite product name for clear differentiation
             df["product_name"] = df.apply(
@@ -169,19 +169,23 @@ else:
                     with cols[idx]:
                         keyword_df = filtered_df[filtered_df["search_keyword"] == keyword]
                         if not keyword_df.empty:
-                            # 1. Calculate Current Market (Latest scrape for each product_url)
+                            # 1. Calculate Current Market (Latest scrape for each product_url that is currently available)
                             idx_latest = keyword_df.groupby("product_url")["scraped_at"].idxmax()
-                            current_market = keyword_df.loc[idx_latest]
+                            latest_obs = keyword_df.loc[idx_latest]
+                            current_market = latest_obs[latest_obs["is_available"] & (latest_obs["price_cash"] > 0)]
                             
-                            if current_market.empty:
+                            # Filter historical data for valid positive prices
+                            hist_df = keyword_df[keyword_df["price_cash"] > 0]
+                            
+                            if current_market.empty or hist_df.empty:
                                 continue
                                 
                             # 2. Extract Metrics
                             best_current_idx = current_market["price_cash"].idxmin()
                             best_current = current_market.loc[best_current_idx]
                             
-                            best_historical_idx = keyword_df["price_cash"].idxmin()
-                            best_historical = keyword_df.loc[best_historical_idx]
+                            best_historical_idx = hist_df["price_cash"].idxmin()
+                            best_historical = hist_df.loc[best_historical_idx]
                             
                             avg_current = current_market["price_cash"].mean()
                             

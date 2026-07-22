@@ -8,6 +8,8 @@ price_cash = "#main-content > div > div.MuiContainer-root.MuiContainer-maxWidthX
 price_installments = "#main-content > div > div.MuiContainer-root.MuiContainer-maxWidthXl.mui-iunmvg-top > div > div.MuiGrid2-root.MuiGrid2-direction-xs-row.MuiGrid2-grid-xs-12.MuiGrid2-grid-sm-5.mui-1oj8u1k-gridInfo > div.mui-caclr-sectionWrapperHorizontal-extraSpace > div:nth-child(3) > div > div.mui-7ie9un-price_total"
 installment_count = "#main-content > div > div.MuiContainer-root.MuiContainer-maxWidthXl.mui-iunmvg-top > div > div.MuiGrid2-root.MuiGrid2-direction-xs-row.MuiGrid2-grid-xs-12.MuiGrid2-grid-sm-5.mui-1oj8u1k-gridInfo > div.mui-caclr-sectionWrapperHorizontal-extraSpace > div:nth-child(3) > div > span"
 product_title = "meta[name='twitter:title']"
+availability_box = "div[class*='availabilityBox'], div.mui-ysen8z-availabilityBox"
+out_of_stock = "(produto\\s+indisponível|fora\\s+de\\s+estoque|indisponível|esgotado|avise-me)"
 
 [notes]
 source = "Pichau product page DOM selectors for installment and cash price extraction"
