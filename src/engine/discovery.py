@@ -62,13 +62,14 @@ class DiscoveryEngine:
         categoria = await self.catalog_repository.get_or_create_categoria("GPU", GPU_CATEGORY_SLUG)
         
         # Extract structured specs using TitleParserRegistry
-        parsed_gpu = TitleParserRegistry.parse_gpu(product_title or model or "", search_keyword=chipset_name)
+        parsed_gpu = TitleParserRegistry.parse_gpu(product_title or model or "", search_keyword=search_keyword)
         brand_name = brand or parsed_gpu.chip_maker or "Unknown"
         marca = await self.catalog_repository.get_or_create_marca(brand_name)
         model_name = model or product_title or "Unknown"
         
+        actual_chipset = parsed_gpu.chipset or _resolve_chipset_name(search_keyword)
         specs = parsed_gpu.to_dict()
-        specs["chipset"] = chipset_name
+        specs["chipset"] = actual_chipset
         
         produto = await self.catalog_repository.get_or_create_produto(
             marca_id=marca.id,
@@ -185,9 +186,10 @@ class DiscoveryEngine:
                                     keyword, d_sku.brand, d_sku.model, d_sku.product_title
                                 )
 
+                            real_keyword = str(produto.specs.get("chipset", keyword)).lower()
                             sku = ProductSKU(
                                 store_name=store_name,
-                                search_keyword=keyword,
+                                search_keyword=real_keyword,
                                 product_url=d_sku.product_url,
                                 produto_id=produto.id,
                                 brand=marca.nome,
