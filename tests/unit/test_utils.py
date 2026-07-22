@@ -172,3 +172,14 @@ async def test_simulate_human_interaction_swallows_cloudflare_iframe_errors(monk
     result = await utils.simulate_human_interaction(page)  # must not raise
 
     assert result is True
+
+
+def test_uuid7_generation():
+    u1 = utils.uuid7()
+    u2 = utils.uuid7()
+
+    assert u1.version == 7
+    assert u2.version == 7
+    assert u1 != u2
+    assert u1 <= u2
+

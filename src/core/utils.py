@@ -3,7 +3,29 @@ import random
 import logging
 from playwright.async_api import Page
 
+import os
+import time
+from uuid import UUID
+
 logger = logging.getLogger(__name__)
+
+
+def uuid7() -> UUID:
+    """
+    Generates a time-ordered UUIDv7 (RFC 9562).
+    Includes Unix timestamp in milliseconds for sequential B-Tree write performance.
+    """
+    ms = int(time.time() * 1000)
+    rand_bytes = os.urandom(10)
+
+    time_high = (ms >> 16) & 0xFFFFFFFF
+    time_low = ms & 0xFFFF
+
+    ver_rand = 0x7000 | (int.from_bytes(rand_bytes[:2], "big") & 0x0FFF)
+    var_rand = 0x8000000000000000 | (int.from_bytes(rand_bytes[2:], "big") & 0x3FFFFFFFFFFFFFFF)
+
+    uuid_int = (time_high << 96) | (time_low << 80) | (ver_rand << 64) | var_rand
+    return UUID(int=uuid_int)
 
 
 async def apply_jitter(min_seconds: float = 3.0, max_seconds: float = 8.0) -> None:

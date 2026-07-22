@@ -6,6 +6,7 @@ from typing import List
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from src.core.utils import uuid7
 
 
 class PriceContract(BaseModel):
@@ -17,8 +18,8 @@ class PriceContract(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", validate_assignment=True)
 
     execution_id: UUID = Field(
-        default_factory=uuid4,
-        description="Unique identifier for the scraping execution.",
+        default_factory=uuid7,
+        description="Unique time-ordered identifier (UUIDv7) for the scraping execution.",
     )
 
     store_name: str = Field(..., description="Standardized store identifier.")
