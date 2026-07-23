@@ -175,11 +175,14 @@ async def test_simulate_human_interaction_swallows_cloudflare_iframe_errors(monk
 
 
 def test_uuid7_generation():
+    import time
     u1 = utils.uuid7()
+    time.sleep(0.002)
     u2 = utils.uuid7()
 
     assert u1.version == 7
     assert u2.version == 7
     assert u1 != u2
     assert u1 <= u2
+
 

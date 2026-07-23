@@ -214,7 +214,12 @@ class PichauScraper(BaseScraper):
             dom_unavailable = True
 
         products = extract_pichau_products(document)
-        if not products or dom_unavailable:
+        if not products:
+            if dom_unavailable:
+                return build_unavailable_contract(self, sku, parser_version=parser_version)
+            raise SelectorOutdatedException(f"[{self.store_name}] Failed to extract product JSON payload from page.")
+
+        if dom_unavailable:
             return build_unavailable_contract(self, sku, parser_version=parser_version)
 
         target_url_key = _url_key_from_url(str(sku.product_url))

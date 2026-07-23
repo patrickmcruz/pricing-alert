@@ -18,6 +18,7 @@ class GPUSpecs(BaseModel):
 
     chipset: str = Field(..., description="GPU chipset model (e.g. 'RTX 5070 Ti', 'RX 7900 XT')")
     chip_maker: str = Field(default="NVIDIA", description="Chip maker (NVIDIA, AMD, Intel)")
+    brand_name: Optional[str] = Field(default=None, description="Board partner brand (e.g. Gigabyte, ASUS, Galax)")
     vram_gb: int = Field(default=0, description="VRAM capacity in GB")
     vram_type: str = Field(default="GDDR6", description="VRAM memory type")
     is_oc: bool = Field(default=False, description="Factory Overclocked")

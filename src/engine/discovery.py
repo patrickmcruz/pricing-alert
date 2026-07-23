@@ -1,23 +1,18 @@
 import logging
 from typing import Any
 
-from src.core.catalog import GPU_CATEGORY_SLUG, Categoria, Marca, Produto, infer_chip_maker
+from src.core.catalog import GPU_CATEGORY_SLUG, Categoria, Marca, Produto
 from src.core.contract import ProductSKU, StoreConfig
+from src.core.title_parser import TitleParserRegistry
 from src.repositories.base_repository import PriceRepository
 from src.repositories.catalog_repository import CatalogRepository
 from src.repositories.target_url_repository import TargetUrlRepository
 
 logger = logging.getLogger(__name__)
 
-# search_keyword -> canonical chipset name. Keeps spelling/noise variations
-# ("rx 9070 oc" is search noise, not part of the chipset) from becoming
-# different produto.specs["chipset"] values.
 _CHIPSET_ALIASES = {
     "rx 9070 oc": "rx 9070",
 }
-
-
-from src.core.title_parser import TitleParserRegistry
 
 
 def _resolve_chipset_name(search_keyword: str) -> str:
@@ -58,7 +53,6 @@ class DiscoveryEngine:
         future categories (notebooks, geladeiras...) can reuse this same path
         with a different categoria/specs shape.
         """
-        chipset_name = _resolve_chipset_name(search_keyword)
         categoria = await self.catalog_repository.get_or_create_categoria("GPU", GPU_CATEGORY_SLUG)
         
         # Extract structured specs using TitleParserRegistry

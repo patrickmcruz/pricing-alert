@@ -26,6 +26,26 @@ In `sqlite_repository.py`, we handle database migrations by blindly running `ALT
 Right now, `src/core/config.py` pipes all logs directly to standard output (`logging.basicConfig`). For a background service running 24/7, this means logs are either lost if the terminal closes, or they will grow indefinitely if piped to a basic file.
 **Improvement**: Configure Python’s `RotatingFileHandler` or `TimedRotatingFileHandler` so that logs are safely written to a `logs/` directory, keeping only the last 7 or 14 days of logs to prevent disk exhaustion.
 
----
+### 6. 🧬 Recomendações de Evolução Arquitetural (Próximos Passos Enterprise)
+Se o aplicativo fosse evoluir para um cenário de alta escala ou múltiplos usuários, as seguintes evoluções arquiteturais trariam valor agregado:
 
-Which of these would you like to tackle next? (I highly recommend starting with **1. Enable Browser Stealth** and **2. Network Resilience** since they directly impact data reliability).
+#### Transactional Outbox Pattern (Event Bus Assíncrono)
+
+- Cenário: Atualmente o `AlertDispatcher`
+ envia notificações diretamente após a persistência.
+- Evolução: Caso o Telegram passe por instabilidade ou novos canais de notificação sejam adicionados, salvar o evento de alerta em uma tabela de outbox no Postgres e processá-lo via worker dedicado garante resiliência e retentativas (retry with exponential backoff) sem bloquear o ciclo do scraper.
+
+#### Circuit Breaker por Loja
+
+- Cenário: Se um e-commerce implementar bloqueio agressivo por Cloudflare/bot mitigation temporário.
+- Evolução: Implementar o padrão Circuit Breaker no `PriceEngine`. Caso N requisições consecutivas retornem erro 403 ou timeout, o estado da loja muda para OPEN (pausado) por um período de cooldown (ex: 30 minutos) antes de tentar uma requisição HALF-OPEN.
+
+#### Particionamento de Dados no PostgreSQL
+
+- Cenário: A tabela price_observations acumula registros continuamente em execuções de cron.
+- Evolução: Conforme o volume de observações de histórico cresça para centenas de milhares de linhas, aplicar Range Partitioning por mês/ano no schema (`schema.py`) otimizará as consultas analíticas de variação de preços no dashboard Streamlit.
+
+#### Telemetria e Observabilidade (OpenTelemetry)
+
+- Cenário: Monitorar a saúde dos scrapers de forma quantitativa.
+- Evolução: Adicionar exportação de métricas (taxa de falha por seletor, tempo de execução por SKU, latência de resposta por e-commerce) para Prometheus/Grafana.

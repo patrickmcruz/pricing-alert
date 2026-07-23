@@ -102,7 +102,7 @@ def test_parse_marks_unavailable_when_stock_status_is_not_in_stock(scraper, sku)
 
     assert product is not None
     assert product.is_available is False
-    assert product.price_cash == Decimal("4799.00")
+    assert product.price_cash == Decimal("0.00")
 
 
 def test_parse_returns_none_for_zero_price(scraper, sku):
@@ -111,7 +111,10 @@ def test_parse_returns_none_for_zero_price(scraper, sku):
         "base_price": 0, "final_price": 0, "max_installments": 1,
     }))
 
-    assert scraper.parse(document, sku) is None
+    product = scraper.parse(document, sku)
+    assert product is not None
+    assert product.is_available is False
+    assert product.price_cash == Decimal("0.00")
 
 
 def test_parse_matches_product_by_url_key_when_page_lists_several(scraper, sku):

@@ -16,7 +16,11 @@ dependencies = [
     "lxml",
     "pandas",
     "plotly",
-    "python-dotenv"
+    "python-dotenv",
+    "opentelemetry-api",
+    "opentelemetry-sdk",
+    "opentelemetry-exporter-prometheus",
+    "prometheus-client"
 ]
 
 [project.optional-dependencies]

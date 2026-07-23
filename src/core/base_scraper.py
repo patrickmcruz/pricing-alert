@@ -5,6 +5,7 @@ from typing import Any, ClassVar, Optional
 import logging
 
 import os
+import time
 import tomllib
 
 from src.core.contract import PriceContract, ProductSKU
@@ -98,6 +99,7 @@ class BaseScraper(ABC):
         """
         Executes the complete scraping pipeline.
         """
+        from src.core.telemetry import record_http_latency, record_selector_failure
 
         await apply_jitter()
 
@@ -107,9 +109,23 @@ class BaseScraper(ABC):
             sku.product_url,
         )
 
-        document = await self.fetch(sku, client)
+        start_time = time.perf_counter()
+        http_status = "200"
+        try:
+            document = await self.fetch(sku, client)
+        except Exception:
+            http_status = "500"
+            record_http_latency(self.store_name, self.transport_type, time.perf_counter() - start_time, http_status)
+            raise
+
+        record_http_latency(self.store_name, self.transport_type, time.perf_counter() - start_time, http_status)
 
         if not document:
             return None
 
-        return self.parse(document, sku)
+        try:
+            return self.parse(document, sku)
+        except SelectorOutdatedException:
+            record_selector_failure(self.store_name, "general_dom", "SelectorOutdatedException")
+            raise
+

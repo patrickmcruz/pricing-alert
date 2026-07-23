@@ -25,6 +25,9 @@ backup_retention_count = 30
 backup_cron_hour = 3
 backup_cron_minute = 0
 trigger_poll_interval_seconds = 5.0
+telemetry_enabled = true
+metrics_port = 9102
+telemetry_service_name = "gpu-pricing-orchestrator"
 
 [staging]
 db_host = "localhost"
@@ -50,6 +53,9 @@ backup_retention_count = 30
 backup_cron_hour = 3
 backup_cron_minute = 0
 trigger_poll_interval_seconds = 5.0
+telemetry_enabled = true
+metrics_port = 9102
+telemetry_service_name = "gpu-pricing-orchestrator"
 
 [production]
 # "db" is the docker-compose service name - only resolvable from inside the
@@ -82,6 +88,9 @@ backup_retention_count = 30
 backup_cron_hour = 3
 backup_cron_minute = 0
 trigger_poll_interval_seconds = 5.0
+telemetry_enabled = true
+metrics_port = 9102
+telemetry_service_name = "gpu-pricing-orchestrator"
 
 [test]
 db_host = "localhost"
@@ -106,3 +115,7 @@ backup_retention_count = 30
 backup_cron_hour = 3
 backup_cron_minute = 0
 trigger_poll_interval_seconds = 5.0
+telemetry_enabled = true
+metrics_port = 9102
+telemetry_service_name = "gpu-pricing-orchestrator"
+

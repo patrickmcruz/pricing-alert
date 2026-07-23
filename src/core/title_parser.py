@@ -1,7 +1,6 @@
 import os
 import re
 import tomllib
-from typing import Any, Dict, List, Optional, Tuple
 
 from src.core.specs import CPUSpecs, GPUSpecs, MotherboardSpecs, RAMSpecs
 
@@ -92,9 +91,21 @@ class TitleParserRegistry:
         if "RAY TRACING" in title_upper or "RAYTRACING" in title_upper:
             features.append("Ray Tracing")
 
+        # Board Partner Brand
+        brand_name = None
+        known_brands = [
+            "GIGABYTE", "ASUS", "MSI", "GALAX", "ZOTAC", "PALIT",
+            "GAINWARD", "POWERCOLOR", "SAPPHIRE", "XFX", "INNO3D", "PNY"
+        ]
+        for b in known_brands:
+            if re.search(r"\b" + b + r"\b", title_upper):
+                brand_name = b.title()
+                break
+
         return GPUSpecs(
             chipset=chipset_model,
             chip_maker=chip_maker,
+            brand_name=brand_name,
             vram_gb=vram_gb,
             vram_type=vram_type,
             is_oc=is_oc,

@@ -32,6 +32,8 @@ services:
       # Map the data directory so backups, stores list, selectors, and locales are shared
       - ./data:/app/data
       - ./config.toml:/app/config.toml
+    ports:
+      - "9102:9102"
     env_file:
       - .env
     environment:
@@ -65,5 +67,31 @@ services:
       - APP_ENV=production
     restart: unless-stopped
 
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: pricing_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./data/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana-oss:10.4.0
+    container_name: pricing_grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - ./data/grafana/provisioning:/etc/grafana/provisioning
+      - ./data/grafana/dashboards:/etc/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+
 volumes:
   pricing_db_data:
+  prometheus_data:
+  grafana_data:
+

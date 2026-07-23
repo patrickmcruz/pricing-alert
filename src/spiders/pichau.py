@@ -1,6 +1,6 @@
 import logging
 import urllib.parse
-from typing import Any, List
+from typing import Any
 
 from src.scrapers.pichau import extract_pichau_products
 from src.spiders.base_spider import BaseSpider, DiscoveredSKU

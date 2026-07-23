@@ -31,6 +31,7 @@ from apscheduler.triggers.cron import CronTrigger
 from scripts.backup_db import backup_database
 
 configure_logging(getattr(settings, "log_level", "INFO"), log_file=settings.log_file_path)
+init_telemetry()
 
 logger = logging.getLogger(__name__)
 

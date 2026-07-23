@@ -7,6 +7,9 @@ from src.alerts.evaluator import AlertEvaluator
 from src.alerts.repository import AlertRepository
 from src.core.contract import PriceContract
 
+import time
+from src.core.telemetry import record_alert_dispatch, record_alert_evaluation
+
 logger = logging.getLogger(__name__)
 
 
@@ -17,7 +20,9 @@ class AlertDispatcher:
     PriceEngine never imports this module, keeping orchestration decoupled from alerting.
     """
 
-    def __init__(self, alert_repository: AlertRepository, channels: List[NotificationChannel]):
+    def __init__(
+        self, alert_repository: AlertRepository, channels: List[NotificationChannel]
+    ):
         self.alert_repository = alert_repository
         self.channels = channels
         # In-process last-seen-price cache for PERCENT_DROP/ANY_DROP rules, keyed by
@@ -33,18 +38,35 @@ class AlertDispatcher:
         rules = await self.alert_repository.get_active_rules()
         events = AlertEvaluator.evaluate(price, rules, previous_price, coleta_preco_id)
 
+        for rule in rules:
+            triggered = any(e.rule_id == rule.rule_id for e in events)
+            rule_type_str = (
+                rule.threshold_type.value
+                if hasattr(rule.threshold_type, "value")
+                else str(rule.threshold_type)
+            )
+            record_alert_evaluation(rule_type_str, triggered=triggered)
+
         if price.is_available:
             self._last_seen_prices[key] = price.price_cash
 
         for event in events:
             await self.alert_repository.save_event(event)
             for channel in self.channels:
+                start_time = time.perf_counter()
+                channel_name = channel.__class__.__name__
                 try:
                     await channel.send(event)
+                    record_alert_dispatch(
+                        channel_name, time.perf_counter() - start_time, "success"
+                    )
                 except Exception as e:
+                    record_alert_dispatch(
+                        channel_name, time.perf_counter() - start_time, "failed"
+                    )
                     logger.error(
                         "Notification channel %s failed for event %s: %s",
-                        channel.__class__.__name__,
+                        channel_name,
                         event.event_id,
                         e,
                         exc_info=True,

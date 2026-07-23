@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'pricing_orchestrator'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['orchestrator:9102']
+        labels:
+          application: 'gpu-pricing-alert'
+          environment: 'production'

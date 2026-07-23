@@ -1,7 +1,7 @@
 import logging
 import re
 import urllib.parse
-from typing import Any, List
+from typing import Any
 
 from src.spiders.base_spider import BaseSpider, DiscoveredSKU
 from src.spiders.registry import register_spider

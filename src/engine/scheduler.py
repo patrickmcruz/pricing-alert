@@ -8,15 +8,32 @@ from uuid import UUID
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from src.core.base_scraper import BaseScraper, SelectorOutdatedException, StoreUnavailableException
+import time
+
+from src.core.base_scraper import (
+    BaseScraper,
+    SelectorOutdatedException,
+    StoreUnavailableException,
+)
 from src.core.config import settings
 from src.core.contract import PriceContract, StoreConfig
-from src.core.execution import RunStatus, SKU_FAILURE_LABELS_PT, ScraperRunResult, SkuRunStatus
+from src.core.execution import (
+    RunStatus,
+    SKU_FAILURE_LABELS_PT,
+    ScraperRunResult,
+    SkuRunStatus,
+)
+from src.core.telemetry import (
+    record_observation_saved,
+    record_scraper_run,
+    record_sku_processing,
+)
 from src.core.transport import ClientFactory
 from src.repositories.base_repository import PriceRepository
 from src.repositories.execution_repository import ExecutionRepository
 
 logger = logging.getLogger(__name__)
+
 
 class MissingScraperError(Exception):
     """Raised when a StoreConfig marked enabled=True has no matching registered scraper."""
@@ -37,7 +54,9 @@ class PriceEngine:
         scheduler: AsyncIOScheduler,
         repository: PriceRepository,
         client_factories: Dict[str, ClientFactory],
-        on_price_saved: Optional[Callable[[PriceContract, str], Awaitable[None]]] = None,
+        on_price_saved: Optional[
+            Callable[[PriceContract, str], Awaitable[None]]
+        ] = None,
         execution_repository: Optional[ExecutionRepository] = None,
     ):
         self.scheduler = scheduler
@@ -69,11 +88,16 @@ class PriceEngine:
             self.register_scraper(scraper)
 
     async def _finish_sku_run(
-        self, sku_run_id: Optional[UUID], status: SkuRunStatus, error_message: Optional[str] = None
+        self,
+        sku_run_id: Optional[UUID],
+        status: SkuRunStatus,
+        error_message: Optional[str] = None,
     ) -> None:
         if self.execution_repository and sku_run_id is not None:
             try:
-                await self.execution_repository.finish_sku_run(sku_run_id, status, error_message)
+                await self.execution_repository.finish_sku_run(
+                    sku_run_id, status, error_message
+                )
             except Exception as e:
                 logger.error("Failed to record SKU execution state: %s", e)
 
@@ -116,7 +140,10 @@ class PriceEngine:
                 for sku in skus:
                     sku_run_id = (
                         await self.execution_repository.start_sku_run(
-                            run_id, scraper.store_name, str(sku.product_url), sku.product_title
+                            run_id,
+                            scraper.store_name,
+                            str(sku.product_url),
+                            sku.product_title,
                         )
                         if self.execution_repository and run_id is not None
                         else None
@@ -126,24 +153,52 @@ class PriceEngine:
                         # A single hung page (network stall, dead browser process, an
                         # anti-bot loop that never resolves) must never block the rest
                         # of this store's SKUs - or the whole run - indefinitely.
+                        sku_start_time = time.perf_counter()
                         price = await asyncio.wait_for(
                             scraper.execute(sku, client),
                             timeout=settings.scraper_timeout_seconds,
                         )
+                        sku_duration = time.perf_counter() - sku_start_time
+                        gpu_model = getattr(sku, "search_keyword", "gpu")
 
                         if price:
-                            logger.info("Extracted price for %s: %s (Available: %s)", sku.product_url, price.price_cash, price.is_available)
-                            observation_ids = await self.repository.save_prices([price], scraper_run_id=run_id)
+                            logger.info(
+                                "Extracted price for %s: %s (Available: %s)",
+                                sku.product_url,
+                                price.price_cash,
+                                price.is_available,
+                            )
+                            observation_ids = await self.repository.save_prices(
+                                [price], scraper_run_id=run_id
+                            )
+                            record_observation_saved(
+                                scraper.store_name, gpu_model, price.is_available
+                            )
+                            record_sku_processing(
+                                scraper.store_name, gpu_model, sku_duration, "success"
+                            )
                             if self.on_price_saved and observation_ids:
                                 await self.on_price_saved(price, observation_ids[0])
                             listings_succeeded += 1
                             await self._finish_sku_run(sku_run_id, SkuRunStatus.SUCCESS)
                         else:
                             logger.warning("No price extracted for %s", sku.product_url)
+                            record_sku_processing(
+                                scraper.store_name, gpu_model, sku_duration, "no_price"
+                            )
                             listings_failed += 1
                             failure_breakdown[SkuRunStatus.NO_PRICE.value] += 1
-                            await self._finish_sku_run(sku_run_id, SkuRunStatus.NO_PRICE, "No price extracted")
+                            await self._finish_sku_run(
+                                sku_run_id, SkuRunStatus.NO_PRICE, "No price extracted"
+                            )
                     except asyncio.TimeoutError:
+                        sku_duration = time.perf_counter() - sku_start_time
+                        record_sku_processing(
+                            scraper.store_name,
+                            getattr(sku, "search_keyword", "gpu"),
+                            sku_duration,
+                            "timeout",
+                        )
                         logger.error(
                             "Scraper %s timed out after %ss on SKU '%s' - treating as failed and moving on.",
                             scraper.store_name,
@@ -153,10 +208,18 @@ class PriceEngine:
                         listings_failed += 1
                         failure_breakdown[SkuRunStatus.TIMEOUT.value] += 1
                         await self._finish_sku_run(
-                            sku_run_id, SkuRunStatus.TIMEOUT,
+                            sku_run_id,
+                            SkuRunStatus.TIMEOUT,
                             f"Timed out after {settings.scraper_timeout_seconds}s",
                         )
                     except SelectorOutdatedException as e:
+                        sku_duration = time.perf_counter() - sku_start_time
+                        record_sku_processing(
+                            scraper.store_name,
+                            getattr(sku, "search_keyword", "gpu"),
+                            sku_duration,
+                            "selector_outdated",
+                        )
                         logger.critical(
                             "SelectorOutdatedException caught for %s on SKU '%s': %s",
                             scraper.store_name,
@@ -165,12 +228,17 @@ class PriceEngine:
                         )
                         listings_failed += 1
                         failure_breakdown[SkuRunStatus.SELECTOR_OUTDATED.value] += 1
-                        await self._finish_sku_run(sku_run_id, SkuRunStatus.SELECTOR_OUTDATED, str(e))
+                        await self._finish_sku_run(
+                            sku_run_id, SkuRunStatus.SELECTOR_OUTDATED, str(e)
+                        )
                     except StoreUnavailableException as e:
-                        # Deliberately logger.warning, not .critical/.error like the
-                        # other failure branches - a store being down is an external,
-                        # expected-to-recur condition, not a code/selector problem to
-                        # page anyone about. See StoreUnavailableException's docstring.
+                        sku_duration = time.perf_counter() - sku_start_time
+                        record_sku_processing(
+                            scraper.store_name,
+                            getattr(sku, "search_keyword", "gpu"),
+                            sku_duration,
+                            "store_unavailable",
+                        )
                         logger.warning(
                             "Store %s appears to be down (SKU '%s'): %s",
                             scraper.store_name,
@@ -179,25 +247,36 @@ class PriceEngine:
                         )
                         listings_failed += 1
                         failure_breakdown[SkuRunStatus.STORE_UNAVAILABLE.value] += 1
-                        await self._finish_sku_run(sku_run_id, SkuRunStatus.STORE_UNAVAILABLE, str(e))
+                        await self._finish_sku_run(
+                            sku_run_id, SkuRunStatus.STORE_UNAVAILABLE, str(e)
+                        )
                     except Exception as e:
+                        sku_duration = time.perf_counter() - sku_start_time
+                        record_sku_processing(
+                            scraper.store_name,
+                            getattr(sku, "search_keyword", "gpu"),
+                            sku_duration,
+                            "failed",
+                        )
                         logger.error(
                             "Scraper %s failed on SKU '%s': %s",
                             scraper.store_name,
                             sku.product_url,
                             e,
-                            exc_info=True
+                            exc_info=True,
                         )
                         listings_failed += 1
                         failure_breakdown[SkuRunStatus.FAILED.value] += 1
-                        await self._finish_sku_run(sku_run_id, SkuRunStatus.FAILED, str(e))
+                        await self._finish_sku_run(
+                            sku_run_id, SkuRunStatus.FAILED, str(e)
+                        )
 
         except Exception as e:
             logger.error(
                 "Failed to initialize client or run scraper %s: %s",
                 scraper.store_name,
                 e,
-                exc_info=True
+                exc_info=True,
             )
             run_error = str(e)
         finally:
@@ -210,6 +289,11 @@ class PriceEngine:
                     )
 
             duration_seconds = (datetime.now(timezone.utc) - started_at).total_seconds()
+            record_scraper_run(
+                scraper.store_name,
+                duration_seconds,
+                "failed" if run_error else "success",
+            )
             listings_total = listings_succeeded + listings_failed
             status = RunStatus.FAILED if run_error else RunStatus.SUCCESS
 
@@ -225,18 +309,35 @@ class PriceEngine:
                     )
                 except Exception as e:
                     logger.error(
-                        "Failed to record execution state for %s: %s", scraper.store_name, e
+                        "Failed to record execution state for %s: %s",
+                        scraper.store_name,
+                        e,
                     )
 
             # One clean, scannable line per run instead of digging through the
             # per-SKU chatter above - this is the line that actually answers
             # "did this store's run work" at a glance.
             if run_error:
-                logger.error("✗ %s: falhou - %s (%.1fs)", scraper.store_name, run_error, duration_seconds)
+                logger.error(
+                    "✗ %s: falhou - %s (%.1fs)",
+                    scraper.store_name,
+                    run_error,
+                    duration_seconds,
+                )
             elif listings_total == 0:
-                logger.info("○ %s: nenhum SKU para processar (%.1fs)", scraper.store_name, duration_seconds)
+                logger.info(
+                    "○ %s: nenhum SKU para processar (%.1fs)",
+                    scraper.store_name,
+                    duration_seconds,
+                )
             elif listings_failed == 0:
-                logger.info("✓ %s: %d/%d SKUs OK (%.1fs)", scraper.store_name, listings_succeeded, listings_total, duration_seconds)
+                logger.info(
+                    "✓ %s: %d/%d SKUs OK (%.1fs)",
+                    scraper.store_name,
+                    listings_succeeded,
+                    listings_total,
+                    duration_seconds,
+                )
             else:
                 breakdown_str = ", ".join(
                     f"{SKU_FAILURE_LABELS_PT.get(reason, reason)}={count}"
@@ -244,7 +345,12 @@ class PriceEngine:
                 )
                 logger.warning(
                     "⚠ %s: %d/%d SKUs OK, %d falharam [%s] (%.1fs)",
-                    scraper.store_name, listings_succeeded, listings_total, listings_failed, breakdown_str, duration_seconds,
+                    scraper.store_name,
+                    listings_succeeded,
+                    listings_total,
+                    listings_failed,
+                    breakdown_str,
+                    duration_seconds,
                 )
             logger.info("Completed execution for scraper: %s", scraper.store_name)
 
@@ -293,7 +399,9 @@ class PriceEngine:
                     # target-stores-list.json is a settings.display_timezone wall-clock
                     # hour, so this has to be explicit on each trigger, not just on the
                     # scheduler.
-                    trigger = CronTrigger(hour=hour, minute=minute, timezone=settings.display_timezone)
+                    trigger = CronTrigger(
+                        hour=hour, minute=minute, timezone=settings.display_timezone
+                    )
                     job_id = f"scrape_{config.store_name}_{hour}_{minute}"
 
                     self.scheduler.add_job(
