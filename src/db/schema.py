@@ -225,9 +225,20 @@ async def initialize_schema(dsn: str) -> None:
     """Single source of truth for the schema. Call once at boot (main.py) and
     from anywhere else that needs a guaranteed-initialized DB (Streamlit pages,
     scripts) - CREATE TABLE/INDEX IF NOT EXISTS is idempotent."""
+    _alters = [
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS mpn TEXT",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS product_line TEXT",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS is_oc BOOLEAN NOT NULL DEFAULT false",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS gtin TEXT",
+    ]
     async with connect(dsn) as db:
         for stmt in _DDL:
             await db.execute(stmt)
+        for stmt in _alters:
+            try:
+                await db.execute(stmt)
+            except Exception:
+                pass
         for stmt in _INDEXES:
             await db.execute(stmt)
         await ensure_monthly_partitions(db)

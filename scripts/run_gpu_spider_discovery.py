@@ -20,7 +20,8 @@ import src.spiders  # noqa: F401 - triggers spider self-registration
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
-KEYWORDS = ["rtx 5070", "rtx 5070 ti", "rx 9070 oc", "rx 9070", "rx 9070 xt"]
+# Load target GPU search keywords dynamically from config.toml
+KEYWORDS = settings.default_gpus
 
 
 async def main():
