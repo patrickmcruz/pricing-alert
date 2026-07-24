@@ -67,14 +67,14 @@ def test_parse_prefers_dom_installment_values_when_available():
         "<html><body><script>self.__next_f.push(" + push_arg + ")</script>"
         "<div id='main-content'><div class='MuiContainer-root'>"
         "<div class='mui-caclr-sectionWrapperHorizontal-extraSpace'>"
-        "<div><div><div class='mui-7ie9un-price_total'>R$ 2.499,99</div><span>12x</span></div></div>"
+        "<div><div><div class='mui-7ie9un-price_total'>R$ 5.999,99</div><span>12x</span></div></div>"
         "</div></div></div></body></html>"
     )
 
     contract = scraper.parse(document, _sku())
 
     assert contract is not None
-    assert contract.price_installments == Decimal("2499.99")
+    assert contract.price_installments == Decimal("5999.99")
     assert contract.installment_count == 12
 
 

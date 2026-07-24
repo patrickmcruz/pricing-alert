@@ -25,13 +25,35 @@ def get_allowed_patterns() -> list[str]:
     return list(set(patterns))
 
 
+NON_GPU_WORDS = [
+    "computador", "pc gamer", "pc completo", "pc elite", "pc pichau", "pc mancer",
+    "pc workstation", "pc ecovision", "xtreme pc", "notebook", "laptop",
+    "processador", "kit upgrade", "placa mãe", "placa mae", "memória", "memoria",
+    "fonte", "gabinete", "ssd", "watercooler", "cooler", "teclado", "headset",
+    "monitor", "waterblock", "cabo riser", "extensor"
+]
+
+
 def is_allowed_keyword(text: str) -> bool:
     if not text:
         return False
     lower = text.lower()
+    for forbidden in NON_GPU_WORDS:
+        if forbidden in lower:
+            return False
     allowed_patterns = get_allowed_patterns()
     for allowed in allowed_patterns:
         if allowed in lower:
+            return True
+    return False
+
+
+def is_non_gpu_title(title: str) -> bool:
+    if not title:
+        return False
+    lower = title.lower()
+    for forbidden in NON_GPU_WORDS:
+        if forbidden in lower:
             return True
     return False
 
@@ -49,7 +71,7 @@ async def purge_database(dsn: str, db_name: str, dry_run: bool = False):
         target_urls = await conn.fetch("SELECT id, store_name, search_keyword, product_url, product_title FROM target_urls")
         target_urls_to_delete = [
             row["id"] for row in target_urls
-            if not is_allowed_keyword(row["search_keyword"]) and not is_allowed_keyword(row["product_title"] or "")
+            if is_non_gpu_title(row["product_title"] or "") or not is_allowed_keyword(row["search_keyword"])
         ]
         print(f"target_urls: {len(target_urls_to_delete)} / {len(target_urls)} flagged for deletion")
 
@@ -61,12 +83,9 @@ async def purge_database(dsn: str, db_name: str, dry_run: bool = False):
         """)
         listings_to_delete = [
             row["id"] for row in listings
-            if not (
-                is_allowed_keyword(row["search_keyword"]) or
-                is_allowed_keyword(row["chipset"] or "") or
-                is_allowed_keyword(row["product_name"] or "") or
-                is_allowed_keyword(row["product_title"] or "")
-            )
+            if is_non_gpu_title(row["product_title"] or "") or
+               is_non_gpu_title(row["product_name"] or "") or
+               not is_allowed_keyword(row["search_keyword"])
         ]
         print(f"listings: {len(listings_to_delete)} / {len(listings)} flagged for deletion")
 

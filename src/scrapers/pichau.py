@@ -239,10 +239,14 @@ class PichauScraper(BaseScraper):
         installment_count = prices.get("max_installments")
 
         dom_price_installments, dom_installment_count = _extract_installment_data_from_dom(document)
-        if dom_price_installments is not None:
+        if dom_price_installments is not None and dom_price_installments >= price_cash:
             price_installments = dom_price_installments
-        if dom_installment_count is not None:
+        if dom_installment_count is not None and dom_installment_count > 0:
             installment_count = dom_installment_count
+
+        # Fallback safety: total installment price must never be less than cash price
+        if price_installments is None or price_installments < price_cash:
+            price_installments = price_cash
 
         contract = build_price_contract(
             self,
