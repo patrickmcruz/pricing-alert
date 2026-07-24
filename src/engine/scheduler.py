@@ -105,11 +105,6 @@ class PriceEngine:
         self,
         scraper: BaseScraper,
     ) -> ScraperRunResult:
-        """
-        Executes a scraper for all configured URLs from the database.
-        """
-        logger.info("Starting execution for scraper: %s", scraper.store_name)
-
         started_at = datetime.now(timezone.utc)
         run_id = (
             await self.execution_repository.start_run(scraper.store_name)
@@ -125,6 +120,9 @@ class PriceEngine:
 
         try:
             skus = await self.repository.get_target_skus(scraper.store_name)
+            sku_count = len(skus)
+            logger.info("Starting execution for scraper '%s' (Loja: %s | SKUs a processar: %d)", scraper.store_name, scraper.store_name.upper(), sku_count)
+
             if not skus:
                 logger.info("No SKUs found for store %s", scraper.store_name)
             else:

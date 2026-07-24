@@ -243,10 +243,26 @@ async def startup_routine(engine: PriceEngine):
     """Runs immediately on startup to update graphs for the user."""
     logger.info("Executing immediate startup routine (Scrapers)...")
 
-    # Run all scrapers concurrently against the SKUs already tracked in the DB
-    # (added/edited/removed via the "Gerenciar GPUs" dashboard page - see
-    # scripts/migrate_target_urls.py for one-time seeding from the legacy
-    # data/target_urls.json manifest).
+    # Inspect total SKUs per store prior to dispatching async tasks
+    skus_per_store = {}
+    total_skus = 0
+    for store_name in engine.scrapers:
+        try:
+            skus = await engine.repository.get_target_skus(store_name)
+            cnt = len(skus)
+            skus_per_store[store_name] = cnt
+            total_skus += cnt
+        except Exception:
+            skus_per_store[store_name] = 0
+
+    breakdown_str = ", ".join(f"{s.upper()}: {cnt} SKU(s)" for s, cnt in skus_per_store.items())
+    logger.info(
+        "Iniciando ciclo de raspagem em %d loja(s) [Total: %d SKU(s) a processar] -> %s",
+        len(engine.scrapers),
+        total_skus,
+        breakdown_str,
+    )
+
     tasks = [engine.run_scraper(scraper) for scraper in engine.scrapers.values()]
 
     results = await asyncio.gather(*tasks, return_exceptions=True)

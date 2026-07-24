@@ -197,6 +197,19 @@ class DiscoveryEngine:
                     logger.error("Spider '%s' failed for keyword %r: %s", store_name, keyword, e)
 
         if discovered_skus:
+            if self.target_url_repository:
+                target_entries = [
+                    TargetUrlEntry(
+                        store_name=s.store_name,
+                        search_keyword=s.search_keyword,
+                        product_url=s.product_url,
+                        brand=s.brand,
+                        model=s.model,
+                        product_title=s.product_title,
+                    )
+                    for s in discovered_skus
+                ]
+                await self.target_url_repository.upsert_many(target_entries)
             await self.repository.save_skus(discovered_skus)
             logger.info("Saved %d SKUs discovered by store spiders.", len(discovered_skus))
 

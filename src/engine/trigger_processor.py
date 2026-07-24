@@ -31,10 +31,27 @@ class TriggerProcessor:
                     scraper = self.engine.scrapers.get(request.store_name)
                     if not scraper:
                         raise ValueError(f"No scraper registered for store '{request.store_name}'")
-                    logger.info("Processing trigger request for store: %s", request.store_name)
+                    skus = await self.engine.repository.get_target_skus(request.store_name)
+                    logger.info("Processing manual trigger request for store '%s' (Total SKUs: %d)", request.store_name, len(skus))
                     await self.engine.run_scraper(scraper)
                 else:
-                    logger.info("Processing trigger request for all %d scraper(s)", len(self.engine.scrapers))
+                    skus_per_store = {}
+                    total_skus = 0
+                    for s_name in self.engine.scrapers:
+                        try:
+                            s_list = await self.engine.repository.get_target_skus(s_name)
+                            cnt = len(s_list)
+                            skus_per_store[s_name] = cnt
+                            total_skus += cnt
+                        except Exception:
+                            skus_per_store[s_name] = 0
+                    breakdown_str = ", ".join(f"{s.upper()}: {cnt} SKU(s)" for s, cnt in skus_per_store.items())
+                    logger.info(
+                        "Processing manual trigger request for ALL %d store(s) [Total: %d SKU(s)] -> %s",
+                        len(self.engine.scrapers),
+                        total_skus,
+                        breakdown_str,
+                    )
                     await asyncio.gather(
                         *(self.engine.run_scraper(s) for s in self.engine.scrapers.values()),
                         return_exceptions=True,
