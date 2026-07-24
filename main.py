@@ -11,6 +11,7 @@ from src.core.execution import SKU_FAILURE_LABELS_PT, ScraperRunResult
 from src.core.http_client import HTTPClientFactory
 from src.core.config import settings
 from src.core.logging_setup import configure_logging
+from src.core.telemetry import init_telemetry
 from src.db.schema import connect, initialize_schema as initialize_db_schema
 from src.engine.discovery import DiscoveryEngine
 from src.engine.scheduler import PriceEngine

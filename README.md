@@ -40,6 +40,7 @@ Esta base de código conta com uma suíte de documentação enterprise completa.
 | 🗄️ [**DER / MER & Banco de Dados**](docs/database/DER_MER.md) | Modelo Entidade-Relacionamento (MER), Diagrama ER físico em Mermaid, Dicionário de Dados e Schemas JSONB para hardware (GPUs, Placas Mãe, RAM). |
 | 🏗️ [**Visão Geral da Arquitetura**](docs/architecture/OVERVIEW.md) | Diagramas de componentes e de sequência mostrando a interação entre orquestrador, scrapers, repositórios e alertas. |
 | 🔍 [**Title Parsers & Seletores**](docs/architecture/PARSERS.md) | Motor de parsing `TitleParserRegistry` e versionamento dinâmico de seletores CSS via arquivos TOML em `data/selectors/`. |
+| 📊 [**Telemetria & Monitoramento**](docs/architecture/TELEMETRY_MONITORING.md) | Guia completo de observabilidade OpenTelemetry, exportador Prometheus, dashboards Grafana e métricas quantitativas de scrapers. |
 | 🛠️ [**Guia de Expansão de Categorias**](docs/guides/ADDING_NEW_HARDWARE_CATEGORY.md) | Passo a passo para adicionar suporte a novas categorias de hardware (Processadores, Placas Mãe, Memórias RAM, SSDs). |
 | 🛒 [**Integração Mercado Livre Scraper**](docs/scrapers/mercadolivre.md) | Guia de autenticação e consumo da API oficial pública do Mercado Livre via OAuth 2.0. |
 
@@ -247,6 +248,20 @@ feat/*, fix/*, chore/*, docs/*, test/*, refactor/*, perf/*, ci/*
 ```
 
 Hotfixes are the one exception to "branch from `develop`": for urgent production-breaking bugs, branch `hotfix/<description>` directly from `main`, then merge into **both** `main` (immediate release) and `develop` (so the fix isn't lost on the next promotion). Never merge a working branch directly into `staging` or `main` otherwise - it must land on `develop` first. Commit messages follow Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `perf:`, `ci:`) matching the branch category.
+
+---
+
+## 📊 Telemetria & Monitoramento (Prometheus & Grafana)
+
+A aplicação conta com observabilidade quantitativa nativa baseada no **OpenTelemetry SDK**, exportando métricas de saúde, latência de I/O de rede e taxa de falha de seletores CSS.
+
+### Endpoints e Acessos WebUI:
+* **Prometheus metrics endpoint:** `http://localhost:9102/metrics`
+* **Prometheus WebUI:** `http://localhost:9090`
+* **Grafana WebUI:** `http://localhost:3000` (Usuário: `admin` / Senha: `admin`)
+* **Dashboard Padrão:** *"GPU Scraper Health & Telemetry"* (id: `gpu_scraper_health`)
+
+Para detalhes completos de métricas instrumentadas e consultas PromQL, leia o [Guia Completo de Telemetria e Monitoramento](docs/architecture/TELEMETRY_MONITORING.md).
 
 ---
 

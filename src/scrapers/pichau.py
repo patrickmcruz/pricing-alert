@@ -185,7 +185,7 @@ class PichauScraper(BaseScraper):
         """
         try:
             await client.goto(
-                str(sku.product_url), wait_until="networkidle", timeout=settings.navigation_timeout_ms
+                str(sku.product_url), wait_until="domcontentloaded", timeout=settings.navigation_timeout_ms
             )
             return await client.content()
         except Exception as e:

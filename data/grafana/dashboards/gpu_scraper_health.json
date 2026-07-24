@@ -13,8 +13,48 @@
       "collapsed": false,
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 6,
         "x": 0,
+        "y": 0
+      },
+      "id": 9,
+      "title": "SLA / Taxa de Sucesso dos Scrapers (%)",
+      "type": "gauge",
+      "fieldConfig": {
+        "defaults": {
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 85 },
+              { "color": "green", "value": 95 }
+            ]
+          },
+          "unit": "percent"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
+          "editorMode": "code",
+          "expr": "(sum(increase(sku_observations_saved_total{gpu_model=~\"$gpu_model\"}[1h])) / sum(increase(sku_processing_duration_seconds_count{gpu_model=~\"$gpu_model\"}[1h]))) * 100",
+          "legendFormat": "Taxa de Sucesso Global",
+          "range": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 9,
+        "x": 6,
         "y": 0
       },
       "id": 1,
@@ -49,8 +89,8 @@
       "collapsed": false,
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 9,
+        "x": 15,
         "y": 0
       },
       "id": 2,
@@ -74,9 +114,159 @@
       "collapsed": false,
       "gridPos": {
         "h": 8,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 8
+      },
+      "id": 4,
+      "title": "Preços Coletados com Sucesso (Por Modelo)",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(sku_observations_saved_total{gpu_model=~\"$gpu_model\"}[1h])) by (gpu_model)",
+          "legendFormat": "{{gpu_model}}",
+          "range": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 8
+      },
+      "id": 6,
+      "title": "Preços Coletados com Sucesso (Por Loja)",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(sku_observations_saved_total{gpu_model=~\"$gpu_model\"}[1h])) by (store_name)",
+          "legendFormat": "{{store_name}}",
+          "range": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 8
+      },
+      "id": 8,
+      "title": "Falhas de Raspagem (Por Modelo)",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(sku_processing_duration_seconds_count{status!=\"success\", gpu_model=~\"$gpu_model\"}[1h])) by (gpu_model, status)",
+          "legendFormat": "{{gpu_model}} ({{status}})",
+          "range": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 8
+      },
+      "id": 7,
+      "title": "Falhas de Raspagem (Por Loja)",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(sku_processing_duration_seconds_count{status!=\"success\", gpu_model=~\"$gpu_model\"}[1h])) by (store_name, status)",
+          "legendFormat": "{{store_name}} ({{status}})",
+          "range": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 16
+      },
+      "id": 10,
+      "title": "Produtos Em Estoque vs Esgotados (Por Loja)",
+      "type": "piechart",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(sku_observations_saved_total{gpu_model=~\"$gpu_model\"}[1h])) by (store_name, in_stock)",
+          "legendFormat": "{{store_name}} (Em Estoque: {{in_stock}})",
+          "range": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 16
+      },
+      "id": 11,
+      "title": "Desempenho por Tipo de Transporte (Browser vs HTTP)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.95, sum(rate(ecommerce_http_latency_seconds_bucket[5m])) by (le, transport_type))",
+          "legendFormat": "{{transport_type}} (p95)",
+          "range": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 16
       },
       "id": 3,
       "title": "Falhas de Seletores DOM por Loja",
@@ -99,34 +289,9 @@
       "collapsed": false,
       "gridPos": {
         "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 8
-      },
-      "id": 4,
-      "title": "Preços Coletados com Sucesso (Por Modelo)",
-      "type": "stat",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "sum(increase(sku_observations_saved_total[1h])) by (gpu_model)",
-          "legendFormat": "{{gpu_model}}",
-          "range": true,
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 8
+        "w": 6,
+        "x": 18,
+        "y": 16
       },
       "id": 5,
       "title": "Disparo de Alertas de Preço por Canal",
@@ -150,6 +315,37 @@
   "schemaVersion": 38,
   "style": "dark",
   "tags": ["pricing-alert", "telemetry", "scrapers"],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "Prometheus"
+        },
+        "definition": "label_values(sku_processing_duration_seconds_count, gpu_model)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Modelo de GPU",
+        "multi": true,
+        "name": "gpu_model",
+        "options": [],
+        "query": {
+          "query": "label_values(sku_processing_duration_seconds_count, gpu_model)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
   "time": {
     "from": "now-3h",
     "to": "now"

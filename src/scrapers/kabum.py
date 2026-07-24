@@ -70,9 +70,10 @@ class KabumScraper(BaseScraper):
         Retrieves the raw HTML document from the store using Playwright.
         """
         try:
-            # client is a Playwright Page object here
+            # client is a Playwright Page object here. Use domcontentloaded instead of
+            # networkidle to avoid hanging on background analytics/tracking connections.
             await client.goto(
-                str(sku.product_url), wait_until="networkidle", timeout=settings.navigation_timeout_ms
+                str(sku.product_url), wait_until="domcontentloaded", timeout=settings.navigation_timeout_ms
             )
             return await client.content()
         except Exception as e:
